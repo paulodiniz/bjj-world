@@ -234,33 +234,6 @@ app.get('/api/path', async (req, res) => {
   }
 });
 
-app.get('/api/graph/:nodeId', async (req, res) => {
-  const session = driver.session();
-  try {
-    const result = await session.run(
-      `MATCH (n:BJJNode {id: $id})-[r]->(m:BJJNode)
-       RETURN n.id AS fromId, n.name AS fromName, n.type AS fromType,
-              type(r) AS rel,
-              m.id AS toId, m.name AS toName, m.type AS toType`,
-      { id: req.params.nodeId }
-    );
-
-    const nodesMap = new Map();
-    const edges = [];
-
-    result.records.forEach(record => {
-      const fromId = record.get('fromId');
-      const toId = record.get('toId');
-      if (!nodesMap.has(fromId)) nodesMap.set(fromId, { id: fromId, name: record.get('fromName'), type: record.get('fromType') });
-      if (!nodesMap.has(toId)) nodesMap.set(toId, { id: toId, name: record.get('toName'), type: record.get('toType') });
-      edges.push({ from: fromId, to: toId, type: record.get('rel') });
-    });
-
-    res.json({ nodes: Array.from(nodesMap.values()), edges });
-  } finally {
-    await session.close();
-  }
-});
 
 async function start() {
   try {
