@@ -117,7 +117,9 @@ async function seedDatabase() {
     const result = await session.run('MATCH (n:BJJNode) RETURN count(n) as count');
     const count = result.records[0].get('count').toNumber();
 
-    if (count === graph.nodes.length) {
+    const videoResult = await session.run('MATCH (n:BJJNode) WHERE n.video_url IS NOT NULL RETURN count(n) as c');
+    const videoCount = videoResult.records[0].get('c').toNumber();
+    if (count === graph.nodes.length && videoCount === graph.nodes.length) {
       console.log(`Database up to date with ${count} nodes`);
       return;
     }
