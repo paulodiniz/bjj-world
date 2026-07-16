@@ -53,6 +53,11 @@ async function ollamaStream(systemPrompt, userMessage, onToken) {
     })
   });
 
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Ollama ${res.status}: ${err}`);
+  }
+
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
 
@@ -63,8 +68,11 @@ async function ollamaStream(systemPrompt, userMessage, onToken) {
     for (const line of lines) {
       try {
         const data = JSON.parse(line);
+        if (data.error) throw new Error(`Ollama error: ${data.error}`);
         if (data.message?.content) onToken(data.message.content);
-      } catch {}
+      } catch (e) {
+        if (e.message.startsWith('Ollama')) throw e;
+      }
     }
   }
 }
@@ -115,6 +123,7 @@ app.post('/api/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
+  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
 
   try {
     // Step 1: Generate Cypher query
@@ -149,6 +158,8 @@ app.post('/api/chat', async (req, res) => {
   } catch (err) {
     console.error(err);
     send('error', { text: err.message });
+  } finally {
+    clearInterval(heartbeat);
   }
 
   res.end();
