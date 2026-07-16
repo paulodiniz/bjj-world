@@ -5,65 +5,173 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BJJ World</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #e5e5e5; height: 100vh; display: flex; flex-direction: column; }
-    header { padding: 16px 24px; border-bottom: 1px solid #222; }
-    header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.05em; color: #fff; }
-    header span { color: #666; font-size: 0.85rem; margin-left: 8px; }
-    #messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+
+    header { padding: 14px 24px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; }
+    header span { color: #555; font-size: 0.82rem; }
+
+    nav { display: flex; gap: 2px; margin-left: auto; }
+    nav button { background: none; border: 1px solid #333; border-radius: 6px; padding: 6px 14px; color: #888; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
+    nav button.active { background: #e63946; border-color: #e63946; color: #fff; }
+    nav button:hover:not(.active) { border-color: #555; color: #ccc; }
+
+    .tab { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .tab.active { display: flex; }
+
+    /* ── CHAT ── */
+    #messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
     .msg { max-width: 720px; line-height: 1.6; }
-    .msg.user { align-self: flex-end; background: #1a1a2e; padding: 12px 16px; border-radius: 12px 12px 2px 12px; color: #a0c4ff; }
+    .msg.user { align-self: flex-end; background: #1a1a2e; padding: 10px 16px; border-radius: 12px 12px 2px 12px; color: #a0c4ff; }
     .msg.assistant { align-self: flex-start; background: #1a1a1a; padding: 12px 16px; border-radius: 2px 12px 12px 12px; border-left: 2px solid #e63946; }
-    .msg.assistant .cypher { margin-top: 10px; background: #111; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.78rem; color: #888; white-space: pre-wrap; }
-    .msg.thinking { color: #555; font-style: italic; font-size: 0.9rem; }
-    #form { padding: 16px 24px; border-top: 1px solid #222; display: flex; gap: 10px; }
-    #input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 12px 16px; color: #e5e5e5; font-size: 0.95rem; outline: none; }
-    #input:focus { border-color: #e63946; }
-    #input::placeholder { color: #555; }
-    button { background: #e63946; color: #fff; border: none; border-radius: 8px; padding: 12px 20px; font-size: 0.95rem; cursor: pointer; }
-    button:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .msg.assistant .answer-text h1,.msg.assistant .answer-text h2,.msg.assistant .answer-text h3 { margin: 8px 0 4px; font-size: 1rem; }
+    .msg.assistant .answer-text ul,.msg.assistant .answer-text ol { padding-left: 20px; margin: 4px 0; }
+    .msg.assistant .answer-text strong { color: #fff; }
+    .msg.assistant .answer-text p { margin: 4px 0; }
+    .msg.assistant .cypher { margin-top: 10px; background: #111; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #666; white-space: pre-wrap; }
+    .msg.thinking { color: #555; font-style: italic; font-size: 0.88rem; }
+    #chat-form { padding: 14px 24px; border-top: 1px solid #222; display: flex; gap: 10px; flex-shrink: 0; }
+    #chat-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #e5e5e5; font-size: 0.92rem; outline: none; }
+    #chat-input:focus { border-color: #e63946; }
+    #chat-input::placeholder { color: #555; }
+    .send-btn { background: #e63946; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.92rem; cursor: pointer; }
+    .send-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+    /* ── PATH FINDER ── */
+    #path-tab { padding: 28px 24px; flex-direction: column; gap: 20px; }
+    .path-controls { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .path-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: #888; }
+    .path-controls select { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #e5e5e5; font-size: 0.92rem; outline: none; min-width: 200px; }
+    .path-controls select:focus { border-color: #e63946; }
+    #path-btn { background: #e63946; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 0.92rem; cursor: pointer; height: 42px; }
+    #path-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    #path-result { background: #1a1a1a; border-radius: 10px; padding: 20px; }
+    #path-result h3 { font-size: 0.9rem; color: #888; margin-bottom: 16px; }
+    .path-steps { display: flex; flex-direction: column; gap: 8px; }
+    .path-step { display: flex; align-items: center; gap: 10px; }
+    .step-node { background: #222; border-radius: 8px; padding: 8px 14px; font-size: 0.88rem; }
+    .step-node.position { border-left: 3px solid #4CAF50; }
+    .step-node.submission { border-left: 3px solid #e63946; }
+    .step-node.sweep { border-left: 3px solid #2196F3; }
+    .step-node.guard_pass { border-left: 3px solid #FF9800; }
+    .step-node.takedown { border-left: 3px solid #9C27B0; }
+    .step-node.escape { border-left: 3px solid #00BCD4; }
+    .step-node.counter { border-left: 3px solid #FF5722; }
+    .step-arrow { color: #555; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .step-arrow .rel-type { color: #e63946; font-size: 0.68rem; font-family: monospace; }
+    #path-explanation { margin-top: 16px; padding-top: 16px; border-top: 1px solid #222; font-size: 0.9rem; line-height: 1.6; color: #ccc; }
+
+    /* ── EXPLORE ── */
+    #explore-tab { flex-direction: row; overflow: hidden; }
+    #explore-sidebar { width: 240px; border-right: 1px solid #222; padding: 16px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
+    #explore-sidebar h3 { font-size: 0.82rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+    #node-search { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; color: #e5e5e5; font-size: 0.88rem; outline: none; width: 100%; }
+    #node-search:focus { border-color: #e63946; }
+    #node-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .node-item { padding: 7px 10px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; display: flex; gap: 8px; align-items: center; }
+    .node-item:hover { background: #1a1a1a; }
+    .node-item.selected { background: #1a1a2e; }
+    .node-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    #graph-container { flex: 1; position: relative; overflow: hidden; }
+    #graph-svg { width: 100%; height: 100%; }
+    #tooltip { position: absolute; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; pointer-events: none; max-width: 220px; line-height: 1.5; display: none; }
+    .legend { position: absolute; bottom: 16px; left: 16px; background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 5px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #888; }
+
+    .type-colors { --position: #4CAF50; --submission: #e63946; --sweep: #2196F3; --guard_pass: #FF9800; --takedown: #9C27B0; --escape: #00BCD4; --counter: #FF5722; --concept: #607D8B; --competitor: #FFD700; --system: #E91E63; }
   </style>
 </head>
-<body>
+<body class="type-colors">
   <header>
-    <h1>BJJ World <span>knowledge graph chat</span></h1>
+    <h1>BJJ World <span>knowledge graph</span></h1>
+    <nav>
+      <button class="active" onclick="switchTab('chat')">Chat</button>
+      <button onclick="switchTab('path')">Path Finder</button>
+      <button onclick="switchTab('explore')">Explore Graph</button>
+    </nav>
   </header>
-  <div id="messages">
-    <div class="msg assistant">Ask me anything about BJJ — positions, submissions, transitions, sweeps, guard passes, or how to get from one position to another.</div>
+
+  <!-- CHAT TAB -->
+  <div id="chat-tab" class="tab active">
+    <div id="messages">
+      <div class="msg assistant">Ask me anything about BJJ — positions, submissions, transitions, sweeps, passes, competitor game plans, or how to get from one position to another.</div>
+    </div>
+    <form id="chat-form">
+      <input id="chat-input" type="text" placeholder="e.g. What submissions can I do from closed guard?" autocomplete="off" />
+      <button type="submit" class="send-btn" id="chat-btn">Ask</button>
+    </form>
   </div>
-  <form id="form">
-    <input id="input" type="text" placeholder="e.g. What submissions can I attack from closed guard?" autocomplete="off" />
-    <button type="submit" id="btn">Ask</button>
-  </form>
+
+  <!-- PATH FINDER TAB -->
+  <div id="path-tab" class="tab">
+    <h2 style="font-size:1.1rem;color:#fff;">Path Finder</h2>
+    <p style="color:#666;font-size:0.88rem;">Find the shortest route between any two positions or techniques in the graph.</p>
+    <div class="path-controls">
+      <label>From
+        <select id="path-from"><option value="">Loading...</option></select>
+      </label>
+      <label>To
+        <select id="path-to"><option value="">Loading...</option></select>
+      </label>
+      <button id="path-btn" onclick="findPath()">Find Path</button>
+    </div>
+    <div id="path-result" style="display:none;"></div>
+  </div>
+
+  <!-- EXPLORE TAB -->
+  <div id="explore-tab" class="tab">
+    <div id="explore-sidebar">
+      <h3>Nodes</h3>
+      <input id="node-search" type="text" placeholder="Search..." oninput="filterNodes(this.value)" />
+      <div id="node-list"></div>
+    </div>
+    <div id="graph-container">
+      <svg id="graph-svg"></svg>
+      <div id="tooltip"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
 
   <script>
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const btn = document.getElementById('btn');
+    // ── TAB SWITCHING ──────────────────────────────────────────────
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(`${name}-tab`).classList.add('active');
+      document.querySelectorAll('nav button')[['chat','path','explore'].indexOf(name)].classList.add('active');
+      if (name === 'path' && !pathLoaded) loadPathPositions();
+      if (name === 'explore' && !exploreLoaded) loadExplore();
+    }
+
+    // ── CHAT ──────────────────────────────────────────────────────
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatBtn = document.getElementById('chat-btn');
     const messages = document.getElementById('messages');
 
     function addMsg(text, role) {
       const div = document.createElement('div');
       div.className = `msg ${role}`;
-      div.textContent = text;
+      if (text) div.textContent = text;
       messages.appendChild(div);
       messages.scrollTop = messages.scrollHeight;
       return div;
     }
 
-    form.addEventListener('submit', async (e) => {
+    chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const question = input.value.trim();
+      const question = chatInput.value.trim();
       if (!question) return;
-
-      input.value = '';
-      btn.disabled = true;
+      chatInput.value = '';
+      chatBtn.disabled = true;
       addMsg(question, 'user');
-
       const statusDiv = addMsg('', 'thinking');
       const answerDiv = addMsg('', 'assistant');
       let cypherPre = null;
+      let buffer = '';
 
       try {
         const res = await fetch('/api/chat', {
@@ -74,16 +182,14 @@
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';
+        let sseBuffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split('\n\n');
-          buffer = parts.pop();
-
+          sseBuffer += decoder.decode(value, { stream: true });
+          const parts = sseBuffer.split('\n\n');
+          sseBuffer = parts.pop();
           for (const part of parts) {
             const line = part.trim();
             if (!line.startsWith('data: ')) continue;
@@ -100,15 +206,14 @@
               }
               cypherPre.textContent = event.text;
             } else if (event.type === 'token') {
-              if (!answerDiv.dataset.raw) answerDiv.dataset.raw = '';
-              answerDiv.dataset.raw += event.text;
+              buffer += event.text;
               const textEl = answerDiv.querySelector('.answer-text') || (() => {
                 const el = document.createElement('div');
                 el.className = 'answer-text';
                 answerDiv.insertBefore(el, cypherPre || null);
                 return el;
               })();
-              textEl.innerHTML = marked.parse(answerDiv.dataset.raw);
+              textEl.innerHTML = marked.parse(buffer);
               messages.scrollTop = messages.scrollHeight;
             } else if (event.type === 'done') {
               statusDiv.remove();
@@ -122,10 +227,216 @@
         statusDiv.remove();
         answerDiv.textContent = `Error: ${err.message}`;
       } finally {
-        btn.disabled = false;
-        input.focus();
+        chatBtn.disabled = false;
+        chatInput.focus();
       }
     });
+
+    // ── PATH FINDER ───────────────────────────────────────────────
+    let pathLoaded = false;
+    let allNodes = [];
+
+    async function loadPathPositions() {
+      const data = await fetch('/api/positions').then(r => r.json());
+      allNodes = data;
+      const positions = data.filter(n => ['position','submission','sweep','guard_pass','takedown','escape'].includes(n.type));
+      ['path-from','path-to'].forEach((id, i) => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = positions.map(p => `<option value="${p.id}">${p.name} (${p.type})</option>`).join('');
+        if (id === 'path-to') sel.selectedIndex = Math.min(5, positions.length - 1);
+      });
+      pathLoaded = true;
+    }
+
+    const TYPE_COLORS = {
+      position: '#4CAF50', submission: '#e63946', sweep: '#2196F3',
+      guard_pass: '#FF9800', takedown: '#9C27B0', escape: '#00BCD4',
+      counter: '#FF5722', concept: '#607D8B', competitor: '#FFD700', system: '#E91E63'
+    };
+
+    async function findPath() {
+      const from = document.getElementById('path-from').value;
+      const to = document.getElementById('path-to').value;
+      const btn = document.getElementById('path-btn');
+      const result = document.getElementById('path-result');
+      if (!from || !to) return;
+      btn.disabled = true;
+      btn.textContent = 'Finding...';
+      result.style.display = 'none';
+
+      try {
+        const data = await fetch(`/api/path?from=${from}&to=${to}`).then(r => r.json());
+        result.style.display = 'block';
+
+        if (!data.found) {
+          result.innerHTML = '<p style="color:#666">No path found between these two nodes.</p>';
+          return;
+        }
+
+        const stepsHtml = data.steps.map((step, i) => {
+          const color = TYPE_COLORS[step.type] || '#666';
+          const nodeHtml = `<div class="step-node ${step.type}" style="border-left-color:${color}">${step.name}<span style="color:#555;font-size:0.75rem;margin-left:6px">${step.type}</span></div>`;
+          if (i < data.transitions.length) {
+            return nodeHtml + `<div class="step-arrow">↓<span class="rel-type">${data.transitions[i]}</span></div>`;
+          }
+          return nodeHtml;
+        }).join('');
+
+        result.innerHTML = `
+          <h3>${data.steps.length} steps from <strong style="color:#fff">${data.steps[0].name}</strong> to <strong style="color:#fff">${data.steps[data.steps.length-1].name}</strong></h3>
+          <div class="path-steps">${stepsHtml}</div>
+          <div id="path-explanation" style="color:#555;font-size:0.82rem">Loading explanation...</div>
+        `;
+
+        const pathDescription = data.steps.map((s, i) =>
+          i < data.transitions.length ? `${s.name} --[${data.transitions[i]}]-->` : s.name
+        ).join(' ');
+
+        const explanation = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: `Explain this BJJ path step by step: ${pathDescription}. Be concise and practical.` })
+        });
+
+        const reader = explanation.body.getReader();
+        const decoder = new TextDecoder();
+        let sseBuffer = '', text = '';
+        const expEl = document.getElementById('path-explanation');
+        expEl.style.color = '#ccc';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const parts = sseBuffer.split('\n\n');
+          sseBuffer = parts.pop();
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+            let ev; try { ev = JSON.parse(line.slice(6)); } catch { continue; }
+            if (ev.type === 'token') { text += ev.text; expEl.innerHTML = marked.parse(text); }
+          }
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Find Path';
+      }
+    }
+
+    // ── EXPLORE GRAPH ─────────────────────────────────────────────
+    let exploreLoaded = false;
+    let simulation, svg, selectedNodeId;
+
+    async function loadExplore() {
+      const data = await fetch('/api/positions').then(r => r.json());
+      allNodes = data;
+      renderNodeList(data);
+      buildLegend();
+      exploreLoaded = true;
+      if (data.length > 0) selectNode(data.find(n => n.id === 'closed_guard') || data[0]);
+    }
+
+    function renderNodeList(nodes) {
+      const list = document.getElementById('node-list');
+      list.innerHTML = nodes.map(n => `
+        <div class="node-item" id="item-${n.id}" onclick="selectNode({id:'${n.id}',name:'${n.name}',type:'${n.type}'})">
+          <div class="node-dot" style="background:${TYPE_COLORS[n.type]||'#666'}"></div>
+          <span>${n.name}</span>
+        </div>`).join('');
+    }
+
+    function filterNodes(q) {
+      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q.toLowerCase()) || n.type.includes(q.toLowerCase()));
+      renderNodeList(filtered);
+    }
+
+    function buildLegend() {
+      const legend = document.getElementById('legend');
+      legend.innerHTML = Object.entries(TYPE_COLORS).map(([type, color]) =>
+        `<div class="legend-item"><div class="node-dot" style="background:${color}"></div>${type}</div>`
+      ).join('');
+    }
+
+    async function selectNode(node) {
+      selectedNodeId = node.id;
+      document.querySelectorAll('.node-item').forEach(el => el.classList.remove('selected'));
+      const item = document.getElementById(`item-${node.id}`);
+      if (item) { item.classList.add('selected'); item.scrollIntoView({ block: 'nearest' }); }
+
+      const data = await fetch(`/api/graph/${node.id}`).then(r => r.json());
+      renderGraph(data.nodes, data.edges, node.id);
+    }
+
+    function renderGraph(nodes, edges, centerId) {
+      const container = document.getElementById('graph-container');
+      const W = container.clientWidth, H = container.clientHeight;
+      d3.select('#graph-svg').selectAll('*').remove();
+
+      svg = d3.select('#graph-svg');
+      const g = svg.append('g');
+
+      svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', e => g.attr('transform', e.transform)));
+
+      svg.append('defs').append('marker')
+        .attr('id', 'arrow').attr('viewBox', '0 -5 10 10').attr('refX', 20).attr('refY', 0)
+        .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
+        .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', '#444');
+
+      const link = g.append('g').selectAll('line').data(edges).enter().append('line')
+        .attr('stroke', '#333').attr('stroke-width', 1.5).attr('marker-end', 'url(#arrow)');
+
+      const linkLabel = g.append('g').selectAll('text').data(edges).enter().append('text')
+        .attr('fill', '#444').attr('font-size', '9px').attr('font-family', 'monospace').attr('text-anchor', 'middle')
+        .text(d => d.type);
+
+      const node = g.append('g').selectAll('g').data(nodes).enter().append('g')
+        .style('cursor', 'pointer')
+        .on('click', (_, d) => { if (d.id !== centerId) selectNode(d); })
+        .on('mouseover', (event, d) => {
+          const tt = document.getElementById('tooltip');
+          tt.style.display = 'block';
+          tt.style.left = (event.offsetX + 12) + 'px';
+          tt.style.top = (event.offsetY + 12) + 'px';
+          tt.innerHTML = `<strong>${d.name}</strong><br><span style="color:#666">${d.type}</span>`;
+        })
+        .on('mouseout', () => { document.getElementById('tooltip').style.display = 'none'; })
+        .call(d3.drag()
+          .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+          .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+          .on('end', (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+      node.append('circle')
+        .attr('r', d => d.id === centerId ? 18 : 12)
+        .attr('fill', d => TYPE_COLORS[d.type] || '#666')
+        .attr('fill-opacity', d => d.id === centerId ? 1 : 0.7)
+        .attr('stroke', d => d.id === centerId ? '#fff' : 'none')
+        .attr('stroke-width', 2);
+
+      node.append('text')
+        .attr('dy', d => d.id === centerId ? 30 : 24)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#ccc')
+        .attr('font-size', d => d.id === centerId ? '11px' : '9px')
+        .text(d => d.name.length > 16 ? d.name.slice(0, 14) + '…' : d.name);
+
+      const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
+      const simEdges = edges.map(e => ({ ...e, source: nodeMap[e.from] || e.from, target: nodeMap[e.to] || e.to }));
+
+      const center = nodes.find(n => n.id === centerId);
+      if (center) { center.fx = W / 2; center.fy = H / 2; }
+
+      simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(simEdges).id(d => d.id).distance(120))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(W / 2, H / 2))
+        .on('tick', () => {
+          link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+              .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+          linkLabel.attr('x', d => (d.source.x + d.target.x) / 2)
+                   .attr('y', d => (d.source.y + d.target.y) / 2);
+          node.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+    }
   </script>
 </body>
 </html>

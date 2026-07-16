@@ -196,6 +196,72 @@ app.post('/api/chat', async (req, res) => {
   res.end();
 });
 
+app.get('/api/positions', async (req, res) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `MATCH (n:BJJNode) WHERE n.type IN ['position','submission','sweep','guard_pass','takedown','escape','counter','concept','competitor','system']
+       RETURN n.id AS id, n.name AS name, n.type AS type ORDER BY n.type, n.name`
+    );
+    res.json(result.records.map(r => ({ id: r.get('id'), name: r.get('name'), type: r.get('type') })));
+  } finally {
+    await session.close();
+  }
+});
+
+app.get('/api/path', async (req, res) => {
+  const { from, to } = req.query;
+  if (!from || !to) return res.status(400).json({ error: 'from and to are required' });
+
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `MATCH (start:BJJNode {id: $from}), (end:BJJNode {id: $to})
+       MATCH p = shortestPath((start)-[*..12]->(end))
+       RETURN [n IN nodes(p) | {id: n.id, name: n.name, type: n.type}] AS steps,
+              [r IN relationships(p) | type(r)] AS transitions`,
+      { from, to }
+    );
+
+    if (result.records.length === 0) {
+      return res.json({ found: false });
+    }
+
+    const record = result.records[0];
+    res.json({ found: true, steps: record.get('steps'), transitions: record.get('transitions') });
+  } finally {
+    await session.close();
+  }
+});
+
+app.get('/api/graph/:nodeId', async (req, res) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(
+      `MATCH (n:BJJNode {id: $id})-[r]->(m:BJJNode)
+       RETURN n.id AS fromId, n.name AS fromName, n.type AS fromType,
+              type(r) AS rel,
+              m.id AS toId, m.name AS toName, m.type AS toType`,
+      { id: req.params.nodeId }
+    );
+
+    const nodesMap = new Map();
+    const edges = [];
+
+    result.records.forEach(record => {
+      const fromId = record.get('fromId');
+      const toId = record.get('toId');
+      if (!nodesMap.has(fromId)) nodesMap.set(fromId, { id: fromId, name: record.get('fromName'), type: record.get('fromType') });
+      if (!nodesMap.has(toId)) nodesMap.set(toId, { id: toId, name: record.get('toName'), type: record.get('toType') });
+      edges.push({ from: fromId, to: toId, type: record.get('rel') });
+    });
+
+    res.json({ nodes: Array.from(nodesMap.values()), edges });
+  } finally {
+    await session.close();
+  }
+});
+
 async function start() {
   try {
     await seedDatabase();
