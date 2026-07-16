@@ -1,5 +1,6 @@
 const express = require('express');
 const neo4j = require('neo4j-driver');
+const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,8 +16,20 @@ const driver = neo4j.driver(
   )
 );
 
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://ollama.railway.internal:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// Simple in-memory rate limiter: 20 requests per IP per hour
+const rateLimiter = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  const limit = 20;
+  const hits = (rateLimiter.get(ip) || []).filter(t => now - t < windowMs);
+  if (hits.length >= limit) return true;
+  hits.push(now);
+  rateLimiter.set(ip, hits);
+  return false;
+}
 
 const SCHEMA_CONTEXT = `You are a BJJ (Brazilian Jiu-Jitsu) knowledge assistant with access to a graph database.
 
@@ -33,46 +46,27 @@ Relationship types:
 
 Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).`;
 
-async function ollama(systemPrompt, userMessage) {
-  let result = '';
-  await ollamaStream(systemPrompt, userMessage, token => { result += token; });
-  return result;
+async function generateCypher(question) {
+  const msg = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 256,
+    system: `${SCHEMA_CONTEXT}\n\nGenerate a single Cypher query to answer the user's BJJ question. Return ONLY the Cypher query with no explanation, no markdown, no code blocks.`,
+    messages: [{ role: 'user', content: question }]
+  });
+  return msg.content[0].text.replace(/```cypher?\n?/gi, '').replace(/```/g, '').trim();
 }
 
-async function ollamaStream(systemPrompt, userMessage, onToken) {
-  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      stream: true,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ]
-    })
+async function streamAnswer(question, records, onToken) {
+  const stream = await anthropic.messages.stream({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    system: 'You are a helpful BJJ coach. Answer the user\'s question clearly and concisely based on the graph data provided. Focus on practical advice.',
+    messages: [{ role: 'user', content: `Question: ${question}\n\nGraph data: ${JSON.stringify(records, null, 2)}` }]
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Ollama ${res.status}: ${err}`);
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const lines = decoder.decode(value).split('\n').filter(l => l.trim());
-    for (const line of lines) {
-      try {
-        const data = JSON.parse(line);
-        if (data.error) throw new Error(`Ollama error: ${data.error}`);
-        if (data.message?.content) onToken(data.message.content);
-      } catch (e) {
-        if (e.message.startsWith('Ollama')) throw e;
-      }
+  for await (const chunk of stream) {
+    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+      onToken(chunk.delta.text);
     }
   }
 }
@@ -115,6 +109,11 @@ async function seedDatabase() {
 }
 
 app.post('/api/chat', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Too many requests. Try again later.' });
+  }
+
   const { question } = req.body;
   if (!question) return res.status(400).json({ error: 'question is required' });
 
@@ -123,16 +122,11 @@ app.post('/api/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
-  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
 
   try {
     // Step 1: Generate Cypher query
     send('status', { text: 'Generating query...' });
-    const cypherRaw = await ollama(
-      `${SCHEMA_CONTEXT}\n\nGenerate a single Cypher query to answer the user's BJJ question. Return ONLY the Cypher query with no explanation, no markdown, no code blocks.`,
-      question
-    );
-    const cypher = cypherRaw.replace(/```cypher?\n?/gi, '').replace(/```/g, '').trim();
+    const cypher = await generateCypher(question);
     send('cypher', { text: cypher });
 
     // Step 2: Run against Neo4j
@@ -148,18 +142,12 @@ app.post('/api/chat', async (req, res) => {
 
     // Step 3: Stream the answer
     send('status', { text: 'Answering...' });
-    await ollamaStream(
-      'You are a helpful BJJ coach. Answer the user\'s question clearly and concisely based on the graph data provided. Focus on practical advice.',
-      `Question: ${question}\n\nGraph data: ${JSON.stringify(records, null, 2)}`,
-      token => send('token', { text: token })
-    );
+    await streamAnswer(question, records, token => send('token', { text: token }));
 
     send('done', {});
   } catch (err) {
     console.error(err);
     send('error', { text: err.message });
-  } finally {
-    clearInterval(heartbeat);
   }
 
   res.end();
