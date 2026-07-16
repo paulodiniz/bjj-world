@@ -34,20 +34,9 @@ Relationship types:
 Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).`;
 
 async function ollama(systemPrompt, userMessage) {
-  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      stream: false,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ]
-    })
-  });
-  const data = await res.json();
-  return data.message.content;
+  let result = '';
+  await ollamaStream(systemPrompt, userMessage, token => { result += token; });
+  return result;
 }
 
 async function ollamaStream(systemPrompt, userMessage, onToken) {
