@@ -30,6 +30,10 @@
     .msg.assistant .answer-text strong { color: #fff; }
     .msg.assistant .answer-text p { margin: 4px 0; }
     .msg.assistant .cypher { margin-top: 10px; background: #111; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #666; white-space: pre-wrap; }
+    .videos { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .video-embed { border-radius: 8px; overflow: hidden; }
+    .video-embed iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; }
+    .video-label { font-size: 0.75rem; color: #666; padding: 4px 0; }
     .msg.thinking { color: #555; font-style: italic; font-size: 0.88rem; }
     #chat-form { padding: 14px 24px; border-top: 1px solid #222; display: flex; gap: 10px; flex-shrink: 0; }
     #chat-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #e5e5e5; font-size: 0.92rem; outline: none; }
@@ -181,6 +185,14 @@
               })();
               textEl.innerHTML = marked.parse(buffer);
               messages.scrollTop = messages.scrollHeight;
+            } else if (event.type === 'videos') {
+              const div = document.createElement('div');
+              div.className = 'videos';
+              div.innerHTML = event.videos.map(v => {
+                const id = v.url.split('v=')[1];
+                return `<div class="video-embed"><div class="video-label">${v.name}</div><iframe src="https://www.youtube.com/embed/${id}" allowfullscreen loading="lazy"></iframe></div>`;
+              }).join('');
+              answerDiv.appendChild(div);
             } else if (event.type === 'done') {
               statusDiv.remove();
             } else if (event.type === 'error') {

@@ -1,404 +1,3760 @@
 {
   "nodes": [
-    {"id": "standing", "name": "Standing", "type": "position", "description": "Both athletes on their feet. Starting state for most matches and target for technical standups."},
-    {"id": "closed_guard", "name": "Closed Guard", "type": "position", "description": "Bottom player's legs locked around opponent's waist. Foundational guard with high submission threat."},
-    {"id": "open_guard", "name": "Open Guard", "type": "position", "description": "Bottom player's legs are open and active but not locked. Transitional guard state with many sub-varieties."},
-    {"id": "half_guard", "name": "Half Guard", "type": "position", "description": "Bottom player controls one of the top player's legs between their own. Classic transitional position."},
-    {"id": "side_control", "name": "Side Control", "type": "position", "description": "Top player lies perpendicular across bottom player's torso, controlling with hip and shoulder pressure."},
-    {"id": "north_south", "name": "North South", "type": "position", "description": "Top player faces opposite direction across bottom player's chest, controlling head and hips."},
-    {"id": "mount", "name": "Mount", "type": "position", "description": "Top player straddles bottom player's torso sitting on their hips. High-percentage dominant position."},
-    {"id": "technical_mount", "name": "Technical Mount", "type": "position", "description": "S-mount variation where top player's leg is over opponent's arm, isolating the limb for attacks."},
-    {"id": "back_control", "name": "Back Control", "type": "position", "description": "Top player behind opponent with hooks in and seatbelt grip. Highest-value position in BJJ."},
-    {"id": "turtle", "name": "Turtle", "type": "position", "description": "Defender on all fours, protecting neck and back. Transitional defensive position."},
-    {"id": "butterfly_guard", "name": "Butterfly Guard", "type": "position", "description": "Bottom player uses both feet as hooks inside opponent's inner thighs. Mobile and sweeping guard."},
-    {"id": "deep_half_guard", "name": "Deep Half Guard", "type": "position", "description": "Bottom player entirely beneath opponent's body with full leg entanglement, head under the hips."},
-    {"id": "de_la_riva_guard", "name": "De La Riva Guard", "type": "position", "description": "Bottom player hooks one leg around the outside of opponent's lead leg with foot on hip. Long-range guard."},
-    {"id": "x_guard", "name": "X-Guard", "type": "position", "description": "Bottom player under opponent with both hooks beneath opponent's hips, controlling both legs."},
-    {"id": "knee_on_belly", "name": "Knee on Belly", "type": "position", "description": "Top player's knee pressed on bottom player's abdomen with an upright base. Transitional pressure position."},
-    {"id": "spider_guard", "name": "Spider Guard", "type": "position", "gi_requirement": "gi", "description": "Bottom player controls both sleeves and places feet on opponent's biceps. Long-range grip-based guard."},
-    {"id": "worm_guard", "name": "Worm Guard", "type": "position", "gi_requirement": "gi", "description": "Bottom player feeds their lapel around the opponent's leg and grips it, creating a powerful entanglement. Pioneered by Keenan Cornelius. Gi only."},
-    {"id": "lasso_guard", "name": "Lasso Guard", "type": "position", "gi_requirement": "gi", "description": "Bottom player threads their leg through the opponent's arm, wrapping around it to control the sleeve. Excellent for breaking posture and attacking. Gi only."},
-    {"id": "fifty_fifty", "name": "50/50 Guard", "type": "position", "description": "Both players have equal leg entanglement with mirrored inside position. Primary position for modern heel hook exchanges and reaping attacks."},
-    {"id": "rubber_guard", "name": "Rubber Guard", "type": "position", "description": "Bottom player controls their own leg high over opponent's shoulder using the hand, breaking posture completely. Requires flexibility. Associated with 10th Planet system."},
-    {"id": "reverse_de_la_riva", "name": "Reverse De La Riva", "type": "position", "description": "Bottom player hooks inside the opponent's lead leg from behind, controlling the ankle with the opposite hand. Entry to back takes and leg locks."},
-    {"id": "z_guard", "name": "Z-Guard", "type": "position", "description": "Half guard variation where the bottom player places their knee shield across the opponent's hip to block the crossface and create space. Also called knee shield half guard."},
-    {"id": "ashi_garami", "name": "Ashi Garami", "type": "position", "description": "Single leg entanglement where bottom player controls the inside position on one leg with hooks, setting up heel hooks and ankle locks. Foundation of modern leg lock systems."},
-    {"id": "dogfight", "name": "Dogfight", "type": "position", "description": "Both players on all fours facing each other with an underhook and overhook exchange. Critical transitional position from half guard."},
-    {"id": "rear_naked_choke", "name": "Rear Naked Choke", "type": "submission", "description": "Choking arm around opponent's neck, other arm bracing behind head. Primary submission from back control."},
-    {"id": "triangle_choke", "name": "Triangle Choke", "type": "submission", "description": "Legs triangled around opponent's neck and one arm, cutting off carotid arteries. Versatile strangle."},
-    {"id": "armbar", "name": "Armbar", "type": "submission", "description": "Elbow joint hyperextended by controlling the arm and bridging hips. Available from multiple positions."},
-    {"id": "omoplata", "name": "Omoplata", "type": "submission", "description": "Shoulder joint locked by trapping opponent's arm with the legs and rotating the hip."},
-    {"id": "kimura", "name": "Kimura", "type": "submission", "description": "Figure-four grip on opponent's arm with wrist bent behind the back. Available from many positions."},
-    {"id": "americana", "name": "Americana", "type": "submission", "description": "Figure-four wrist lock with arm bent at low angle on the mat. Most common from side control and mount."},
-    {"id": "guillotine", "name": "Guillotine", "type": "submission", "description": "Arm around opponent's neck applying pressure on windpipe or carotid arteries. Available standing and guard."},
-    {"id": "darce_choke", "name": "D'Arce Choke", "type": "submission", "description": "Figure-four arm triangle choke with arm threaded under neck. Typically applied from top positions."},
-    {"id": "bow_and_arrow_choke", "name": "Bow and Arrow Choke", "type": "submission", "gi_requirement": "gi", "description": "Collar choke with cross-collar grip and belt or leg control. Primary gi submission from back control."},
-    {"id": "ankle_lock", "name": "Ankle Lock", "type": "submission", "description": "Straight heel pressure on ankle joint using body as lever. Foot lock targeting the ankle ligaments."},
-    {"id": "heel_hook", "name": "Heel Hook", "type": "submission", "description": "Rotational knee attack by controlling the heel and twisting. High-percentage leg lock in modern BJJ."},
-    {"id": "north_south_choke", "name": "North-South Choke", "type": "submission", "description": "Forearm or bicep pressed across the trachea from a north-south position while the head is trapped under the body. Requires precise shoulder placement."},
-    {"id": "clock_choke", "name": "Clock Choke", "type": "submission", "gi_requirement": "gi", "description": "Collar choke applied from turtle position where the top player drives their hip into the side of the opponent's head while pulling the collar. Gi only."},
-    {"id": "ezekiel_choke", "name": "Ezekiel Choke", "type": "submission", "gi_requirement": "gi", "description": "Sleeve-assisted choke using one hand inside the sleeve to grip the other forearm, applying pressure across the neck. Works from mount and guard. Gi only."},
-    {"id": "banana_split", "name": "Banana Split", "type": "submission", "description": "Hip adductor stretch submission from leg entanglement where both legs are split in opposite directions using the body as a fulcrum. Applied from 50/50 or ashi garami."},
-    {"id": "calf_slicer", "name": "Calf Slicer", "type": "submission", "description": "Compression lock on the calf muscle by wedging the knee or forearm behind the opponent's knee joint. Applied from leg entanglements."},
-    {"id": "peruvian_necktie", "name": "Peruvian Necktie", "type": "submission", "description": "Twisting choke from front headlock or turtle where the top player uses a collar tie and leg over the back to apply a neck crank and blood choke simultaneously."},
-    {"id": "baseball_bat_choke", "name": "Baseball Bat Choke", "type": "submission", "gi_requirement": "gi", "description": "Collar choke using two grips pointing the same direction, applied by rotating the forearms. Set up from side control or mount and finished by rolling through. Gi only."},
-    {"id": "mounted_triangle", "name": "Mounted Triangle", "type": "submission", "description": "Triangle choke applied from the mount position by swinging a leg over the opponent's head and locking the triangle while maintaining the top position."},
-    {"id": "gogoplata", "name": "Gogoplata", "type": "submission", "description": "Choke using the shin across the trachea from rubber guard or inverted guard. Bottom player threads the leg deep under the opponent's chin and applies downward pressure on the head."},
-    {"id": "twister", "name": "Twister", "type": "submission", "description": "Spinal lock from back control using leg hooks to rotate the bottom half of the opponent's body while turning the upper body the opposite direction. Associated with 10th Planet."},
-    {"id": "kneebar", "name": "Kneebar", "type": "submission", "description": "Hyperextension of the knee joint by wrapping the leg under the armpit and bridging the hips into the joint, similar mechanics to an armbar but targeting the knee."},
-    {"id": "scissor_sweep", "name": "Scissor Sweep", "type": "sweep", "description": "Bottom player scissors legs to topple opponent from closed guard using collar and sleeve grips."},
-    {"id": "hip_bump_sweep", "name": "Hip Bump Sweep", "type": "sweep", "description": "Sit-up sweep from closed guard using hip explosion to roll opponent over. Sets up kimura if blocked."},
-    {"id": "butterfly_sweep", "name": "Butterfly Sweep", "type": "sweep", "description": "Lifting sweep using butterfly hooks and an underhook to toss opponent to the side."},
-    {"id": "x_guard_sweep", "name": "X-Guard Sweep", "type": "sweep", "description": "Sweep from x-guard lifting opponent with both hooks and dumping them to the side."},
-    {"id": "flower_sweep", "name": "Flower Sweep", "type": "sweep", "description": "Pendulum sweep from closed guard using cross-collar grip and ankle control to roll opponent."},
-    {"id": "waiter_sweep", "name": "Waiter Sweep", "type": "sweep", "description": "Sweep from deep half guard where the bottom player extends the trapped leg upward like a waiter holding a tray, rolling the opponent over."},
-    {"id": "sickle_sweep", "name": "Sickle Sweep", "type": "sweep", "description": "Hook sweep from De La Riva or butterfly guard using a sickle motion of the leg to knock out the opponent's base leg while pulling the sleeve."},
-    {"id": "lasso_sweep", "name": "Lasso Sweep", "type": "sweep", "description": "Sweep from lasso guard using the leg wrap and sleeve grip to rotate the opponent off-balance and roll them to the side."},
-    {"id": "torreando_pass", "name": "Torreando Pass", "type": "guard_pass", "description": "Speed pass that controls both knees and moves the hips around the guard. Primarily from open guard."},
-    {"id": "knee_slice_pass", "name": "Knee Slice Pass", "type": "guard_pass", "description": "Pass by threading knee between opponent's legs and using hip pressure to cut through."},
-    {"id": "double_under_pass", "name": "Double Under Pass", "type": "guard_pass", "description": "Stacking pass by controlling both legs under the arms and passing with bodyweight."},
-    {"id": "over_under_pass", "name": "Over Under Pass", "type": "guard_pass", "description": "Pass controlling one leg over the shoulder and one under, using hip pressure to clear guard."},
-    {"id": "leg_drag_pass", "name": "Leg Drag Pass", "type": "guard_pass", "description": "Pass by dragging opponent's top leg across the body and establishing side control."},
-    {"id": "x_pass", "name": "X-Pass", "type": "guard_pass", "description": "Fast pass that uses an X-step around the opponent's open guard while controlling the knee with one hand. Creates distance and angles around the guard quickly."},
-    {"id": "cartwheel_pass", "name": "Cartwheel Pass", "type": "guard_pass", "description": "Dynamic passing technique that uses a cartwheel motion to spin around De La Riva or reverse De La Riva guard. Requires timing and athleticism."},
-    {"id": "smash_pass", "name": "Smash Pass", "type": "guard_pass", "description": "Pressure pass that smashes the opponent's legs flat to the mat using bodyweight and hip pressure, eliminating the guard frame before passing."},
-    {"id": "long_step_pass", "name": "Long Step Pass", "type": "guard_pass", "description": "Pass that uses a long lateral step to clear the knee shield and establish a crossface. Most effective against z-guard and knee shield half guard."},
-    {"id": "double_leg_takedown", "name": "Double Leg Takedown", "type": "takedown", "description": "Shooting to both legs and driving through opponent to bring them down. Fundamental wrestling takedown."},
-    {"id": "single_leg_takedown", "name": "Single Leg Takedown", "type": "takedown", "description": "Securing one leg and using trips, lifts, or drives to take opponent down. Versatile wrestling takedown."},
-    {"id": "judo_throw", "name": "Judo Throw", "type": "takedown", "description": "Hip-based or shoulder-based throw using kuzushi, tsukuri, and kake. Covers ippon seoi nage, o-goshi, etc."},
-    {"id": "hip_throw", "name": "Hip Throw", "type": "takedown", "description": "Throw using hip insertion to lift and rotate the opponent off the mat. Includes o-goshi, harai goshi, and tsuri goshi variants. Requires body contact and kuzushi."},
-    {"id": "foot_sweep", "name": "Foot Sweep", "type": "takedown", "description": "Sweeping the opponent's foot or ankle at the moment of weight transfer to knock them down. Timing-dependent technique requiring precise entry. Includes o-uchi gari and ko-uchi gari."},
-    {"id": "firemans_carry", "name": "Fireman's Carry", "type": "takedown", "description": "Arm drag takedown where the attacker gets under the opponent and rolls them over the shoulders. Often used as a reaction to an overhook or arm reach."},
-    {"id": "elbow_knee_escape", "name": "Elbow-Knee Escape", "type": "escape", "description": "Primary escape from mount using a frame with the elbow on the hip and knee shield to create space, then shrimping to recover half guard. Also called the bridge-and-elbow escape."},
-    {"id": "shrimp_escape", "name": "Shrimp Escape", "type": "escape", "description": "Hip escape movement from side control or mount using alternating shrimping (hip extension) to create space and recover guard. Foundational defensive movement in BJJ."},
-    {"id": "back_escape_roll", "name": "Back Escape Roll", "type": "escape", "description": "Escape from back control by turning into the choking arm, tucking the chin, and rolling through to face the opponent. Sacrifices position to avoid the choke."},
-    {"id": "granby_roll", "name": "Granby Roll", "type": "escape", "description": "Shoulder roll escape from turtle or back control that inverts the defender and allows them to re-guard or come up to a seated position. Wrestler's technique adapted for BJJ."},
-    {"id": "running_man_escape", "name": "Running Man Escape", "type": "escape", "description": "Leg lock defense technique that uses a rolling motion to pop the heel out of single leg entanglements. Effective against straight ashi garami but risky against heel hooks."},
-    {"id": "sprawl", "name": "Sprawl", "type": "counter", "description": "Defensive reaction to a takedown shot by driving the hips down and back while pushing the opponent's head down. Counters double leg and single leg takedowns."},
-    {"id": "posture_up", "name": "Posture Up", "type": "counter", "description": "Guard passing defense where the bottom player breaks the opponent's posture by pulling the head or collar down. Also a top player defense to prevent sweep and submission setups."},
-    {"id": "arm_tuck", "name": "Arm Tuck Defense", "type": "counter", "description": "Defense against kimura and americana by pulling the arm tight to the body and framing before the grip is fully established. Prevents the figure-four lock from being secured."},
-    {"id": "stack_defense", "name": "Stack Defense", "type": "counter", "description": "Counter to triangle choke and armbar from guard by stacking the opponent's hips over their head, removing their leverage. Allows the top player to posture up and escape."},
-    {"id": "frame_and_shrimp", "name": "Frame and Shrimp", "type": "counter", "description": "Combined counter to guard passes using frames on the hip and shoulder to stall progress, then shrimping away to re-establish guard. The fundamental passing defense."},
-    {"id": "kuzushi", "name": "Kuzushi", "type": "concept", "description": "The principle of unbalancing the opponent before executing a throw, sweep, or technique. Without kuzushi, most throws and sweeps will fail. The first stage of any throwing technique."},
-    {"id": "hip_escape_movement", "name": "Hip Escape", "type": "concept", "description": "The foundational defensive movement of BJJ — extending the hips away from the opponent by pushing off the foot and bridging the hips laterally. Creates space to recover guard or escape positions."},
-    {"id": "base_and_posture", "name": "Base and Posture", "type": "concept", "description": "Base is the wide stable foundation preventing sweeps. Posture is the upright spine alignment preventing chokes and breaks. Both must be maintained simultaneously in top and bottom positions."},
-    {"id": "framing", "name": "Framing", "type": "concept", "description": "Using the skeletal structure of the arms and legs as rigid frames against the opponent's body to create and maintain space. Frames buy time for escapes and guard recovery."},
-    {"id": "grips", "name": "Grips", "type": "concept", "description": "Grip selection and control is the first battle in BJJ. Controlling the opponent's sleeve, collar, wrist or leg dictates which techniques are available. Breaking grips is as important as establishing them."},
-    {"id": "weight_distribution", "name": "Weight Distribution", "type": "concept", "description": "Understanding where the opponent's weight is loaded determines when sweeps and takedowns are available. Techniques succeed when the opponent's weight is shifted away from the direction of the throw."},
-    {"id": "bridge_movement", "name": "Bridge", "type": "concept", "description": "Explosive upward hip extension from the bottom position using the feet and shoulders as base. Used to unbalance the top player and create space for escapes or rolls."},
-
-    {"id": "marcelo_garcia", "name": "Marcelo Garcia", "type": "competitor", "gi_requirement": "both", "description": "5x ADCC champion and multiple gi world champion. Considered one of the greatest of all time. Known for his butterfly guard, arm drags, guillotine choke, and systematic back takes."},
-    {"id": "gordon_ryan", "name": "Gordon Ryan", "type": "competitor", "gi_requirement": "no_gi", "description": "Dominant no-gi competitor and multiple ADCC champion. Known for his systematic back taking, leg lock entries, and submission-only approach. Student of John Danaher."},
-    {"id": "keenan_cornelius", "name": "Keenan Cornelius", "type": "competitor", "gi_requirement": "gi", "description": "Known for pioneering modern lapel guard systems including the worm guard. Multiple ADCC and gi world championship finalist with an innovative and technical game."},
-    {"id": "roger_gracie", "name": "Roger Gracie", "type": "competitor", "gi_requirement": "gi", "description": "Widely considered the greatest gi competitor of all time. 10x world champion known for simple, fundamental techniques — particularly the cross-collar choke from every position."},
-    {"id": "mikey_musumeci", "name": "Mikey Musumeci", "type": "competitor", "gi_requirement": "both", "description": "Multiple gi and no-gi world champion. Known for his closed guard game, leg locks, and technical precision. Student of John Danaher."},
-    {"id": "bernardo_faria", "name": "Bernardo Faria", "type": "competitor", "gi_requirement": "gi", "description": "5x gi world champion known for his deep half guard game and smothering over-under pass. Represents old-school fundamentals applied at the highest level."},
-    {"id": "john_danaher", "name": "John Danaher", "type": "competitor", "gi_requirement": "both", "description": "Renowned coach and system developer who transformed modern BJJ. Developed the Danaher Death Squad's systematic approach to leg locks, back attacks, and front headlock systems."},
-    {"id": "leandro_lo", "name": "Leandro Lo", "type": "competitor", "gi_requirement": "gi", "description": "Multiple gi world champion known for his dynamic athleticism, aggressive passing, knee on belly game, and ability to finish from any position."},
-    {"id": "romulo_barral", "name": "Romulo Barral", "type": "competitor", "gi_requirement": "gi", "description": "7x gi world champion known for his spider guard and De La Riva combinations, creative guard game, and dangerous kimura from top positions."},
-    {"id": "andre_galvao", "name": "Andre Galvao", "type": "competitor", "gi_requirement": "both", "description": "Multiple gi and no-gi world champion and ADCC champion. Well-rounded game with strong wrestling, guard passing, and submission hunting. Founder of Atos Jiu-Jitsu."},
-
-    {"id": "marcelo_butterfly_back_system", "name": "Marcelo's Butterfly Back System", "type": "system", "gi_requirement": "both", "description": "Marcelo Garcia's game plan built around butterfly guard as the foundation for arm drags, underhooks, and taking the back. Finishes primarily with RNC and guillotine. Works in both gi and no-gi."},
-    {"id": "keenan_lapel_guard_system", "name": "Keenan's Lapel Guard System", "type": "system", "gi_requirement": "gi", "description": "Keenan Cornelius's innovative gi system using lapel entanglements — primarily worm guard from De La Riva — to control opponents and attack with triangles, omoplatas, and back takes."},
-    {"id": "roger_closed_guard_system", "name": "Roger's Closed Guard System", "type": "system", "gi_requirement": "gi", "description": "Roger Gracie's game plan centered on breaking posture from closed guard and finishing with the cross-collar choke or transitioning to mount for the same finish. Deceptively simple and brutally effective."},
-    {"id": "bernardo_half_guard_system", "name": "Bernardo's Half Guard System", "type": "system", "gi_requirement": "gi", "description": "Bernardo Faria's systematic use of deep half guard sweeps and the over-under pass. Built on smothering pressure and positional control rather than speed or athleticism."},
-    {"id": "gordon_back_system", "name": "Gordon Ryan's Back System", "type": "system", "gi_requirement": "no_gi", "description": "Gordon Ryan's systematic approach to taking and maintaining back control developed under John Danaher. Emphasizes seat belt control, hook placement, and choking mechanics."},
-    {"id": "dds_leg_lock_system", "name": "DDS Leg Lock System", "type": "system", "gi_requirement": "no_gi", "description": "The Danaher Death Squad's revolutionary systematic approach to leg locks. Built around ashi garami entries, inside heel hook finishes, and 50/50 exchanges. Transformed modern no-gi competition."}
+    {
+      "id": "standing",
+      "name": "Standing",
+      "type": "position",
+      "description": "Both athletes on their feet. Starting state for most matches and target for technical standups.",
+      "video_url": "https://www.youtube.com/watch?v=V4cxh_H7x6o"
+    },
+    {
+      "id": "closed_guard",
+      "name": "Closed Guard",
+      "type": "position",
+      "description": "Bottom player's legs locked around opponent's waist. Foundational guard with high submission threat.",
+      "video_url": "https://www.youtube.com/watch?v=d_zfY7Kjezo"
+    },
+    {
+      "id": "open_guard",
+      "name": "Open Guard",
+      "type": "position",
+      "description": "Bottom player's legs are open and active but not locked. Transitional guard state with many sub-varieties.",
+      "video_url": "https://www.youtube.com/watch?v=npuOznVZoXA"
+    },
+    {
+      "id": "half_guard",
+      "name": "Half Guard",
+      "type": "position",
+      "description": "Bottom player controls one of the top player's legs between their own. Classic transitional position.",
+      "video_url": "https://www.youtube.com/watch?v=15kus9CLg2s"
+    },
+    {
+      "id": "side_control",
+      "name": "Side Control",
+      "type": "position",
+      "description": "Top player lies perpendicular across bottom player's torso, controlling with hip and shoulder pressure.",
+      "video_url": "https://www.youtube.com/watch?v=6nLxHsl0_2I"
+    },
+    {
+      "id": "north_south",
+      "name": "North South",
+      "type": "position",
+      "description": "Top player faces opposite direction across bottom player's chest, controlling head and hips.",
+      "video_url": "https://www.youtube.com/watch?v=cans383if9Q"
+    },
+    {
+      "id": "mount",
+      "name": "Mount",
+      "type": "position",
+      "description": "Top player straddles bottom player's torso sitting on their hips. High-percentage dominant position.",
+      "video_url": "https://www.youtube.com/watch?v=SYel-mVSMAI"
+    },
+    {
+      "id": "technical_mount",
+      "name": "Technical Mount",
+      "type": "position",
+      "description": "S-mount variation where top player's leg is over opponent's arm, isolating the limb for attacks.",
+      "video_url": "https://www.youtube.com/watch?v=DZ-fmNcJFg4"
+    },
+    {
+      "id": "back_control",
+      "name": "Back Control",
+      "type": "position",
+      "description": "Top player behind opponent with hooks in and seatbelt grip. Highest-value position in BJJ.",
+      "video_url": "https://www.youtube.com/watch?v=pLxI_FQtYP4"
+    },
+    {
+      "id": "turtle",
+      "name": "Turtle",
+      "type": "position",
+      "description": "Defender on all fours, protecting neck and back. Transitional defensive position.",
+      "video_url": "https://www.youtube.com/watch?v=A8JVwd_OoSY"
+    },
+    {
+      "id": "butterfly_guard",
+      "name": "Butterfly Guard",
+      "type": "position",
+      "description": "Bottom player uses both feet as hooks inside opponent's inner thighs. Mobile and sweeping guard.",
+      "video_url": "https://www.youtube.com/watch?v=-wftJg6jm3E"
+    },
+    {
+      "id": "deep_half_guard",
+      "name": "Deep Half Guard",
+      "type": "position",
+      "description": "Bottom player entirely beneath opponent's body with full leg entanglement, head under the hips.",
+      "video_url": "https://www.youtube.com/watch?v=Q3Hqc4zB-qQ"
+    },
+    {
+      "id": "de_la_riva_guard",
+      "name": "De La Riva Guard",
+      "type": "position",
+      "description": "Bottom player hooks one leg around the outside of opponent's lead leg with foot on hip. Long-range guard.",
+      "video_url": "https://www.youtube.com/watch?v=Ct5yCkAxuis"
+    },
+    {
+      "id": "x_guard",
+      "name": "X-Guard",
+      "type": "position",
+      "description": "Bottom player under opponent with both hooks beneath opponent's hips, controlling both legs.",
+      "video_url": "https://www.youtube.com/watch?v=qS6GxvS7MYY"
+    },
+    {
+      "id": "knee_on_belly",
+      "name": "Knee on Belly",
+      "type": "position",
+      "description": "Top player's knee pressed on bottom player's abdomen with an upright base. Transitional pressure position.",
+      "video_url": "https://www.youtube.com/watch?v=BHUYEm0ve9A"
+    },
+    {
+      "id": "spider_guard",
+      "name": "Spider Guard",
+      "type": "position",
+      "gi_requirement": "gi",
+      "description": "Bottom player controls both sleeves and places feet on opponent's biceps. Long-range grip-based guard.",
+      "video_url": "https://www.youtube.com/watch?v=5ciTwCNs8uM"
+    },
+    {
+      "id": "worm_guard",
+      "name": "Worm Guard",
+      "type": "position",
+      "gi_requirement": "gi",
+      "description": "Bottom player feeds their lapel around the opponent's leg and grips it, creating a powerful entanglement. Pioneered by Keenan Cornelius. Gi only.",
+      "video_url": "https://www.youtube.com/watch?v=qv-QMBt8WmE"
+    },
+    {
+      "id": "lasso_guard",
+      "name": "Lasso Guard",
+      "type": "position",
+      "gi_requirement": "gi",
+      "description": "Bottom player threads their leg through the opponent's arm, wrapping around it to control the sleeve. Excellent for breaking posture and attacking. Gi only.",
+      "video_url": "https://www.youtube.com/watch?v=UpeeHnlKZKM"
+    },
+    {
+      "id": "fifty_fifty",
+      "name": "50/50 Guard",
+      "type": "position",
+      "description": "Both players have equal leg entanglement with mirrored inside position. Primary position for modern heel hook exchanges and reaping attacks.",
+      "video_url": "https://www.youtube.com/watch?v=cJs8PSIvKoY"
+    },
+    {
+      "id": "rubber_guard",
+      "name": "Rubber Guard",
+      "type": "position",
+      "description": "Bottom player controls their own leg high over opponent's shoulder using the hand, breaking posture completely. Requires flexibility. Associated with 10th Planet system.",
+      "video_url": "https://www.youtube.com/watch?v=RJ7Iutti8cY"
+    },
+    {
+      "id": "reverse_de_la_riva",
+      "name": "Reverse De La Riva",
+      "type": "position",
+      "description": "Bottom player hooks inside the opponent's lead leg from behind, controlling the ankle with the opposite hand. Entry to back takes and leg locks.",
+      "video_url": "https://www.youtube.com/watch?v=aXOMnatOGlo"
+    },
+    {
+      "id": "z_guard",
+      "name": "Z-Guard",
+      "type": "position",
+      "description": "Half guard variation where the bottom player places their knee shield across the opponent's hip to block the crossface and create space. Also called knee shield half guard.",
+      "video_url": "https://www.youtube.com/watch?v=NsRHHZk5Nx4"
+    },
+    {
+      "id": "ashi_garami",
+      "name": "Ashi Garami",
+      "type": "position",
+      "description": "Single leg entanglement where bottom player controls the inside position on one leg with hooks, setting up heel hooks and ankle locks. Foundation of modern leg lock systems.",
+      "video_url": "https://www.youtube.com/watch?v=bqzwIArDvlA"
+    },
+    {
+      "id": "dogfight",
+      "name": "Dogfight",
+      "type": "position",
+      "description": "Both players on all fours facing each other with an underhook and overhook exchange. Critical transitional position from half guard.",
+      "video_url": "https://www.youtube.com/watch?v=UKvg5KHUMEA"
+    },
+    {
+      "id": "rear_naked_choke",
+      "name": "Rear Naked Choke",
+      "type": "submission",
+      "description": "Choking arm around opponent's neck, other arm bracing behind head. Primary submission from back control.",
+      "video_url": "https://www.youtube.com/watch?v=8MpFS5wvSAM"
+    },
+    {
+      "id": "triangle_choke",
+      "name": "Triangle Choke",
+      "type": "submission",
+      "description": "Legs triangled around opponent's neck and one arm, cutting off carotid arteries. Versatile strangle.",
+      "video_url": "https://www.youtube.com/watch?v=20j7LcZ5xRY"
+    },
+    {
+      "id": "armbar",
+      "name": "Armbar",
+      "type": "submission",
+      "description": "Elbow joint hyperextended by controlling the arm and bridging hips. Available from multiple positions.",
+      "video_url": "https://www.youtube.com/watch?v=iUap4TaYVQc"
+    },
+    {
+      "id": "omoplata",
+      "name": "Omoplata",
+      "type": "submission",
+      "description": "Shoulder joint locked by trapping opponent's arm with the legs and rotating the hip.",
+      "video_url": "https://www.youtube.com/watch?v=ra0tIjxI2Tc"
+    },
+    {
+      "id": "kimura",
+      "name": "Kimura",
+      "type": "submission",
+      "description": "Figure-four grip on opponent's arm with wrist bent behind the back. Available from many positions.",
+      "video_url": "https://www.youtube.com/watch?v=fqQ4mVxJaoE"
+    },
+    {
+      "id": "americana",
+      "name": "Americana",
+      "type": "submission",
+      "description": "Figure-four wrist lock with arm bent at low angle on the mat. Most common from side control and mount.",
+      "video_url": "https://www.youtube.com/watch?v=6W9yVDLSZIk"
+    },
+    {
+      "id": "guillotine",
+      "name": "Guillotine",
+      "type": "submission",
+      "description": "Arm around opponent's neck applying pressure on windpipe or carotid arteries. Available standing and guard.",
+      "video_url": "https://www.youtube.com/watch?v=YWwRC0V6O9Y"
+    },
+    {
+      "id": "darce_choke",
+      "name": "D'Arce Choke",
+      "type": "submission",
+      "description": "Figure-four arm triangle choke with arm threaded under neck. Typically applied from top positions.",
+      "video_url": "https://www.youtube.com/watch?v=xmX1Tjh3mjQ"
+    },
+    {
+      "id": "bow_and_arrow_choke",
+      "name": "Bow and Arrow Choke",
+      "type": "submission",
+      "gi_requirement": "gi",
+      "description": "Collar choke with cross-collar grip and belt or leg control. Primary gi submission from back control.",
+      "video_url": "https://www.youtube.com/watch?v=FHcP1ZjT28w"
+    },
+    {
+      "id": "ankle_lock",
+      "name": "Ankle Lock",
+      "type": "submission",
+      "description": "Straight heel pressure on ankle joint using body as lever. Foot lock targeting the ankle ligaments.",
+      "video_url": "https://www.youtube.com/watch?v=1UShYzZtG_8"
+    },
+    {
+      "id": "heel_hook",
+      "name": "Heel Hook",
+      "type": "submission",
+      "description": "Rotational knee attack by controlling the heel and twisting. High-percentage leg lock in modern BJJ.",
+      "video_url": "https://www.youtube.com/watch?v=Ahvt-763hwg"
+    },
+    {
+      "id": "north_south_choke",
+      "name": "North-South Choke",
+      "type": "submission",
+      "description": "Forearm or bicep pressed across the trachea from a north-south position while the head is trapped under the body. Requires precise shoulder placement.",
+      "video_url": "https://www.youtube.com/watch?v=HuwV3-g2knA"
+    },
+    {
+      "id": "clock_choke",
+      "name": "Clock Choke",
+      "type": "submission",
+      "gi_requirement": "gi",
+      "description": "Collar choke applied from turtle position where the top player drives their hip into the side of the opponent's head while pulling the collar. Gi only.",
+      "video_url": "https://www.youtube.com/watch?v=jAGbvarXopw"
+    },
+    {
+      "id": "ezekiel_choke",
+      "name": "Ezekiel Choke",
+      "type": "submission",
+      "gi_requirement": "gi",
+      "description": "Sleeve-assisted choke using one hand inside the sleeve to grip the other forearm, applying pressure across the neck. Works from mount and guard. Gi only.",
+      "video_url": "https://www.youtube.com/watch?v=nX2E3x9r0vg"
+    },
+    {
+      "id": "banana_split",
+      "name": "Banana Split",
+      "type": "submission",
+      "description": "Hip adductor stretch submission from leg entanglement where both legs are split in opposite directions using the body as a fulcrum. Applied from 50/50 or ashi garami.",
+      "video_url": "https://www.youtube.com/watch?v=ClN0y-NFabs"
+    },
+    {
+      "id": "calf_slicer",
+      "name": "Calf Slicer",
+      "type": "submission",
+      "description": "Compression lock on the calf muscle by wedging the knee or forearm behind the opponent's knee joint. Applied from leg entanglements.",
+      "video_url": "https://www.youtube.com/watch?v=9EwRjvWPBZE"
+    },
+    {
+      "id": "peruvian_necktie",
+      "name": "Peruvian Necktie",
+      "type": "submission",
+      "description": "Twisting choke from front headlock or turtle where the top player uses a collar tie and leg over the back to apply a neck crank and blood choke simultaneously.",
+      "video_url": "https://www.youtube.com/watch?v=SSi-KmaaSgs"
+    },
+    {
+      "id": "baseball_bat_choke",
+      "name": "Baseball Bat Choke",
+      "type": "submission",
+      "gi_requirement": "gi",
+      "description": "Collar choke using two grips pointing the same direction, applied by rotating the forearms. Set up from side control or mount and finished by rolling through. Gi only.",
+      "video_url": "https://www.youtube.com/watch?v=dBTW4qXA3PI"
+    },
+    {
+      "id": "mounted_triangle",
+      "name": "Mounted Triangle",
+      "type": "submission",
+      "description": "Triangle choke applied from the mount position by swinging a leg over the opponent's head and locking the triangle while maintaining the top position.",
+      "video_url": "https://www.youtube.com/watch?v=7wg8dHOeDDY"
+    },
+    {
+      "id": "gogoplata",
+      "name": "Gogoplata",
+      "type": "submission",
+      "description": "Choke using the shin across the trachea from rubber guard or inverted guard. Bottom player threads the leg deep under the opponent's chin and applies downward pressure on the head.",
+      "video_url": "https://www.youtube.com/watch?v=PsYSobSqBgI"
+    },
+    {
+      "id": "twister",
+      "name": "Twister",
+      "type": "submission",
+      "description": "Spinal lock from back control using leg hooks to rotate the bottom half of the opponent's body while turning the upper body the opposite direction. Associated with 10th Planet.",
+      "video_url": "https://www.youtube.com/watch?v=k2PvQY2iTKQ"
+    },
+    {
+      "id": "kneebar",
+      "name": "Kneebar",
+      "type": "submission",
+      "description": "Hyperextension of the knee joint by wrapping the leg under the armpit and bridging the hips into the joint, similar mechanics to an armbar but targeting the knee.",
+      "video_url": "https://www.youtube.com/watch?v=3qUq8rKigDo"
+    },
+    {
+      "id": "scissor_sweep",
+      "name": "Scissor Sweep",
+      "type": "sweep",
+      "description": "Bottom player scissors legs to topple opponent from closed guard using collar and sleeve grips.",
+      "video_url": "https://www.youtube.com/watch?v=UBf7uF5x8GQ"
+    },
+    {
+      "id": "hip_bump_sweep",
+      "name": "Hip Bump Sweep",
+      "type": "sweep",
+      "description": "Sit-up sweep from closed guard using hip explosion to roll opponent over. Sets up kimura if blocked.",
+      "video_url": "https://www.youtube.com/watch?v=86eSdQYSjxA"
+    },
+    {
+      "id": "butterfly_sweep",
+      "name": "Butterfly Sweep",
+      "type": "sweep",
+      "description": "Lifting sweep using butterfly hooks and an underhook to toss opponent to the side.",
+      "video_url": "https://www.youtube.com/watch?v=x7Wv0w9EEcc"
+    },
+    {
+      "id": "x_guard_sweep",
+      "name": "X-Guard Sweep",
+      "type": "sweep",
+      "description": "Sweep from x-guard lifting opponent with both hooks and dumping them to the side.",
+      "video_url": "https://www.youtube.com/watch?v=oe-xUmRLcUg"
+    },
+    {
+      "id": "flower_sweep",
+      "name": "Flower Sweep",
+      "type": "sweep",
+      "description": "Pendulum sweep from closed guard using cross-collar grip and ankle control to roll opponent.",
+      "video_url": "https://www.youtube.com/watch?v=V0ngkF1lxOY"
+    },
+    {
+      "id": "waiter_sweep",
+      "name": "Waiter Sweep",
+      "type": "sweep",
+      "description": "Sweep from deep half guard where the bottom player extends the trapped leg upward like a waiter holding a tray, rolling the opponent over.",
+      "video_url": "https://www.youtube.com/watch?v=K8uKaM9oEqc"
+    },
+    {
+      "id": "sickle_sweep",
+      "name": "Sickle Sweep",
+      "type": "sweep",
+      "description": "Hook sweep from De La Riva or butterfly guard using a sickle motion of the leg to knock out the opponent's base leg while pulling the sleeve.",
+      "video_url": "https://www.youtube.com/watch?v=cEDs9P9CoS0"
+    },
+    {
+      "id": "lasso_sweep",
+      "name": "Lasso Sweep",
+      "type": "sweep",
+      "description": "Sweep from lasso guard using the leg wrap and sleeve grip to rotate the opponent off-balance and roll them to the side.",
+      "video_url": "https://www.youtube.com/watch?v=BDVAieCh9sc"
+    },
+    {
+      "id": "torreando_pass",
+      "name": "Torreando Pass",
+      "type": "guard_pass",
+      "description": "Speed pass that controls both knees and moves the hips around the guard. Primarily from open guard.",
+      "video_url": "https://www.youtube.com/watch?v=bOJ2txGsZxQ"
+    },
+    {
+      "id": "knee_slice_pass",
+      "name": "Knee Slice Pass",
+      "type": "guard_pass",
+      "description": "Pass by threading knee between opponent's legs and using hip pressure to cut through.",
+      "video_url": "https://www.youtube.com/watch?v=Hy0XYZMV0vo"
+    },
+    {
+      "id": "double_under_pass",
+      "name": "Double Under Pass",
+      "type": "guard_pass",
+      "description": "Stacking pass by controlling both legs under the arms and passing with bodyweight.",
+      "video_url": "https://www.youtube.com/watch?v=foSp4rnbfuM"
+    },
+    {
+      "id": "over_under_pass",
+      "name": "Over Under Pass",
+      "type": "guard_pass",
+      "description": "Pass controlling one leg over the shoulder and one under, using hip pressure to clear guard.",
+      "video_url": "https://www.youtube.com/watch?v=4hAY12ghrGk"
+    },
+    {
+      "id": "leg_drag_pass",
+      "name": "Leg Drag Pass",
+      "type": "guard_pass",
+      "description": "Pass by dragging opponent's top leg across the body and establishing side control.",
+      "video_url": "https://www.youtube.com/watch?v=2dhRIVOfcm0"
+    },
+    {
+      "id": "x_pass",
+      "name": "X-Pass",
+      "type": "guard_pass",
+      "description": "Fast pass that uses an X-step around the opponent's open guard while controlling the knee with one hand. Creates distance and angles around the guard quickly.",
+      "video_url": "https://www.youtube.com/watch?v=bOJ2txGsZxQ"
+    },
+    {
+      "id": "cartwheel_pass",
+      "name": "Cartwheel Pass",
+      "type": "guard_pass",
+      "description": "Dynamic passing technique that uses a cartwheel motion to spin around De La Riva or reverse De La Riva guard. Requires timing and athleticism.",
+      "video_url": "https://www.youtube.com/watch?v=OaL-Hyg7yTc"
+    },
+    {
+      "id": "smash_pass",
+      "name": "Smash Pass",
+      "type": "guard_pass",
+      "description": "Pressure pass that smashes the opponent's legs flat to the mat using bodyweight and hip pressure, eliminating the guard frame before passing.",
+      "video_url": "https://www.youtube.com/watch?v=JAimwURs7nY"
+    },
+    {
+      "id": "long_step_pass",
+      "name": "Long Step Pass",
+      "type": "guard_pass",
+      "description": "Pass that uses a long lateral step to clear the knee shield and establish a crossface. Most effective against z-guard and knee shield half guard.",
+      "video_url": "https://www.youtube.com/watch?v=dq4IEWbTJLg"
+    },
+    {
+      "id": "double_leg_takedown",
+      "name": "Double Leg Takedown",
+      "type": "takedown",
+      "description": "Shooting to both legs and driving through opponent to bring them down. Fundamental wrestling takedown.",
+      "video_url": "https://www.youtube.com/watch?v=4DHzLvLd-0Y"
+    },
+    {
+      "id": "single_leg_takedown",
+      "name": "Single Leg Takedown",
+      "type": "takedown",
+      "description": "Securing one leg and using trips, lifts, or drives to take opponent down. Versatile wrestling takedown.",
+      "video_url": "https://www.youtube.com/watch?v=2u0ZKAbxp6w"
+    },
+    {
+      "id": "judo_throw",
+      "name": "Judo Throw",
+      "type": "takedown",
+      "description": "Hip-based or shoulder-based throw using kuzushi, tsukuri, and kake. Covers ippon seoi nage, o-goshi, etc.",
+      "video_url": "https://www.youtube.com/watch?v=FWocYMtjDgI"
+    },
+    {
+      "id": "hip_throw",
+      "name": "Hip Throw",
+      "type": "takedown",
+      "description": "Throw using hip insertion to lift and rotate the opponent off the mat. Includes o-goshi, harai goshi, and tsuri goshi variants. Requires body contact and kuzushi.",
+      "video_url": "https://www.youtube.com/watch?v=5iVyAvd-rNQ"
+    },
+    {
+      "id": "foot_sweep",
+      "name": "Foot Sweep",
+      "type": "takedown",
+      "description": "Sweeping the opponent's foot or ankle at the moment of weight transfer to knock them down. Timing-dependent technique requiring precise entry. Includes o-uchi gari and ko-uchi gari.",
+      "video_url": "https://www.youtube.com/watch?v=wAPI3OnN3-Q"
+    },
+    {
+      "id": "firemans_carry",
+      "name": "Fireman's Carry",
+      "type": "takedown",
+      "description": "Arm drag takedown where the attacker gets under the opponent and rolls them over the shoulders. Often used as a reaction to an overhook or arm reach.",
+      "video_url": "https://www.youtube.com/watch?v=7VXYPEaI5cE"
+    },
+    {
+      "id": "elbow_knee_escape",
+      "name": "Elbow-Knee Escape",
+      "type": "escape",
+      "description": "Primary escape from mount using a frame with the elbow on the hip and knee shield to create space, then shrimping to recover half guard. Also called the bridge-and-elbow escape.",
+      "video_url": "https://www.youtube.com/watch?v=SYel-mVSMAI"
+    },
+    {
+      "id": "shrimp_escape",
+      "name": "Shrimp Escape",
+      "type": "escape",
+      "description": "Hip escape movement from side control or mount using alternating shrimping (hip extension) to create space and recover guard. Foundational defensive movement in BJJ.",
+      "video_url": "https://www.youtube.com/watch?v=D0rTw8IfJDE"
+    },
+    {
+      "id": "back_escape_roll",
+      "name": "Back Escape Roll",
+      "type": "escape",
+      "description": "Escape from back control by turning into the choking arm, tucking the chin, and rolling through to face the opponent. Sacrifices position to avoid the choke.",
+      "video_url": "https://www.youtube.com/watch?v=N6lKNqUOZoY"
+    },
+    {
+      "id": "granby_roll",
+      "name": "Granby Roll",
+      "type": "escape",
+      "description": "Shoulder roll escape from turtle or back control that inverts the defender and allows them to re-guard or come up to a seated position. Wrestler's technique adapted for BJJ.",
+      "video_url": "https://www.youtube.com/watch?v=Rzy_oxuYj_M"
+    },
+    {
+      "id": "running_man_escape",
+      "name": "Running Man Escape",
+      "type": "escape",
+      "description": "Leg lock defense technique that uses a rolling motion to pop the heel out of single leg entanglements. Effective against straight ashi garami but risky against heel hooks.",
+      "video_url": "https://www.youtube.com/watch?v=EIXVvpBUMR0"
+    },
+    {
+      "id": "sprawl",
+      "name": "Sprawl",
+      "type": "counter",
+      "description": "Defensive reaction to a takedown shot by driving the hips down and back while pushing the opponent's head down. Counters double leg and single leg takedowns.",
+      "video_url": "https://www.youtube.com/watch?v=8yG1_e_Bnx4"
+    },
+    {
+      "id": "posture_up",
+      "name": "Posture Up",
+      "type": "counter",
+      "description": "Guard passing defense where the bottom player breaks the opponent's posture by pulling the head or collar down. Also a top player defense to prevent sweep and submission setups.",
+      "video_url": "https://www.youtube.com/watch?v=rbrtbmS4L-c"
+    },
+    {
+      "id": "arm_tuck",
+      "name": "Arm Tuck Defense",
+      "type": "counter",
+      "description": "Defense against kimura and americana by pulling the arm tight to the body and framing before the grip is fully established. Prevents the figure-four lock from being secured.",
+      "video_url": "https://www.youtube.com/watch?v=zWSncdvIBoc"
+    },
+    {
+      "id": "stack_defense",
+      "name": "Stack Defense",
+      "type": "counter",
+      "description": "Counter to triangle choke and armbar from guard by stacking the opponent's hips over their head, removing their leverage. Allows the top player to posture up and escape.",
+      "video_url": "https://www.youtube.com/watch?v=ZBEZYwDIv5A"
+    },
+    {
+      "id": "frame_and_shrimp",
+      "name": "Frame and Shrimp",
+      "type": "counter",
+      "description": "Combined counter to guard passes using frames on the hip and shoulder to stall progress, then shrimping away to re-establish guard. The fundamental passing defense.",
+      "video_url": "https://www.youtube.com/watch?v=KqoPXVA_5Hc"
+    },
+    {
+      "id": "kuzushi",
+      "name": "Kuzushi",
+      "type": "concept",
+      "description": "The principle of unbalancing the opponent before executing a throw, sweep, or technique. Without kuzushi, most throws and sweeps will fail. The first stage of any throwing technique.",
+      "video_url": "https://www.youtube.com/watch?v=D4WMlC9lM24"
+    },
+    {
+      "id": "hip_escape_movement",
+      "name": "Hip Escape",
+      "type": "concept",
+      "description": "The foundational defensive movement of BJJ — extending the hips away from the opponent by pushing off the foot and bridging the hips laterally. Creates space to recover guard or escape positions.",
+      "video_url": "https://www.youtube.com/watch?v=iUq85AdgoIU"
+    },
+    {
+      "id": "base_and_posture",
+      "name": "Base and Posture",
+      "type": "concept",
+      "description": "Base is the wide stable foundation preventing sweeps. Posture is the upright spine alignment preventing chokes and breaks. Both must be maintained simultaneously in top and bottom positions.",
+      "video_url": "https://www.youtube.com/watch?v=KuZtR1mogvY"
+    },
+    {
+      "id": "framing",
+      "name": "Framing",
+      "type": "concept",
+      "description": "Using the skeletal structure of the arms and legs as rigid frames against the opponent's body to create and maintain space. Frames buy time for escapes and guard recovery.",
+      "video_url": "https://www.youtube.com/watch?v=WRnKMbQqnD4"
+    },
+    {
+      "id": "grips",
+      "name": "Grips",
+      "type": "concept",
+      "description": "Grip selection and control is the first battle in BJJ. Controlling the opponent's sleeve, collar, wrist or leg dictates which techniques are available. Breaking grips is as important as establishing them.",
+      "video_url": "https://www.youtube.com/watch?v=MR4nJQ6qhuU"
+    },
+    {
+      "id": "weight_distribution",
+      "name": "Weight Distribution",
+      "type": "concept",
+      "description": "Understanding where the opponent's weight is loaded determines when sweeps and takedowns are available. Techniques succeed when the opponent's weight is shifted away from the direction of the throw.",
+      "video_url": "https://www.youtube.com/watch?v=z4JfRlXNFGE"
+    },
+    {
+      "id": "bridge_movement",
+      "name": "Bridge",
+      "type": "concept",
+      "description": "Explosive upward hip extension from the bottom position using the feet and shoulders as base. Used to unbalance the top player and create space for escapes or rolls.",
+      "video_url": "https://www.youtube.com/watch?v=A9wyYrhGw0w"
+    },
+    {
+      "id": "marcelo_garcia",
+      "name": "Marcelo Garcia",
+      "type": "competitor",
+      "gi_requirement": "both",
+      "description": "5x ADCC champion and multiple gi world champion. Considered one of the greatest of all time. Known for his butterfly guard, arm drags, guillotine choke, and systematic back takes.",
+      "video_url": "https://www.youtube.com/watch?v=GYCpxo7bpxY"
+    },
+    {
+      "id": "gordon_ryan",
+      "name": "Gordon Ryan",
+      "type": "competitor",
+      "gi_requirement": "no_gi",
+      "description": "Dominant no-gi competitor and multiple ADCC champion. Known for his systematic back taking, leg lock entries, and submission-only approach. Student of John Danaher.",
+      "video_url": "https://www.youtube.com/watch?v=Okd-T7qWDbU"
+    },
+    {
+      "id": "keenan_cornelius",
+      "name": "Keenan Cornelius",
+      "type": "competitor",
+      "gi_requirement": "gi",
+      "description": "Known for pioneering modern lapel guard systems including the worm guard. Multiple ADCC and gi world championship finalist with an innovative and technical game.",
+      "video_url": "https://www.youtube.com/watch?v=LdeH5NCCJs4"
+    },
+    {
+      "id": "roger_gracie",
+      "name": "Roger Gracie",
+      "type": "competitor",
+      "gi_requirement": "gi",
+      "description": "Widely considered the greatest gi competitor of all time. 10x world champion known for simple, fundamental techniques — particularly the cross-collar choke from every position.",
+      "video_url": "https://www.youtube.com/watch?v=nddy2kvFyj0"
+    },
+    {
+      "id": "mikey_musumeci",
+      "name": "Mikey Musumeci",
+      "type": "competitor",
+      "gi_requirement": "both",
+      "description": "Multiple gi and no-gi world champion. Known for his closed guard game, leg locks, and technical precision. Student of John Danaher.",
+      "video_url": "https://www.youtube.com/watch?v=slJYFJV6ROw"
+    },
+    {
+      "id": "bernardo_faria",
+      "name": "Bernardo Faria",
+      "type": "competitor",
+      "gi_requirement": "gi",
+      "description": "5x gi world champion known for his deep half guard game and smothering over-under pass. Represents old-school fundamentals applied at the highest level.",
+      "video_url": "https://www.youtube.com/watch?v=kWirQNCPzQI"
+    },
+    {
+      "id": "john_danaher",
+      "name": "John Danaher",
+      "type": "competitor",
+      "gi_requirement": "both",
+      "description": "Renowned coach and system developer who transformed modern BJJ. Developed the Danaher Death Squad's systematic approach to leg locks, back attacks, and front headlock systems.",
+      "video_url": "https://www.youtube.com/watch?v=HuwV3-g2knA"
+    },
+    {
+      "id": "leandro_lo",
+      "name": "Leandro Lo",
+      "type": "competitor",
+      "gi_requirement": "gi",
+      "description": "Multiple gi world champion known for his dynamic athleticism, aggressive passing, knee on belly game, and ability to finish from any position.",
+      "video_url": "https://www.youtube.com/watch?v=Y9_amS8R67Q"
+    },
+    {
+      "id": "romulo_barral",
+      "name": "Romulo Barral",
+      "type": "competitor",
+      "gi_requirement": "gi",
+      "description": "7x gi world champion known for his spider guard and De La Riva combinations, creative guard game, and dangerous kimura from top positions.",
+      "video_url": "https://www.youtube.com/watch?v=n8sys2-tXhU"
+    },
+    {
+      "id": "andre_galvao",
+      "name": "Andre Galvao",
+      "type": "competitor",
+      "gi_requirement": "both",
+      "description": "Multiple gi and no-gi world champion and ADCC champion. Well-rounded game with strong wrestling, guard passing, and submission hunting. Founder of Atos Jiu-Jitsu.",
+      "video_url": "https://www.youtube.com/watch?v=rZwjsvVgbrY"
+    },
+    {
+      "id": "marcelo_butterfly_back_system",
+      "name": "Marcelo's Butterfly Back System",
+      "type": "system",
+      "gi_requirement": "both",
+      "description": "Marcelo Garcia's game plan built around butterfly guard as the foundation for arm drags, underhooks, and taking the back. Finishes primarily with RNC and guillotine. Works in both gi and no-gi.",
+      "video_url": "https://www.youtube.com/watch?v=0WG1MYvgXAM"
+    },
+    {
+      "id": "keenan_lapel_guard_system",
+      "name": "Keenan's Lapel Guard System",
+      "type": "system",
+      "gi_requirement": "gi",
+      "description": "Keenan Cornelius's innovative gi system using lapel entanglements — primarily worm guard from De La Riva — to control opponents and attack with triangles, omoplatas, and back takes.",
+      "video_url": "https://www.youtube.com/watch?v=541H63KeHD4"
+    },
+    {
+      "id": "roger_closed_guard_system",
+      "name": "Roger's Closed Guard System",
+      "type": "system",
+      "gi_requirement": "gi",
+      "description": "Roger Gracie's game plan centered on breaking posture from closed guard and finishing with the cross-collar choke or transitioning to mount for the same finish. Deceptively simple and brutally effective.",
+      "video_url": "https://www.youtube.com/watch?v=4OQLd1OV4r4"
+    },
+    {
+      "id": "bernardo_half_guard_system",
+      "name": "Bernardo's Half Guard System",
+      "type": "system",
+      "gi_requirement": "gi",
+      "description": "Bernardo Faria's systematic use of deep half guard sweeps and the over-under pass. Built on smothering pressure and positional control rather than speed or athleticism.",
+      "video_url": "https://www.youtube.com/watch?v=E8x1Cva8hJ8"
+    },
+    {
+      "id": "gordon_back_system",
+      "name": "Gordon Ryan's Back System",
+      "type": "system",
+      "gi_requirement": "no_gi",
+      "description": "Gordon Ryan's systematic approach to taking and maintaining back control developed under John Danaher. Emphasizes seat belt control, hook placement, and choking mechanics.",
+      "video_url": "https://www.youtube.com/watch?v=zcJe8NnWtfk"
+    },
+    {
+      "id": "dds_leg_lock_system",
+      "name": "DDS Leg Lock System",
+      "type": "system",
+      "gi_requirement": "no_gi",
+      "description": "The Danaher Death Squad's revolutionary systematic approach to leg locks. Built around ashi garami entries, inside heel hook finishes, and 50/50 exchanges. Transformed modern no-gi competition.",
+      "video_url": "https://www.youtube.com/watch?v=iByvUzTk4Ko"
+    }
   ],
   "edges": [
-    {"from": "standing", "to": "double_leg_takedown", "action": "attack_with", "conditions": ["opponent in range", "level change executed", "stance broken"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "standing", "to": "single_leg_takedown", "action": "attack_with", "conditions": ["opponent leg exposed", "level changed", "grip on leg obtained"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "standing", "to": "judo_throw", "action": "attack_with", "conditions": ["clinch established", "collar-elbow grip secured"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "standing", "to": "hip_throw", "action": "attack_with", "conditions": ["clinch established", "hip inserted in front of opponent", "kuzushi achieved"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "standing", "to": "foot_sweep", "action": "attack_with", "conditions": ["opponent stepping", "weight shifted to one leg", "timing precise"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "standing", "to": "firemans_carry", "action": "attack_with", "conditions": ["opponent arm extended or overhooking", "level change", "shoulder under armpit"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "standing", "to": "guillotine", "action": "attack_with", "conditions": ["opponent's head down", "opponent shooting or posture broken"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "standing", "to": "closed_guard", "action": "transition_to", "conditions": ["guard pull executed", "opponent standing above"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "standing", "to": "de_la_riva_guard", "action": "transition_to", "conditions": ["seated guard pull", "foot placed on opponent's hip"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "standing", "to": "butterfly_guard", "action": "transition_to", "conditions": ["seated guard pull", "hooks inside opponent's thighs"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "double_leg_takedown", "to": "side_control", "action": "follow_up", "conditions": ["controlled finish", "opponent did not roll"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "double_leg_takedown", "to": "mount", "action": "follow_up", "conditions": ["opponent lands flat on back", "clean finish"], "confidence": "medium", "difficulty": "beginner"},
-    {"from": "single_leg_takedown", "to": "side_control", "action": "follow_up", "conditions": ["trip completion", "controlled finish"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "single_leg_takedown", "to": "turtle", "action": "follow_up", "conditions": ["opponent defends with sprawl", "goes to knees"], "confidence": "medium", "difficulty": "beginner"},
-    {"from": "judo_throw", "to": "side_control", "action": "follow_up", "conditions": ["controlled throw", "grip maintained"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "judo_throw", "to": "mount", "action": "follow_up", "conditions": ["opponent lands on back", "clean throw"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "hip_throw", "to": "side_control", "action": "follow_up", "conditions": ["controlled landing", "grip maintained throughout"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "hip_throw", "to": "mount", "action": "follow_up", "conditions": ["clean throw", "opponent lands flat"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "foot_sweep", "to": "side_control", "action": "follow_up", "conditions": ["opponent falls to side", "follow to ground"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "firemans_carry", "to": "back_control", "action": "follow_up", "conditions": ["roll complete", "opponent on all fours"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "firemans_carry", "to": "side_control", "action": "follow_up", "conditions": ["opponent lands on back", "controlled finish"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "guillotine", "to": "closed_guard", "action": "follow_up", "conditions": ["guard pulled while choke locked", "arm-in or arm-out position"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "guillotine", "to": "side_control", "action": "follow_up", "conditions": ["standing finish", "opponent controlled on ground"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "triangle_choke", "action": "attack_with", "conditions": ["arm across body", "posture broken", "hips angled"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "armbar", "action": "attack_with", "conditions": ["arm extended", "posture broken", "wrist controlled"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "kimura", "action": "attack_with", "conditions": ["arm bent", "wrist controlled above shoulder"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "closed_guard", "to": "omoplata", "action": "attack_with", "conditions": ["hip rotated out", "arm isolated over shoulder"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "guillotine", "action": "attack_with", "conditions": ["posture broken", "head accessible", "opponent posturing up"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "gogoplata", "action": "attack_with", "conditions": ["flexibility sufficient", "shin threaded under chin", "head controlled"], "confidence": "low", "difficulty": "advanced"},
-    {"from": "closed_guard", "to": "scissor_sweep", "action": "sweep_with", "conditions": ["collar and sleeve grip", "knee on chest", "opponent's weight forward"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "closed_guard", "to": "hip_bump_sweep", "action": "sweep_with", "conditions": ["posture broken", "opponent pushing forward", "sit-up executed"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "closed_guard", "to": "flower_sweep", "action": "sweep_with", "conditions": ["cross-collar grip", "ankle controlled", "opponent's weight to one side"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "open_guard", "action": "transition_to", "conditions": ["opponent stands or breaks guard open"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "closed_guard", "to": "half_guard", "action": "transition_to", "conditions": ["opponent partially passes", "one leg trapped"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "closed_guard", "to": "rubber_guard", "action": "transition_to", "conditions": ["flexibility required", "leg pulled to shoulder height", "hand controls shin"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "closed_guard", "to": "double_under_pass", "action": "pass_with", "conditions": ["both legs scooped", "posture up", "stacking initiated"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "closed_guard", "to": "over_under_pass", "action": "pass_with", "conditions": ["one leg over shoulder", "one leg under", "hip to hip control"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "scissor_sweep", "to": "mount", "action": "follow_up", "conditions": ["clean sweep", "opponent lands on back"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "hip_bump_sweep", "to": "mount", "action": "follow_up", "conditions": ["opponent rolled over"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "hip_bump_sweep", "to": "kimura", "action": "follow_up", "conditions": ["opponent posts hand to base to prevent sweep"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "flower_sweep", "to": "mount", "action": "follow_up", "conditions": ["opponent lifted and rolled"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "butterfly_sweep", "to": "mount", "action": "follow_up", "conditions": ["opponent launched and landed on back"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "x_guard_sweep", "to": "side_control", "action": "follow_up", "conditions": ["opponent dumped to side"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "waiter_sweep", "to": "mount", "action": "follow_up", "conditions": ["opponent rolled over trapped leg"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "waiter_sweep", "to": "back_control", "action": "follow_up", "conditions": ["opponent turns to base and exposes back"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "sickle_sweep", "to": "side_control", "action": "follow_up", "conditions": ["base knocked out", "opponent falls to side"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "lasso_sweep", "to": "mount", "action": "follow_up", "conditions": ["opponent rotated and lands on back"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "triangle_choke", "to": "armbar", "action": "follow_up", "conditions": ["opponent postures up to relieve choke pressure"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "triangle_choke", "to": "omoplata", "action": "follow_up", "conditions": ["opponent rolls toward trapped arm"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "armbar", "to": "triangle_choke", "action": "follow_up", "conditions": ["arm slipped out partially", "angled to re-triangle"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "armbar", "to": "kimura", "action": "follow_up", "conditions": ["opponent bends arm to prevent extension"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "kimura", "to": "guillotine", "action": "follow_up", "conditions": ["opponent postures up", "head becomes accessible"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "omoplata", "to": "back_control", "action": "follow_up", "conditions": ["opponent rolls forward to escape shoulder lock"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "open_guard", "to": "de_la_riva_guard", "action": "transition_to", "conditions": ["foot on hip", "DLR hook established around leg"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "butterfly_guard", "action": "transition_to", "conditions": ["both feet as hooks inside opponent's thighs"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "spider_guard", "action": "transition_to", "conditions": ["sleeve grips secured", "feet on biceps"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "x_guard", "action": "transition_to", "conditions": ["under both opponent's legs", "hooks inserted"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "open_guard", "to": "lasso_guard", "action": "transition_to", "conditions": ["sleeve grip secured", "leg threaded through arm"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "reverse_de_la_riva", "action": "transition_to", "conditions": ["outside position obtained", "hook behind opponent's lead leg"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "ankle_lock", "action": "attack_with", "conditions": ["leg exposed", "straight ankle lock position established"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "torreando_pass", "action": "pass_with", "conditions": ["hips controlled", "guard passed around to the side"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "open_guard", "to": "x_pass", "action": "pass_with", "conditions": ["knee controlled", "x-step executed", "hips cleared"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "open_guard", "to": "closed_guard", "action": "recover_to", "conditions": ["legs re-closed around opponent's waist"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "open_guard", "to": "half_guard", "action": "transition_to", "conditions": ["opponent partially passes", "one leg controlled"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "spider_guard", "to": "triangle_choke", "action": "attack_with", "conditions": ["one sleeve dropped", "arm pulled through"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "spider_guard", "to": "armbar", "action": "attack_with", "conditions": ["arm extended", "foot push on bicep"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "spider_guard", "to": "omoplata", "action": "attack_with", "conditions": ["rotation executed", "foot push sends arm over"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "spider_guard", "to": "lasso_guard", "action": "transition_to", "conditions": ["one foot removed from bicep", "leg threaded through arm"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "spider_guard", "to": "torreando_pass", "action": "pass_with", "conditions": ["sleeve grips broken", "hips cleared"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "de_la_riva_guard", "to": "x_guard", "action": "transition_to", "conditions": ["underhook obtained", "second hook inserted"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "de_la_riva_guard", "to": "worm_guard", "action": "transition_to", "conditions": ["gi lapel fed around leg", "grip secured", "gi required"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "de_la_riva_guard", "to": "reverse_de_la_riva", "action": "transition_to", "conditions": ["hook switched to inside", "outside position established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "de_la_riva_guard", "to": "back_control", "action": "transition_to", "conditions": ["berimbolo rotation", "inversion executed"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "de_la_riva_guard", "to": "ankle_lock", "action": "attack_with", "conditions": ["outside DLR", "leg position exposed"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "de_la_riva_guard", "to": "heel_hook", "action": "attack_with", "conditions": ["inside heel hook entry", "leg entanglement established"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "de_la_riva_guard", "to": "sickle_sweep", "action": "sweep_with", "conditions": ["sleeve grip", "sickle kick to base leg", "opponent off-balance"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "de_la_riva_guard", "to": "torreando_pass", "action": "pass_with", "conditions": ["hips cleared", "DLR hook removed"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "de_la_riva_guard", "to": "leg_drag_pass", "action": "pass_with", "conditions": ["leg dragged across body", "guard cleared"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "de_la_riva_guard", "to": "cartwheel_pass", "action": "pass_with", "conditions": ["cartwheel motion initiated", "hips cleared over guard"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "worm_guard", "to": "back_control", "action": "transition_to", "conditions": ["lapel control maintained", "rotation to back executed"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "worm_guard", "to": "triangle_choke", "action": "attack_with", "conditions": ["arm trapped in lapel entanglement", "triangle locked"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "worm_guard", "to": "omoplata", "action": "attack_with", "conditions": ["shoulder isolated through lapel wrap", "hip rotation"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "lasso_guard", "to": "lasso_sweep", "action": "sweep_with", "conditions": ["sleeve grip", "lasso hook in place", "opponent off-balance to the side"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "lasso_guard", "to": "triangle_choke", "action": "attack_with", "conditions": ["lasso released", "arm across body", "triangle locked"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "lasso_guard", "to": "armbar", "action": "attack_with", "conditions": ["arm controlled via lasso", "extension achieved"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "lasso_guard", "to": "omoplata", "action": "attack_with", "conditions": ["hip rotated out", "lasso transitions to omoplata position"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "lasso_guard", "to": "spider_guard", "action": "transition_to", "conditions": ["lasso switched to foot on bicep"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "fifty_fifty", "to": "heel_hook", "action": "attack_with", "conditions": ["inside position secured", "heel controlled", "rotation applied"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "fifty_fifty", "to": "ankle_lock", "action": "attack_with", "conditions": ["heel exposed", "ankle lock body position established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "fifty_fifty", "to": "banana_split", "action": "attack_with", "conditions": ["top leg controlled", "split pressure applied to adductors"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "fifty_fifty", "to": "kneebar", "action": "attack_with", "conditions": ["knee joint isolated", "armpit over knee", "hips bridge"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "fifty_fifty", "to": "ashi_garami", "action": "transition_to", "conditions": ["inside position won", "hook repositioned for ashi"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "rubber_guard", "to": "gogoplata", "action": "attack_with", "conditions": ["shin under chin", "head pushed down with hand"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "rubber_guard", "to": "triangle_choke", "action": "attack_with", "conditions": ["leg transitions to triangle position", "arm trapped"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "rubber_guard", "to": "omoplata", "action": "attack_with", "conditions": ["hip rotated", "arm isolated over shoulder from rubber position"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "reverse_de_la_riva", "to": "back_control", "action": "transition_to", "conditions": ["rotation behind opponent executed", "hooks inserted"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "reverse_de_la_riva", "to": "x_guard", "action": "transition_to", "conditions": ["second hook inserted under hips"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "reverse_de_la_riva", "to": "heel_hook", "action": "attack_with", "conditions": ["outside heel hook entry from RDLR", "knee alignment correct"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "reverse_de_la_riva", "to": "ankle_lock", "action": "attack_with", "conditions": ["foot trapped", "ankle lock body position established"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "reverse_de_la_riva", "to": "cartwheel_pass", "action": "pass_with", "conditions": ["cartwheel over RDLR hook", "hips cleared"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "z_guard", "to": "deep_half_guard", "action": "transition_to", "conditions": ["knee shield lowered", "head ducked under hip"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "z_guard", "to": "back_control", "action": "transition_to", "conditions": ["underhook secured", "rotation behind opponent"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "z_guard", "to": "closed_guard", "action": "recover_to", "conditions": ["legs re-closed around waist"], "confidence": "medium", "difficulty": "beginner"},
-    {"from": "z_guard", "to": "long_step_pass", "action": "pass_with", "conditions": ["long step clears knee shield", "crossface established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "z_guard", "to": "smash_pass", "action": "pass_with", "conditions": ["knee shield smashed flat", "bodyweight applied", "hips passed"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "ashi_garami", "to": "heel_hook", "action": "attack_with", "conditions": ["inside heel controlled", "rotation applied to knee"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "ashi_garami", "to": "ankle_lock", "action": "attack_with", "conditions": ["ankle in armpit", "body extended away"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "ashi_garami", "to": "kneebar", "action": "attack_with", "conditions": ["knee joint isolated", "extension applied"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "ashi_garami", "to": "fifty_fifty", "action": "transition_to", "conditions": ["opponent enters leg entanglement", "mirrored position established"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "dogfight", "to": "back_control", "action": "transition_to", "conditions": ["underhook wins", "rotation behind opponent"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "dogfight", "to": "single_leg_takedown", "action": "attack_with", "conditions": ["leg exposed during dogfight", "opponent's base on that leg"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "dogfight", "to": "standing", "action": "transition_to", "conditions": ["both players base up from dogfight"], "confidence": "medium", "difficulty": "beginner"},
-    {"from": "dogfight", "to": "mount", "action": "transition_to", "conditions": ["opponent rolls to back from dogfight"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "butterfly_guard", "to": "butterfly_sweep", "action": "sweep_with", "conditions": ["underhook secured", "hook lift initiated", "opponent off-balance"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "butterfly_guard", "to": "x_guard", "action": "transition_to", "conditions": ["both hooks inserted under opponent's hips"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "butterfly_guard", "to": "guillotine", "action": "attack_with", "conditions": ["head controlled", "posture broken"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "butterfly_guard", "to": "kimura", "action": "attack_with", "conditions": ["arm isolated", "wrist controlled"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "butterfly_guard", "to": "back_control", "action": "transition_to", "conditions": ["underhook obtained", "opponent overcommits forward"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "butterfly_guard", "to": "sickle_sweep", "action": "sweep_with", "conditions": ["underhook and sickle kick timing aligned", "base leg knocked out"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "butterfly_guard", "to": "over_under_pass", "action": "pass_with", "conditions": ["one leg scooped over shoulder", "hip cross-face"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "x_guard", "to": "x_guard_sweep", "action": "sweep_with", "conditions": ["both hooks set", "opponent off-balance", "lift executed"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "x_guard", "to": "ankle_lock", "action": "attack_with", "conditions": ["leg controlled", "ankle exposed"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "x_guard", "to": "heel_hook", "action": "attack_with", "conditions": ["heel accessible", "knee aligned"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "x_guard", "to": "ashi_garami", "action": "transition_to", "conditions": ["one hook repositioned for single leg entanglement"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "half_guard", "to": "deep_half_guard", "action": "transition_to", "conditions": ["diving under", "head under hip", "leg wrapped"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "half_guard", "to": "z_guard", "action": "transition_to", "conditions": ["knee shield inserted", "frames on hip and shoulder"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "half_guard", "to": "dogfight", "action": "transition_to", "conditions": ["underhook obtained", "base established on all fours"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "half_guard", "to": "back_control", "action": "transition_to", "conditions": ["underhook obtained", "walk to back"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "half_guard", "to": "closed_guard", "action": "recover_to", "conditions": ["legs re-closed", "full guard recovered"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "half_guard", "to": "kimura", "action": "attack_with", "conditions": ["opponent's arm isolated near hip", "z-guard or lockdown established"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "half_guard", "to": "standing", "action": "transition_to", "conditions": ["underhook obtained", "technical standup executed"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "half_guard", "to": "knee_slice_pass", "action": "pass_with", "conditions": ["knee threaded between legs", "hips driving forward"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "half_guard", "to": "smash_pass", "action": "pass_with", "conditions": ["knee shield smashed", "hip pressure applied", "guard cleared"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "deep_half_guard", "to": "x_guard", "action": "transition_to", "conditions": ["hooks repositioned under hips"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "deep_half_guard", "to": "back_control", "action": "transition_to", "conditions": ["opponent reaches across", "back exposed"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "deep_half_guard", "to": "waiter_sweep", "action": "sweep_with", "conditions": ["trapped leg extended upward", "opponent's weight forward"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "deep_half_guard", "to": "x_guard_sweep", "action": "sweep_with", "conditions": ["arm control obtained", "opponent lifted"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "torreando_pass", "to": "side_control", "action": "follow_up", "conditions": ["guard cleared", "hip to hip control"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "knee_slice_pass", "to": "side_control", "action": "follow_up", "conditions": ["knee through", "hip to hip contact"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "knee_slice_pass", "to": "mount", "action": "follow_up", "conditions": ["full knee through", "directly to mount"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "double_under_pass", "to": "side_control", "action": "follow_up", "conditions": ["stack complete", "legs controlled"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "over_under_pass", "to": "side_control", "action": "follow_up", "conditions": ["hip controlled", "guard cleared"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "leg_drag_pass", "to": "side_control", "action": "follow_up", "conditions": ["leg dragged across body", "hip connection established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "leg_drag_pass", "to": "back_control", "action": "follow_up", "conditions": ["opponent turns to prevent pass", "back exposed"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "x_pass", "to": "side_control", "action": "follow_up", "conditions": ["x-step complete", "hips cleared", "top position established"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "cartwheel_pass", "to": "side_control", "action": "follow_up", "conditions": ["cartwheel complete", "guard cleared"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "cartwheel_pass", "to": "back_control", "action": "follow_up", "conditions": ["opponent turns during cartwheel", "back exposed"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "smash_pass", "to": "side_control", "action": "follow_up", "conditions": ["guard smashed flat", "hips cleared"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "long_step_pass", "to": "side_control", "action": "follow_up", "conditions": ["crossface established", "guard cleared"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "long_step_pass", "to": "mount", "action": "follow_up", "conditions": ["long step directly to mount", "knee clears hip"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "side_control", "to": "mount", "action": "transition_to", "conditions": ["knee-through", "opponent's elbow removed from hip"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "side_control", "to": "north_south", "action": "transition_to", "conditions": ["walking around opponent's head"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "side_control", "to": "knee_on_belly", "action": "transition_to", "conditions": ["knee inserted on stomach", "collar or sleeve grip"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "side_control", "to": "back_control", "action": "transition_to", "conditions": ["opponent turns to knees to escape"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "side_control", "to": "kimura", "action": "attack_with", "conditions": ["near arm bent and isolated"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "side_control", "to": "americana", "action": "attack_with", "conditions": ["arm flat on mat", "wrist pushed up"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "side_control", "to": "darce_choke", "action": "attack_with", "conditions": ["arm over neck", "figure-four entry established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "side_control", "to": "baseball_bat_choke", "action": "attack_with", "conditions": ["collar grips secured pointing same direction", "gi required", "roll initiated"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "side_control", "to": "ezekiel_choke", "action": "attack_with", "conditions": ["sleeve grip inside collar", "forearm across neck", "gi required"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "side_control", "to": "half_guard", "action": "recover_to", "conditions": ["bottom player shrimps", "knee recovered inside"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "side_control", "to": "shrimp_escape", "action": "escape_with", "conditions": ["frames established", "hips shrimped away", "space created"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "north_south", "to": "kimura", "action": "attack_with", "conditions": ["arm controlled from north-south", "kimura grip secured"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "north_south", "to": "darce_choke", "action": "attack_with", "conditions": ["arm across neck", "figure-four locked"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "north_south", "to": "north_south_choke", "action": "attack_with", "conditions": ["shoulder positioned across trachea", "head trapped under chest"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "north_south", "to": "side_control", "action": "transition_to", "conditions": ["walking back to side control position"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "north_south", "to": "back_control", "action": "transition_to", "conditions": ["opponent turns to knees"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "mount", "to": "armbar", "action": "attack_with", "conditions": ["arm extended", "collar grip or wrist controlled"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "mount", "to": "triangle_choke", "action": "attack_with", "conditions": ["arm pulled across", "leg through for triangle"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "mount", "to": "americana", "action": "attack_with", "conditions": ["arm pinned flat", "low wrist lock"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "mount", "to": "kimura", "action": "attack_with", "conditions": ["arm bent", "wrist controlled"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "mount", "to": "mounted_triangle", "action": "attack_with", "conditions": ["leg swings over head", "triangle locked from mount"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "mount", "to": "ezekiel_choke", "action": "attack_with", "conditions": ["sleeve threaded inside collar", "forearm pressure on neck", "gi required"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "mount", "to": "baseball_bat_choke", "action": "attack_with", "conditions": ["two collar grips same direction", "roll to finish", "gi required"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "mount", "to": "technical_mount", "action": "transition_to", "conditions": ["leg over to S-mount position"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "mount", "to": "back_control", "action": "transition_to", "conditions": ["opponent turns to escape", "back exposed"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "mount", "to": "half_guard", "action": "recover_to", "conditions": ["elbow-knee escape completed", "knee recovered"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "mount", "to": "elbow_knee_escape", "action": "escape_with", "conditions": ["elbow frame on hip", "knee shield inserted", "shrimp to recover half guard"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "mounted_triangle", "to": "armbar", "action": "follow_up", "conditions": ["opponent postures to relieve triangle", "arm extended"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "technical_mount", "to": "armbar", "action": "attack_with", "conditions": ["S-mount position", "arm fully isolated"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "technical_mount", "to": "triangle_choke", "action": "attack_with", "conditions": ["leg inserted over head from S-mount"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "technical_mount", "to": "back_control", "action": "transition_to", "conditions": ["opponent turns", "seatbelt applied"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "back_control", "to": "rear_naked_choke", "action": "attack_with", "conditions": ["seatbelt grip", "neck exposed", "chin down defense failed"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "back_control", "to": "bow_and_arrow_choke", "action": "attack_with", "conditions": ["collar grip obtained", "belt or leg grip secured"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "back_control", "to": "triangle_choke", "action": "attack_with", "conditions": ["leg inserted over defending arm"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "back_control", "to": "twister", "action": "attack_with", "conditions": ["leg hooks control lower body", "upper body rotated opposite direction"], "confidence": "low", "difficulty": "advanced"},
-    {"from": "back_control", "to": "turtle", "action": "recover_to", "conditions": ["opponent slips hooks", "rolls to knees"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "back_control", "to": "side_control", "action": "recover_to", "conditions": ["opponent rolls through", "escapes to side"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "back_control", "to": "back_escape_roll", "action": "escape_with", "conditions": ["turn into choking arm", "chin tucked", "roll through to face opponent"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "turtle", "to": "back_control", "action": "transition_to", "conditions": ["top player inserts hooks", "seatbelt secured"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "turtle", "to": "closed_guard", "action": "recover_to", "conditions": ["defender rolls to back", "guard closed"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "turtle", "to": "darce_choke", "action": "attack_with", "conditions": ["top player arm over neck", "roll initiated"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "turtle", "to": "guillotine", "action": "attack_with", "conditions": ["top player reaches under for chin"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "turtle", "to": "clock_choke", "action": "attack_with", "conditions": ["collar grip secured", "hip driven into side of head", "gi required"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "turtle", "to": "peruvian_necktie", "action": "attack_with", "conditions": ["front headlock established", "leg over back", "twisting pressure applied"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "turtle", "to": "baseball_bat_choke", "action": "attack_with", "conditions": ["collar grips set from turtle", "roll to finish", "gi required"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "turtle", "to": "granby_roll", "action": "escape_with", "conditions": ["shoulder roll initiated", "inversion through", "guard re-established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "turtle", "to": "standing", "action": "recover_to", "conditions": ["defender bases up", "stands up"], "confidence": "medium", "difficulty": "beginner"},
-    {"from": "knee_on_belly", "to": "mount", "action": "transition_to", "conditions": ["advancing knee over to full mount"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "knee_on_belly", "to": "side_control", "action": "transition_to", "conditions": ["retreating knee down"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "knee_on_belly", "to": "armbar", "action": "attack_with", "conditions": ["opponent frames up", "arm isolated and extended"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "knee_on_belly", "to": "darce_choke", "action": "attack_with", "conditions": ["arm over neck", "kneeling position allows entry"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "knee_on_belly", "to": "half_guard", "action": "recover_to", "conditions": ["bottom player recovers knee shield"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "x_guard_sweep", "to": "standing", "action": "follow_up", "conditions": ["opponent elevated and reset to feet"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "ashi_garami", "to": "running_man_escape", "action": "escape_with", "conditions": ["heel not yet hooked", "roll away from entanglement"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "fifty_fifty", "to": "running_man_escape", "action": "escape_with", "conditions": ["inside position not fully locked", "roll to disengage"], "confidence": "medium", "difficulty": "advanced"},
-    {"from": "sprawl", "to": "turtle", "action": "follow_up", "conditions": ["takedown stopped", "opponent on all fours"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "sprawl", "to": "guillotine", "action": "attack_with", "conditions": ["head accessible after sprawl", "arm around neck"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "sprawl", "to": "back_control", "action": "follow_up", "conditions": ["opponent's back exposed from failed shot", "hooks inserted"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "double_leg_takedown", "to": "sprawl", "action": "counters", "conditions": ["defender hips driven down and back", "head pushed to mat"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "single_leg_takedown", "to": "sprawl", "action": "counters", "conditions": ["defender sprawls hip to mat", "leg freed"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "triangle_choke", "to": "stack_defense", "action": "counters", "conditions": ["hips stacked over defender's head", "posture regained"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "armbar", "to": "stack_defense", "action": "counters", "conditions": ["hips stacked", "arm bent to relieve pressure"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "kimura", "to": "arm_tuck", "action": "counters", "conditions": ["arm pulled tight to body before grip set", "frame created"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "americana", "to": "arm_tuck", "action": "counters", "conditions": ["arm pulled to chest before lock established"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "torreando_pass", "to": "frame_and_shrimp", "action": "counters", "conditions": ["frame on passing hip", "shrimp away", "guard re-established"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "knee_slice_pass", "to": "frame_and_shrimp", "action": "counters", "conditions": ["frame blocks knee", "shrimp creates space"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "guard_pulling_attempt", "to": "posture_up", "action": "counters", "conditions": ["top player postures and prevents guard pull", "pressure applied"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "shrimp_escape", "to": "half_guard", "action": "follow_up", "conditions": ["space created", "knee recovered inside"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "shrimp_escape", "to": "closed_guard", "action": "follow_up", "conditions": ["full shrimp completed", "legs close around waist"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "elbow_knee_escape", "to": "half_guard", "action": "follow_up", "conditions": ["elbow-knee escape completes", "knee shield recovered"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "back_escape_roll", "to": "closed_guard", "action": "follow_up", "conditions": ["roll complete", "opponent now in guard"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "back_escape_roll", "to": "half_guard", "action": "follow_up", "conditions": ["partial roll", "half guard recovered"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "granby_roll", "to": "closed_guard", "action": "follow_up", "conditions": ["granby complete", "guard recovered"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "granby_roll", "to": "open_guard", "action": "follow_up", "conditions": ["partial granby", "open guard established"], "confidence": "medium", "difficulty": "intermediate"},
-    {"from": "running_man_escape", "to": "standing", "action": "follow_up", "conditions": ["leg entanglement cleared", "stand to base"], "confidence": "high", "difficulty": "advanced"},
-    {"from": "kuzushi", "to": "butterfly_sweep", "action": "requires", "conditions": ["off-balance achieved before hook lift"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "kuzushi", "to": "judo_throw", "action": "requires", "conditions": ["kuzushi is first stage of throw"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "kuzushi", "to": "hip_throw", "action": "requires", "conditions": ["balance broken before hip insertion"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "hip_escape_movement", "to": "shrimp_escape", "action": "requires", "conditions": ["hip escape movement is the foundation of the shrimp"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "hip_escape_movement", "to": "elbow_knee_escape", "action": "requires", "conditions": ["hip escape creates space for knee recovery"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "bridge_movement", "to": "elbow_knee_escape", "action": "requires", "conditions": ["bridge unbalances top player allowing escape"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "framing", "to": "shrimp_escape", "action": "requires", "conditions": ["frames create space for the shrimp movement"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "framing", "to": "frame_and_shrimp", "action": "requires", "conditions": ["frames are the first component of this counter"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "base_and_posture", "to": "stack_defense", "action": "requires", "conditions": ["posture regained before stack is effective"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "grips", "to": "lasso_guard", "action": "requires", "conditions": ["sleeve grip is prerequisite for lasso guard entry"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "grips", "to": "spider_guard", "action": "requires", "conditions": ["sleeve grips required to maintain spider guard"], "confidence": "high", "difficulty": "intermediate"},
-    {"from": "weight_distribution", "to": "scissor_sweep", "action": "requires", "conditions": ["opponent's weight must be forward for sweep to work"], "confidence": "high", "difficulty": "beginner"},
-    {"from": "weight_distribution", "to": "flower_sweep", "action": "requires", "conditions": ["opponent's weight shifted to one side for the pendulum"], "confidence": "high", "difficulty": "intermediate"},
-
-    {"from": "marcelo_garcia", "to": "marcelo_butterfly_back_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "keenan_cornelius", "to": "keenan_lapel_guard_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_gracie", "to": "roger_closed_guard_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_faria", "to": "bernardo_half_guard_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_ryan", "to": "gordon_back_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "john_danaher", "to": "dds_leg_lock_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_ryan", "to": "dds_leg_lock_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "mikey_musumeci", "to": "dds_leg_lock_system", "action": "developed", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-
-    {"from": "marcelo_butterfly_back_system", "to": "butterfly_guard", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "marcelo_butterfly_back_system", "to": "back_control", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "keenan_lapel_guard_system", "to": "worm_guard", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "keenan_lapel_guard_system", "to": "de_la_riva_guard", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_closed_guard_system", "to": "closed_guard", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_closed_guard_system", "to": "mount", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_half_guard_system", "to": "half_guard", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_half_guard_system", "to": "deep_half_guard", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_back_system", "to": "back_control", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "dds_leg_lock_system", "to": "ashi_garami", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "dds_leg_lock_system", "to": "fifty_fifty", "action": "centers_on", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-
-    {"from": "marcelo_butterfly_back_system", "to": "butterfly_sweep", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "marcelo_butterfly_back_system", "to": "rear_naked_choke", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "marcelo_butterfly_back_system", "to": "guillotine", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "keenan_lapel_guard_system", "to": "triangle_choke", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "keenan_lapel_guard_system", "to": "omoplata", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_closed_guard_system", "to": "triangle_choke", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_closed_guard_system", "to": "armbar", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_half_guard_system", "to": "over_under_pass", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_half_guard_system", "to": "waiter_sweep", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_back_system", "to": "rear_naked_choke", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "dds_leg_lock_system", "to": "heel_hook", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "dds_leg_lock_system", "to": "ankle_lock", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "dds_leg_lock_system", "to": "kneebar", "action": "features", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-
-    {"from": "marcelo_garcia", "to": "guillotine", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "marcelo_garcia", "to": "rear_naked_choke", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "marcelo_garcia", "to": "butterfly_guard", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_ryan", "to": "heel_hook", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_ryan", "to": "rear_naked_choke", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "gordon_ryan", "to": "back_control", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "keenan_cornelius", "to": "worm_guard", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_gracie", "to": "triangle_choke", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_gracie", "to": "armbar", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "roger_gracie", "to": "mount", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "mikey_musumeci", "to": "closed_guard", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "mikey_musumeci", "to": "heel_hook", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_faria", "to": "over_under_pass", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "bernardo_faria", "to": "deep_half_guard", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "leandro_lo", "to": "knee_on_belly", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "romulo_barral", "to": "spider_guard", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "romulo_barral", "to": "de_la_riva_guard", "action": "known_for", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-
-    {"from": "gordon_ryan", "to": "john_danaher", "action": "coached_by", "conditions": [], "confidence": "high", "difficulty": "advanced"},
-    {"from": "mikey_musumeci", "to": "john_danaher", "action": "coached_by", "conditions": [], "confidence": "high", "difficulty": "advanced"}
+    {
+      "from": "standing",
+      "to": "double_leg_takedown",
+      "action": "attack_with",
+      "conditions": [
+        "opponent in range",
+        "level change executed",
+        "stance broken"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "single_leg_takedown",
+      "action": "attack_with",
+      "conditions": [
+        "opponent leg exposed",
+        "level changed",
+        "grip on leg obtained"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "judo_throw",
+      "action": "attack_with",
+      "conditions": [
+        "clinch established",
+        "collar-elbow grip secured"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "hip_throw",
+      "action": "attack_with",
+      "conditions": [
+        "clinch established",
+        "hip inserted in front of opponent",
+        "kuzushi achieved"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "foot_sweep",
+      "action": "attack_with",
+      "conditions": [
+        "opponent stepping",
+        "weight shifted to one leg",
+        "timing precise"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "firemans_carry",
+      "action": "attack_with",
+      "conditions": [
+        "opponent arm extended or overhooking",
+        "level change",
+        "shoulder under armpit"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "guillotine",
+      "action": "attack_with",
+      "conditions": [
+        "opponent's head down",
+        "opponent shooting or posture broken"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "closed_guard",
+      "action": "transition_to",
+      "conditions": [
+        "guard pull executed",
+        "opponent standing above"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "de_la_riva_guard",
+      "action": "transition_to",
+      "conditions": [
+        "seated guard pull",
+        "foot placed on opponent's hip"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "butterfly_guard",
+      "action": "transition_to",
+      "conditions": [
+        "seated guard pull",
+        "hooks inside opponent's thighs"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "double_leg_takedown",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "controlled finish",
+        "opponent did not roll"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "double_leg_takedown",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent lands flat on back",
+        "clean finish"
+      ],
+      "confidence": "medium",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "single_leg_takedown",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "trip completion",
+        "controlled finish"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "single_leg_takedown",
+      "to": "turtle",
+      "action": "follow_up",
+      "conditions": [
+        "opponent defends with sprawl",
+        "goes to knees"
+      ],
+      "confidence": "medium",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "judo_throw",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "controlled throw",
+        "grip maintained"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "judo_throw",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent lands on back",
+        "clean throw"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "hip_throw",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "controlled landing",
+        "grip maintained throughout"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "hip_throw",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "clean throw",
+        "opponent lands flat"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "foot_sweep",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent falls to side",
+        "follow to ground"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "firemans_carry",
+      "to": "back_control",
+      "action": "follow_up",
+      "conditions": [
+        "roll complete",
+        "opponent on all fours"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "firemans_carry",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent lands on back",
+        "controlled finish"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "guillotine",
+      "to": "closed_guard",
+      "action": "follow_up",
+      "conditions": [
+        "guard pulled while choke locked",
+        "arm-in or arm-out position"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "guillotine",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "standing finish",
+        "opponent controlled on ground"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "arm across body",
+        "posture broken",
+        "hips angled"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "armbar",
+      "action": "attack_with",
+      "conditions": [
+        "arm extended",
+        "posture broken",
+        "wrist controlled"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "kimura",
+      "action": "attack_with",
+      "conditions": [
+        "arm bent",
+        "wrist controlled above shoulder"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "closed_guard",
+      "to": "omoplata",
+      "action": "attack_with",
+      "conditions": [
+        "hip rotated out",
+        "arm isolated over shoulder"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "guillotine",
+      "action": "attack_with",
+      "conditions": [
+        "posture broken",
+        "head accessible",
+        "opponent posturing up"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "gogoplata",
+      "action": "attack_with",
+      "conditions": [
+        "flexibility sufficient",
+        "shin threaded under chin",
+        "head controlled"
+      ],
+      "confidence": "low",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "closed_guard",
+      "to": "scissor_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "collar and sleeve grip",
+        "knee on chest",
+        "opponent's weight forward"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "closed_guard",
+      "to": "hip_bump_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "posture broken",
+        "opponent pushing forward",
+        "sit-up executed"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "closed_guard",
+      "to": "flower_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "cross-collar grip",
+        "ankle controlled",
+        "opponent's weight to one side"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "open_guard",
+      "action": "transition_to",
+      "conditions": [
+        "opponent stands or breaks guard open"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "closed_guard",
+      "to": "half_guard",
+      "action": "transition_to",
+      "conditions": [
+        "opponent partially passes",
+        "one leg trapped"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "closed_guard",
+      "to": "rubber_guard",
+      "action": "transition_to",
+      "conditions": [
+        "flexibility required",
+        "leg pulled to shoulder height",
+        "hand controls shin"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "closed_guard",
+      "to": "double_under_pass",
+      "action": "pass_with",
+      "conditions": [
+        "both legs scooped",
+        "posture up",
+        "stacking initiated"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "closed_guard",
+      "to": "over_under_pass",
+      "action": "pass_with",
+      "conditions": [
+        "one leg over shoulder",
+        "one leg under",
+        "hip to hip control"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "scissor_sweep",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "clean sweep",
+        "opponent lands on back"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "hip_bump_sweep",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent rolled over"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "hip_bump_sweep",
+      "to": "kimura",
+      "action": "follow_up",
+      "conditions": [
+        "opponent posts hand to base to prevent sweep"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "flower_sweep",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent lifted and rolled"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "butterfly_sweep",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent launched and landed on back"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "x_guard_sweep",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent dumped to side"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "waiter_sweep",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent rolled over trapped leg"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "waiter_sweep",
+      "to": "back_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent turns to base and exposes back"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "sickle_sweep",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "base knocked out",
+        "opponent falls to side"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "lasso_sweep",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "opponent rotated and lands on back"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "triangle_choke",
+      "to": "armbar",
+      "action": "follow_up",
+      "conditions": [
+        "opponent postures up to relieve choke pressure"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "triangle_choke",
+      "to": "omoplata",
+      "action": "follow_up",
+      "conditions": [
+        "opponent rolls toward trapped arm"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "armbar",
+      "to": "triangle_choke",
+      "action": "follow_up",
+      "conditions": [
+        "arm slipped out partially",
+        "angled to re-triangle"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "armbar",
+      "to": "kimura",
+      "action": "follow_up",
+      "conditions": [
+        "opponent bends arm to prevent extension"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "kimura",
+      "to": "guillotine",
+      "action": "follow_up",
+      "conditions": [
+        "opponent postures up",
+        "head becomes accessible"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "omoplata",
+      "to": "back_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent rolls forward to escape shoulder lock"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "open_guard",
+      "to": "de_la_riva_guard",
+      "action": "transition_to",
+      "conditions": [
+        "foot on hip",
+        "DLR hook established around leg"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "butterfly_guard",
+      "action": "transition_to",
+      "conditions": [
+        "both feet as hooks inside opponent's thighs"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "spider_guard",
+      "action": "transition_to",
+      "conditions": [
+        "sleeve grips secured",
+        "feet on biceps"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "x_guard",
+      "action": "transition_to",
+      "conditions": [
+        "under both opponent's legs",
+        "hooks inserted"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "open_guard",
+      "to": "lasso_guard",
+      "action": "transition_to",
+      "conditions": [
+        "sleeve grip secured",
+        "leg threaded through arm"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "reverse_de_la_riva",
+      "action": "transition_to",
+      "conditions": [
+        "outside position obtained",
+        "hook behind opponent's lead leg"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [
+        "leg exposed",
+        "straight ankle lock position established"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "torreando_pass",
+      "action": "pass_with",
+      "conditions": [
+        "hips controlled",
+        "guard passed around to the side"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "open_guard",
+      "to": "x_pass",
+      "action": "pass_with",
+      "conditions": [
+        "knee controlled",
+        "x-step executed",
+        "hips cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "open_guard",
+      "to": "closed_guard",
+      "action": "recover_to",
+      "conditions": [
+        "legs re-closed around opponent's waist"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "open_guard",
+      "to": "half_guard",
+      "action": "transition_to",
+      "conditions": [
+        "opponent partially passes",
+        "one leg controlled"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "spider_guard",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "one sleeve dropped",
+        "arm pulled through"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "spider_guard",
+      "to": "armbar",
+      "action": "attack_with",
+      "conditions": [
+        "arm extended",
+        "foot push on bicep"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "spider_guard",
+      "to": "omoplata",
+      "action": "attack_with",
+      "conditions": [
+        "rotation executed",
+        "foot push sends arm over"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "spider_guard",
+      "to": "lasso_guard",
+      "action": "transition_to",
+      "conditions": [
+        "one foot removed from bicep",
+        "leg threaded through arm"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "spider_guard",
+      "to": "torreando_pass",
+      "action": "pass_with",
+      "conditions": [
+        "sleeve grips broken",
+        "hips cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "x_guard",
+      "action": "transition_to",
+      "conditions": [
+        "underhook obtained",
+        "second hook inserted"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "worm_guard",
+      "action": "transition_to",
+      "conditions": [
+        "gi lapel fed around leg",
+        "grip secured",
+        "gi required"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "reverse_de_la_riva",
+      "action": "transition_to",
+      "conditions": [
+        "hook switched to inside",
+        "outside position established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "berimbolo rotation",
+        "inversion executed"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [
+        "outside DLR",
+        "leg position exposed"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "inside heel hook entry",
+        "leg entanglement established"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "sickle_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "sleeve grip",
+        "sickle kick to base leg",
+        "opponent off-balance"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "torreando_pass",
+      "action": "pass_with",
+      "conditions": [
+        "hips cleared",
+        "DLR hook removed"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "leg_drag_pass",
+      "action": "pass_with",
+      "conditions": [
+        "leg dragged across body",
+        "guard cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "de_la_riva_guard",
+      "to": "cartwheel_pass",
+      "action": "pass_with",
+      "conditions": [
+        "cartwheel motion initiated",
+        "hips cleared over guard"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "worm_guard",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "lapel control maintained",
+        "rotation to back executed"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "worm_guard",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "arm trapped in lapel entanglement",
+        "triangle locked"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "worm_guard",
+      "to": "omoplata",
+      "action": "attack_with",
+      "conditions": [
+        "shoulder isolated through lapel wrap",
+        "hip rotation"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "lasso_guard",
+      "to": "lasso_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "sleeve grip",
+        "lasso hook in place",
+        "opponent off-balance to the side"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "lasso_guard",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "lasso released",
+        "arm across body",
+        "triangle locked"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "lasso_guard",
+      "to": "armbar",
+      "action": "attack_with",
+      "conditions": [
+        "arm controlled via lasso",
+        "extension achieved"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "lasso_guard",
+      "to": "omoplata",
+      "action": "attack_with",
+      "conditions": [
+        "hip rotated out",
+        "lasso transitions to omoplata position"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "lasso_guard",
+      "to": "spider_guard",
+      "action": "transition_to",
+      "conditions": [
+        "lasso switched to foot on bicep"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "inside position secured",
+        "heel controlled",
+        "rotation applied"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [
+        "heel exposed",
+        "ankle lock body position established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "banana_split",
+      "action": "attack_with",
+      "conditions": [
+        "top leg controlled",
+        "split pressure applied to adductors"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "kneebar",
+      "action": "attack_with",
+      "conditions": [
+        "knee joint isolated",
+        "armpit over knee",
+        "hips bridge"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "ashi_garami",
+      "action": "transition_to",
+      "conditions": [
+        "inside position won",
+        "hook repositioned for ashi"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "rubber_guard",
+      "to": "gogoplata",
+      "action": "attack_with",
+      "conditions": [
+        "shin under chin",
+        "head pushed down with hand"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "rubber_guard",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "leg transitions to triangle position",
+        "arm trapped"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "rubber_guard",
+      "to": "omoplata",
+      "action": "attack_with",
+      "conditions": [
+        "hip rotated",
+        "arm isolated over shoulder from rubber position"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "reverse_de_la_riva",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "rotation behind opponent executed",
+        "hooks inserted"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "reverse_de_la_riva",
+      "to": "x_guard",
+      "action": "transition_to",
+      "conditions": [
+        "second hook inserted under hips"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "reverse_de_la_riva",
+      "to": "heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "outside heel hook entry from RDLR",
+        "knee alignment correct"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "reverse_de_la_riva",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [
+        "foot trapped",
+        "ankle lock body position established"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "reverse_de_la_riva",
+      "to": "cartwheel_pass",
+      "action": "pass_with",
+      "conditions": [
+        "cartwheel over RDLR hook",
+        "hips cleared"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "z_guard",
+      "to": "deep_half_guard",
+      "action": "transition_to",
+      "conditions": [
+        "knee shield lowered",
+        "head ducked under hip"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "z_guard",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "underhook secured",
+        "rotation behind opponent"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "z_guard",
+      "to": "closed_guard",
+      "action": "recover_to",
+      "conditions": [
+        "legs re-closed around waist"
+      ],
+      "confidence": "medium",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "z_guard",
+      "to": "long_step_pass",
+      "action": "pass_with",
+      "conditions": [
+        "long step clears knee shield",
+        "crossface established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "z_guard",
+      "to": "smash_pass",
+      "action": "pass_with",
+      "conditions": [
+        "knee shield smashed flat",
+        "bodyweight applied",
+        "hips passed"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "inside heel controlled",
+        "rotation applied to knee"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [
+        "ankle in armpit",
+        "body extended away"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "kneebar",
+      "action": "attack_with",
+      "conditions": [
+        "knee joint isolated",
+        "extension applied"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "fifty_fifty",
+      "action": "transition_to",
+      "conditions": [
+        "opponent enters leg entanglement",
+        "mirrored position established"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dogfight",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "underhook wins",
+        "rotation behind opponent"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "dogfight",
+      "to": "single_leg_takedown",
+      "action": "attack_with",
+      "conditions": [
+        "leg exposed during dogfight",
+        "opponent's base on that leg"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "dogfight",
+      "to": "standing",
+      "action": "transition_to",
+      "conditions": [
+        "both players base up from dogfight"
+      ],
+      "confidence": "medium",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "dogfight",
+      "to": "mount",
+      "action": "transition_to",
+      "conditions": [
+        "opponent rolls to back from dogfight"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "butterfly_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "underhook secured",
+        "hook lift initiated",
+        "opponent off-balance"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "x_guard",
+      "action": "transition_to",
+      "conditions": [
+        "both hooks inserted under opponent's hips"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "guillotine",
+      "action": "attack_with",
+      "conditions": [
+        "head controlled",
+        "posture broken"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "kimura",
+      "action": "attack_with",
+      "conditions": [
+        "arm isolated",
+        "wrist controlled"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "underhook obtained",
+        "opponent overcommits forward"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "sickle_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "underhook and sickle kick timing aligned",
+        "base leg knocked out"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "butterfly_guard",
+      "to": "over_under_pass",
+      "action": "pass_with",
+      "conditions": [
+        "one leg scooped over shoulder",
+        "hip cross-face"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "x_guard",
+      "to": "x_guard_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "both hooks set",
+        "opponent off-balance",
+        "lift executed"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "x_guard",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [
+        "leg controlled",
+        "ankle exposed"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "x_guard",
+      "to": "heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "heel accessible",
+        "knee aligned"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "x_guard",
+      "to": "ashi_garami",
+      "action": "transition_to",
+      "conditions": [
+        "one hook repositioned for single leg entanglement"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "half_guard",
+      "to": "deep_half_guard",
+      "action": "transition_to",
+      "conditions": [
+        "diving under",
+        "head under hip",
+        "leg wrapped"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "z_guard",
+      "action": "transition_to",
+      "conditions": [
+        "knee shield inserted",
+        "frames on hip and shoulder"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "half_guard",
+      "to": "dogfight",
+      "action": "transition_to",
+      "conditions": [
+        "underhook obtained",
+        "base established on all fours"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "underhook obtained",
+        "walk to back"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "closed_guard",
+      "action": "recover_to",
+      "conditions": [
+        "legs re-closed",
+        "full guard recovered"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "half_guard",
+      "to": "kimura",
+      "action": "attack_with",
+      "conditions": [
+        "opponent's arm isolated near hip",
+        "z-guard or lockdown established"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "standing",
+      "action": "transition_to",
+      "conditions": [
+        "underhook obtained",
+        "technical standup executed"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "knee_slice_pass",
+      "action": "pass_with",
+      "conditions": [
+        "knee threaded between legs",
+        "hips driving forward"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "smash_pass",
+      "action": "pass_with",
+      "conditions": [
+        "knee shield smashed",
+        "hip pressure applied",
+        "guard cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "deep_half_guard",
+      "to": "x_guard",
+      "action": "transition_to",
+      "conditions": [
+        "hooks repositioned under hips"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "deep_half_guard",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent reaches across",
+        "back exposed"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "deep_half_guard",
+      "to": "waiter_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "trapped leg extended upward",
+        "opponent's weight forward"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "deep_half_guard",
+      "to": "x_guard_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "arm control obtained",
+        "opponent lifted"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "torreando_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "guard cleared",
+        "hip to hip control"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "knee_slice_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "knee through",
+        "hip to hip contact"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "knee_slice_pass",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "full knee through",
+        "directly to mount"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "double_under_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "stack complete",
+        "legs controlled"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "over_under_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "hip controlled",
+        "guard cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "leg_drag_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "leg dragged across body",
+        "hip connection established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "leg_drag_pass",
+      "to": "back_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent turns to prevent pass",
+        "back exposed"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "x_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "x-step complete",
+        "hips cleared",
+        "top position established"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "cartwheel_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "cartwheel complete",
+        "guard cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "cartwheel_pass",
+      "to": "back_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent turns during cartwheel",
+        "back exposed"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "smash_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "guard smashed flat",
+        "hips cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "long_step_pass",
+      "to": "side_control",
+      "action": "follow_up",
+      "conditions": [
+        "crossface established",
+        "guard cleared"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "long_step_pass",
+      "to": "mount",
+      "action": "follow_up",
+      "conditions": [
+        "long step directly to mount",
+        "knee clears hip"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "side_control",
+      "to": "mount",
+      "action": "transition_to",
+      "conditions": [
+        "knee-through",
+        "opponent's elbow removed from hip"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "side_control",
+      "to": "north_south",
+      "action": "transition_to",
+      "conditions": [
+        "walking around opponent's head"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "side_control",
+      "to": "knee_on_belly",
+      "action": "transition_to",
+      "conditions": [
+        "knee inserted on stomach",
+        "collar or sleeve grip"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "side_control",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent turns to knees to escape"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "side_control",
+      "to": "kimura",
+      "action": "attack_with",
+      "conditions": [
+        "near arm bent and isolated"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "side_control",
+      "to": "americana",
+      "action": "attack_with",
+      "conditions": [
+        "arm flat on mat",
+        "wrist pushed up"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "side_control",
+      "to": "darce_choke",
+      "action": "attack_with",
+      "conditions": [
+        "arm over neck",
+        "figure-four entry established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "side_control",
+      "to": "baseball_bat_choke",
+      "action": "attack_with",
+      "conditions": [
+        "collar grips secured pointing same direction",
+        "gi required",
+        "roll initiated"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "side_control",
+      "to": "ezekiel_choke",
+      "action": "attack_with",
+      "conditions": [
+        "sleeve grip inside collar",
+        "forearm across neck",
+        "gi required"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "side_control",
+      "to": "half_guard",
+      "action": "recover_to",
+      "conditions": [
+        "bottom player shrimps",
+        "knee recovered inside"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "side_control",
+      "to": "shrimp_escape",
+      "action": "escape_with",
+      "conditions": [
+        "frames established",
+        "hips shrimped away",
+        "space created"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "north_south",
+      "to": "kimura",
+      "action": "attack_with",
+      "conditions": [
+        "arm controlled from north-south",
+        "kimura grip secured"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "north_south",
+      "to": "darce_choke",
+      "action": "attack_with",
+      "conditions": [
+        "arm across neck",
+        "figure-four locked"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "north_south",
+      "to": "north_south_choke",
+      "action": "attack_with",
+      "conditions": [
+        "shoulder positioned across trachea",
+        "head trapped under chest"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "north_south",
+      "to": "side_control",
+      "action": "transition_to",
+      "conditions": [
+        "walking back to side control position"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "north_south",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent turns to knees"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "mount",
+      "to": "armbar",
+      "action": "attack_with",
+      "conditions": [
+        "arm extended",
+        "collar grip or wrist controlled"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "mount",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "arm pulled across",
+        "leg through for triangle"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mount",
+      "to": "americana",
+      "action": "attack_with",
+      "conditions": [
+        "arm pinned flat",
+        "low wrist lock"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "mount",
+      "to": "kimura",
+      "action": "attack_with",
+      "conditions": [
+        "arm bent",
+        "wrist controlled"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "mount",
+      "to": "mounted_triangle",
+      "action": "attack_with",
+      "conditions": [
+        "leg swings over head",
+        "triangle locked from mount"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mount",
+      "to": "ezekiel_choke",
+      "action": "attack_with",
+      "conditions": [
+        "sleeve threaded inside collar",
+        "forearm pressure on neck",
+        "gi required"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mount",
+      "to": "baseball_bat_choke",
+      "action": "attack_with",
+      "conditions": [
+        "two collar grips same direction",
+        "roll to finish",
+        "gi required"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mount",
+      "to": "technical_mount",
+      "action": "transition_to",
+      "conditions": [
+        "leg over to S-mount position"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "mount",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent turns to escape",
+        "back exposed"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "mount",
+      "to": "half_guard",
+      "action": "recover_to",
+      "conditions": [
+        "elbow-knee escape completed",
+        "knee recovered"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "mount",
+      "to": "elbow_knee_escape",
+      "action": "escape_with",
+      "conditions": [
+        "elbow frame on hip",
+        "knee shield inserted",
+        "shrimp to recover half guard"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "mounted_triangle",
+      "to": "armbar",
+      "action": "follow_up",
+      "conditions": [
+        "opponent postures to relieve triangle",
+        "arm extended"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "technical_mount",
+      "to": "armbar",
+      "action": "attack_with",
+      "conditions": [
+        "S-mount position",
+        "arm fully isolated"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "technical_mount",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "leg inserted over head from S-mount"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "technical_mount",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent turns",
+        "seatbelt applied"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "back_control",
+      "to": "rear_naked_choke",
+      "action": "attack_with",
+      "conditions": [
+        "seatbelt grip",
+        "neck exposed",
+        "chin down defense failed"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "back_control",
+      "to": "bow_and_arrow_choke",
+      "action": "attack_with",
+      "conditions": [
+        "collar grip obtained",
+        "belt or leg grip secured"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "back_control",
+      "to": "triangle_choke",
+      "action": "attack_with",
+      "conditions": [
+        "leg inserted over defending arm"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "back_control",
+      "to": "twister",
+      "action": "attack_with",
+      "conditions": [
+        "leg hooks control lower body",
+        "upper body rotated opposite direction"
+      ],
+      "confidence": "low",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "back_control",
+      "to": "turtle",
+      "action": "recover_to",
+      "conditions": [
+        "opponent slips hooks",
+        "rolls to knees"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "back_control",
+      "to": "side_control",
+      "action": "recover_to",
+      "conditions": [
+        "opponent rolls through",
+        "escapes to side"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "back_control",
+      "to": "back_escape_roll",
+      "action": "escape_with",
+      "conditions": [
+        "turn into choking arm",
+        "chin tucked",
+        "roll through to face opponent"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "turtle",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "top player inserts hooks",
+        "seatbelt secured"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "turtle",
+      "to": "closed_guard",
+      "action": "recover_to",
+      "conditions": [
+        "defender rolls to back",
+        "guard closed"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "turtle",
+      "to": "darce_choke",
+      "action": "attack_with",
+      "conditions": [
+        "top player arm over neck",
+        "roll initiated"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "turtle",
+      "to": "guillotine",
+      "action": "attack_with",
+      "conditions": [
+        "top player reaches under for chin"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "turtle",
+      "to": "clock_choke",
+      "action": "attack_with",
+      "conditions": [
+        "collar grip secured",
+        "hip driven into side of head",
+        "gi required"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "turtle",
+      "to": "peruvian_necktie",
+      "action": "attack_with",
+      "conditions": [
+        "front headlock established",
+        "leg over back",
+        "twisting pressure applied"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "turtle",
+      "to": "baseball_bat_choke",
+      "action": "attack_with",
+      "conditions": [
+        "collar grips set from turtle",
+        "roll to finish",
+        "gi required"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "turtle",
+      "to": "granby_roll",
+      "action": "escape_with",
+      "conditions": [
+        "shoulder roll initiated",
+        "inversion through",
+        "guard re-established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "turtle",
+      "to": "standing",
+      "action": "recover_to",
+      "conditions": [
+        "defender bases up",
+        "stands up"
+      ],
+      "confidence": "medium",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "knee_on_belly",
+      "to": "mount",
+      "action": "transition_to",
+      "conditions": [
+        "advancing knee over to full mount"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "knee_on_belly",
+      "to": "side_control",
+      "action": "transition_to",
+      "conditions": [
+        "retreating knee down"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "knee_on_belly",
+      "to": "armbar",
+      "action": "attack_with",
+      "conditions": [
+        "opponent frames up",
+        "arm isolated and extended"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "knee_on_belly",
+      "to": "darce_choke",
+      "action": "attack_with",
+      "conditions": [
+        "arm over neck",
+        "kneeling position allows entry"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "knee_on_belly",
+      "to": "half_guard",
+      "action": "recover_to",
+      "conditions": [
+        "bottom player recovers knee shield"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "x_guard_sweep",
+      "to": "standing",
+      "action": "follow_up",
+      "conditions": [
+        "opponent elevated and reset to feet"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "running_man_escape",
+      "action": "escape_with",
+      "conditions": [
+        "heel not yet hooked",
+        "roll away from entanglement"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "running_man_escape",
+      "action": "escape_with",
+      "conditions": [
+        "inside position not fully locked",
+        "roll to disengage"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "sprawl",
+      "to": "turtle",
+      "action": "follow_up",
+      "conditions": [
+        "takedown stopped",
+        "opponent on all fours"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "sprawl",
+      "to": "guillotine",
+      "action": "attack_with",
+      "conditions": [
+        "head accessible after sprawl",
+        "arm around neck"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "sprawl",
+      "to": "back_control",
+      "action": "follow_up",
+      "conditions": [
+        "opponent's back exposed from failed shot",
+        "hooks inserted"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "double_leg_takedown",
+      "to": "sprawl",
+      "action": "counters",
+      "conditions": [
+        "defender hips driven down and back",
+        "head pushed to mat"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "single_leg_takedown",
+      "to": "sprawl",
+      "action": "counters",
+      "conditions": [
+        "defender sprawls hip to mat",
+        "leg freed"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "triangle_choke",
+      "to": "stack_defense",
+      "action": "counters",
+      "conditions": [
+        "hips stacked over defender's head",
+        "posture regained"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "armbar",
+      "to": "stack_defense",
+      "action": "counters",
+      "conditions": [
+        "hips stacked",
+        "arm bent to relieve pressure"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "kimura",
+      "to": "arm_tuck",
+      "action": "counters",
+      "conditions": [
+        "arm pulled tight to body before grip set",
+        "frame created"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "americana",
+      "to": "arm_tuck",
+      "action": "counters",
+      "conditions": [
+        "arm pulled to chest before lock established"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "torreando_pass",
+      "to": "frame_and_shrimp",
+      "action": "counters",
+      "conditions": [
+        "frame on passing hip",
+        "shrimp away",
+        "guard re-established"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "knee_slice_pass",
+      "to": "frame_and_shrimp",
+      "action": "counters",
+      "conditions": [
+        "frame blocks knee",
+        "shrimp creates space"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "guard_pulling_attempt",
+      "to": "posture_up",
+      "action": "counters",
+      "conditions": [
+        "top player postures and prevents guard pull",
+        "pressure applied"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "shrimp_escape",
+      "to": "half_guard",
+      "action": "follow_up",
+      "conditions": [
+        "space created",
+        "knee recovered inside"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "shrimp_escape",
+      "to": "closed_guard",
+      "action": "follow_up",
+      "conditions": [
+        "full shrimp completed",
+        "legs close around waist"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "elbow_knee_escape",
+      "to": "half_guard",
+      "action": "follow_up",
+      "conditions": [
+        "elbow-knee escape completes",
+        "knee shield recovered"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "back_escape_roll",
+      "to": "closed_guard",
+      "action": "follow_up",
+      "conditions": [
+        "roll complete",
+        "opponent now in guard"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "back_escape_roll",
+      "to": "half_guard",
+      "action": "follow_up",
+      "conditions": [
+        "partial roll",
+        "half guard recovered"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "granby_roll",
+      "to": "closed_guard",
+      "action": "follow_up",
+      "conditions": [
+        "granby complete",
+        "guard recovered"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "granby_roll",
+      "to": "open_guard",
+      "action": "follow_up",
+      "conditions": [
+        "partial granby",
+        "open guard established"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "running_man_escape",
+      "to": "standing",
+      "action": "follow_up",
+      "conditions": [
+        "leg entanglement cleared",
+        "stand to base"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "kuzushi",
+      "to": "butterfly_sweep",
+      "action": "requires",
+      "conditions": [
+        "off-balance achieved before hook lift"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "kuzushi",
+      "to": "judo_throw",
+      "action": "requires",
+      "conditions": [
+        "kuzushi is first stage of throw"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "kuzushi",
+      "to": "hip_throw",
+      "action": "requires",
+      "conditions": [
+        "balance broken before hip insertion"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "hip_escape_movement",
+      "to": "shrimp_escape",
+      "action": "requires",
+      "conditions": [
+        "hip escape movement is the foundation of the shrimp"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "hip_escape_movement",
+      "to": "elbow_knee_escape",
+      "action": "requires",
+      "conditions": [
+        "hip escape creates space for knee recovery"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "bridge_movement",
+      "to": "elbow_knee_escape",
+      "action": "requires",
+      "conditions": [
+        "bridge unbalances top player allowing escape"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "framing",
+      "to": "shrimp_escape",
+      "action": "requires",
+      "conditions": [
+        "frames create space for the shrimp movement"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "framing",
+      "to": "frame_and_shrimp",
+      "action": "requires",
+      "conditions": [
+        "frames are the first component of this counter"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "base_and_posture",
+      "to": "stack_defense",
+      "action": "requires",
+      "conditions": [
+        "posture regained before stack is effective"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "grips",
+      "to": "lasso_guard",
+      "action": "requires",
+      "conditions": [
+        "sleeve grip is prerequisite for lasso guard entry"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "grips",
+      "to": "spider_guard",
+      "action": "requires",
+      "conditions": [
+        "sleeve grips required to maintain spider guard"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "weight_distribution",
+      "to": "scissor_sweep",
+      "action": "requires",
+      "conditions": [
+        "opponent's weight must be forward for sweep to work"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "weight_distribution",
+      "to": "flower_sweep",
+      "action": "requires",
+      "conditions": [
+        "opponent's weight shifted to one side for the pendulum"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "marcelo_garcia",
+      "to": "marcelo_butterfly_back_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "keenan_cornelius",
+      "to": "keenan_lapel_guard_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_gracie",
+      "to": "roger_closed_guard_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_faria",
+      "to": "bernardo_half_guard_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "gordon_back_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "john_danaher",
+      "to": "dds_leg_lock_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "dds_leg_lock_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mikey_musumeci",
+      "to": "dds_leg_lock_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_butterfly_back_system",
+      "to": "butterfly_guard",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_butterfly_back_system",
+      "to": "back_control",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "keenan_lapel_guard_system",
+      "to": "worm_guard",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "keenan_lapel_guard_system",
+      "to": "de_la_riva_guard",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_closed_guard_system",
+      "to": "closed_guard",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_closed_guard_system",
+      "to": "mount",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_half_guard_system",
+      "to": "half_guard",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_half_guard_system",
+      "to": "deep_half_guard",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_back_system",
+      "to": "back_control",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "ashi_garami",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "fifty_fifty",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_butterfly_back_system",
+      "to": "butterfly_sweep",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_butterfly_back_system",
+      "to": "rear_naked_choke",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_butterfly_back_system",
+      "to": "guillotine",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "keenan_lapel_guard_system",
+      "to": "triangle_choke",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "keenan_lapel_guard_system",
+      "to": "omoplata",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_closed_guard_system",
+      "to": "triangle_choke",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_closed_guard_system",
+      "to": "armbar",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_half_guard_system",
+      "to": "over_under_pass",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_half_guard_system",
+      "to": "waiter_sweep",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_back_system",
+      "to": "rear_naked_choke",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "heel_hook",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "ankle_lock",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "kneebar",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_garcia",
+      "to": "guillotine",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_garcia",
+      "to": "rear_naked_choke",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "marcelo_garcia",
+      "to": "butterfly_guard",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "heel_hook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "rear_naked_choke",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "back_control",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "keenan_cornelius",
+      "to": "worm_guard",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_gracie",
+      "to": "triangle_choke",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_gracie",
+      "to": "armbar",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "roger_gracie",
+      "to": "mount",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mikey_musumeci",
+      "to": "closed_guard",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mikey_musumeci",
+      "to": "heel_hook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_faria",
+      "to": "over_under_pass",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "bernardo_faria",
+      "to": "deep_half_guard",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "leandro_lo",
+      "to": "knee_on_belly",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "romulo_barral",
+      "to": "spider_guard",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "romulo_barral",
+      "to": "de_la_riva_guard",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "john_danaher",
+      "action": "coached_by",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "mikey_musumeci",
+      "to": "john_danaher",
+      "action": "coached_by",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    }
   ]
 }

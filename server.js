@@ -74,9 +74,9 @@ Cypher syntax rules:
 - String properties use double quotes: {id: "closed_guard"}
 
 Example valid queries:
-MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode) RETURN b.name, r.difficulty, r.conditions
-MATCH (a:BJJNode {id: "mount"})-[:ESCAPE_WITH]->(e:BJJNode) RETURN e.name, e.description
-MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a.name, a.description
+MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode) RETURN b, r.difficulty, r.conditions
+MATCH (a:BJJNode {id: "mount"})-[:ESCAPE_WITH]->(e:BJJNode) RETURN e
+MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a
 MATCH (c:BJJNode {id: "marcelo_garcia"})-[:KNOWN_FOR|DEVELOPED]->(t:BJJNode) RETURN c.name, t.name, t.type, type(r) AS rel
 MATCH (s:BJJNode {type: "system"})-[:CENTERS_ON|FEATURES]->(t:BJJNode) WHERE s.id CONTAINS "marcelo" RETURN s.name, t.name, t.type`;
 
@@ -128,8 +128,8 @@ async function seedDatabase() {
 
     for (const node of graph.nodes) {
       await session.run(
-        'MERGE (n:BJJNode {id: $id}) SET n.name = $name, n.type = $type, n.description = $description, n.gi_requirement = $gi_requirement',
-        { id: node.id, name: node.name, type: node.type, description: node.description, gi_requirement: node.gi_requirement || 'both' }
+        'MERGE (n:BJJNode {id: $id}) SET n.name = $name, n.type = $type, n.description = $description, n.gi_requirement = $gi_requirement, n.video_url = $video_url',
+        { id: node.id, name: node.name, type: node.type, description: node.description, gi_requirement: node.gi_requirement || 'both', video_url: node.video_url || null }
       );
     }
 
@@ -186,6 +186,15 @@ app.post('/api/chat', async (req, res) => {
     // Step 3: Stream the answer
     send('status', { text: 'Answering...' });
     await streamAnswer(question, records, token => send('token', { text: token }));
+
+    // Send video URLs for techniques mentioned in results
+    const videos = records
+      .flatMap(r => Object.values(r))
+      .filter(v => v && typeof v === 'object' && v.video_url)
+      .map(v => ({ name: v.name, url: v.video_url }))
+      .filter((v, i, a) => a.findIndex(x => x.url === v.url) === i)
+      .slice(0, 3);
+    if (videos.length) send('videos', { videos });
 
     send('done', {});
   } catch (err) {
