@@ -187,14 +187,23 @@ app.post('/api/chat', async (req, res) => {
     send('status', { text: 'Answering...' });
     await streamAnswer(question, records, token => send('token', { text: token }));
 
-    // Send video URLs for techniques mentioned in results
-    const videos = records
-      .flatMap(r => Object.values(r))
-      .filter(v => v && typeof v === 'object' && v.video_url)
-      .map(v => ({ name: v.name, url: v.video_url }))
-      .filter((v, i, a) => a.findIndex(x => x.url === v.url) === i)
-      .slice(0, 3);
-    if (videos.length) send('videos', { videos });
+    // Look up video URLs by matching node names found in the results
+    const namesInResults = [...new Set(
+      records.flatMap(r => Object.values(r)).filter(v => typeof v === 'string' && v.length > 2)
+    )];
+    if (namesInResults.length) {
+      const videoSession = driver.session();
+      try {
+        const videoResult = await videoSession.run(
+          'MATCH (n:BJJNode) WHERE n.name IN $names AND n.video_url IS NOT NULL RETURN n.name AS name, n.video_url AS url',
+          { names: namesInResults }
+        );
+        const videos = videoResult.records.map(r => ({ name: r.get('name'), url: r.get('url') })).slice(0, 3);
+        if (videos.length) send('videos', { videos });
+      } finally {
+        await videoSession.close();
+      }
+    }
 
     send('done', {});
   } catch (err) {
