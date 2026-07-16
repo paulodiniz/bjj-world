@@ -31,12 +31,17 @@ function isRateLimited(ip) {
   return false;
 }
 
-const SCHEMA_CONTEXT = `You are a BJJ (Brazilian Jiu-Jitsu) knowledge assistant with access to a graph database.
+const SCHEMA_CONTEXT = `You are a BJJ (Brazilian Jiu-Jitsu) knowledge assistant with access to a Neo4j graph database.
 
-Node types: position, submission, sweep, guard_pass, takedown.
-Node properties: id, name, type, description.
+IMPORTANT: All nodes have the label :BJJNode. There are NO other labels.
+Node properties: id (snake_case e.g. "closed_guard", "triangle_choke"), name, type, description.
+Node types (stored as the 'type' property, NOT as labels): position, submission, sweep, guard_pass, takedown.
 
-Relationship types:
+Example node ids: standing, closed_guard, open_guard, half_guard, side_control, mount, back_control,
+triangle_choke, armbar, kimura, americana, guillotine, rear_naked_choke, omoplata,
+scissor_sweep, butterfly_sweep, torreando_pass, knee_slice_pass, double_leg_takedown.
+
+Relationship types (always uppercase):
 - ATTACK_WITH: can attack from this position with this technique
 - TRANSITION_TO: can move to this position
 - SWEEP_WITH: can sweep from this position
@@ -44,7 +49,11 @@ Relationship types:
 - FOLLOW_UP: natural follow-up after this technique
 - RECOVER_TO: can recover to this position
 
-Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).`;
+Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).
+
+Example valid query:
+MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode)
+RETURN b.name, b.description, r.difficulty, r.conditions`;
 
 async function generateCypher(question) {
   const msg = await anthropic.messages.create({

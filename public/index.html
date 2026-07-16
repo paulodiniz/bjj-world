@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BJJ World</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #e5e5e5; height: 100vh; display: flex; flex-direction: column; }
@@ -92,14 +93,15 @@
               }
               cypherPre.textContent = event.text;
             } else if (event.type === 'token') {
-              const span = cypherPre
-                ? answerDiv.childNodes[0]
-                : answerDiv;
-              if (!answerDiv.firstChild || answerDiv.firstChild === cypherPre) {
-                const textNode = document.createTextNode('');
-                answerDiv.insertBefore(textNode, cypherPre || null);
-              }
-              answerDiv.firstChild.textContent += event.text;
+              if (!answerDiv.dataset.raw) answerDiv.dataset.raw = '';
+              answerDiv.dataset.raw += event.text;
+              const textEl = answerDiv.querySelector('.answer-text') || (() => {
+                const el = document.createElement('div');
+                el.className = 'answer-text';
+                answerDiv.insertBefore(el, cypherPre || null);
+                return el;
+              })();
+              textEl.innerHTML = marked.parse(answerDiv.dataset.raw);
               messages.scrollTop = messages.scrollHeight;
             } else if (event.type === 'done') {
               statusDiv.remove();
