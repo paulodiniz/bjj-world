@@ -35,25 +35,33 @@ const SCHEMA_CONTEXT = `You are a BJJ (Brazilian Jiu-Jitsu) knowledge assistant 
 
 IMPORTANT: All nodes have the label :BJJNode. There are NO other labels.
 Node properties: id (snake_case e.g. "closed_guard", "triangle_choke"), name, type, description.
-Node types (stored as the 'type' property, NOT as labels): position, submission, sweep, guard_pass, takedown.
-
-Example node ids: standing, closed_guard, open_guard, half_guard, side_control, mount, back_control,
-triangle_choke, armbar, kimura, americana, guillotine, rear_naked_choke, omoplata,
-scissor_sweep, butterfly_sweep, torreando_pass, knee_slice_pass, double_leg_takedown.
+Node types (stored as the 'type' property, NOT as labels):
+- position: guard and dominant positions (closed_guard, mount, back_control, worm_guard, fifty_fifty, ashi_garami, dogfight, z_guard, lasso_guard, rubber_guard, reverse_de_la_riva, etc.)
+- submission: finishing techniques (armbar, triangle_choke, heel_hook, north_south_choke, clock_choke, ezekiel_choke, gogoplata, twister, kneebar, banana_split, calf_slicer, etc.)
+- sweep: techniques to reverse position (scissor_sweep, butterfly_sweep, waiter_sweep, sickle_sweep, lasso_sweep, etc.)
+- guard_pass: techniques to pass the guard (torreando_pass, knee_slice_pass, x_pass, cartwheel_pass, smash_pass, long_step_pass, etc.)
+- takedown: standing techniques (double_leg_takedown, single_leg_takedown, judo_throw, hip_throw, foot_sweep, firemans_carry)
+- escape: defensive techniques to escape bad positions (elbow_knee_escape, shrimp_escape, back_escape_roll, granby_roll, running_man_escape)
+- counter: techniques that counter specific attacks (sprawl, posture_up, arm_tuck, stack_defense, frame_and_shrimp)
+- concept: fundamental principles (kuzushi, hip_escape_movement, base_and_posture, framing, grips, weight_distribution, bridge_movement)
 
 Relationship types (always uppercase):
 - ATTACK_WITH: can attack from this position with this technique
 - TRANSITION_TO: can move to this position
-- SWEEP_WITH: can sweep from this position
-- PASS_WITH: can pass guard with this technique
+- SWEEP_WITH: can sweep using this technique
+- PASS_WITH: can pass guard using this technique
 - FOLLOW_UP: natural follow-up after this technique
 - RECOVER_TO: can recover to this position
+- ESCAPE_WITH: can escape from this position using this technique
+- COUNTERS: this technique counters that technique
+- REQUIRES: this technique requires this concept/movement
 
 Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).
 
-Example valid query:
-MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode)
-RETURN b.name, b.description, r.difficulty, r.conditions`;
+Example valid queries:
+MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode) RETURN b.name, r.difficulty, r.conditions
+MATCH (a:BJJNode {id: "mount"})-[:ESCAPE_WITH]->(e:BJJNode) RETURN e.name, e.description
+MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a.name, a.description`;
 
 async function generateCypher(question) {
   const msg = await anthropic.messages.create({
@@ -81,18 +89,19 @@ async function streamAnswer(question, records, onToken) {
 }
 
 async function seedDatabase() {
+  const graph = JSON.parse(fs.readFileSync(path.join(__dirname, 'graph.json'), 'utf8'));
   const session = driver.session();
   try {
     const result = await session.run('MATCH (n:BJJNode) RETURN count(n) as count');
     const count = result.records[0].get('count').toNumber();
-    if (count > 0) {
-      console.log(`Database already has ${count} nodes, skipping seed`);
+
+    if (count === graph.nodes.length) {
+      console.log(`Database up to date with ${count} nodes`);
       return;
     }
 
-    console.log('Seeding database from graph.json...');
-    const graph = JSON.parse(fs.readFileSync(path.join(__dirname, 'graph.json'), 'utf8'));
-
+    console.log(`Database has ${count} nodes, graph.json has ${graph.nodes.length} — reseeding...`);
+    await session.run('MATCH (n) DETACH DELETE n');
     await session.run('CREATE CONSTRAINT bjj_node_id IF NOT EXISTS FOR (n:BJJNode) REQUIRE n.id IS UNIQUE');
 
     for (const node of graph.nodes) {
@@ -106,8 +115,9 @@ async function seedDatabase() {
       const relType = edge.action.toUpperCase();
       await session.run(
         `MATCH (a:BJJNode {id: $from}), (b:BJJNode {id: $to})
+         WHERE a IS NOT NULL AND b IS NOT NULL
          CREATE (a)-[:${relType} {conditions: $conditions, confidence: $confidence, difficulty: $difficulty}]->(b)`,
-        { from: edge.from, to: edge.to, conditions: edge.conditions, confidence: edge.confidence, difficulty: edge.difficulty }
+        { from: edge.from, to: edge.to, conditions: edge.conditions || [], confidence: edge.confidence, difficulty: edge.difficulty }
       );
     }
 
