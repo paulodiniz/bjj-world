@@ -158,6 +158,8 @@ app.post('/api/chat', async (req, res) => {
   const { question } = req.body;
   if (!question) return res.status(400).json({ error: 'question is required' });
 
+  console.log(`[${new Date().toISOString()}] ip=${ip} question="${question}"`);
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
