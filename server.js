@@ -68,10 +68,17 @@ Relationship types (always uppercase):
 
 Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).
 
+Cypher syntax rules:
+- To get a relationship type use type(r), NOT "r type": RETURN type(r) AS relationship_type
+- To filter by multiple relationship types use: -[:TYPE_A|TYPE_B]->
+- String properties use double quotes: {id: "closed_guard"}
+
 Example valid queries:
 MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode) RETURN b.name, r.difficulty, r.conditions
 MATCH (a:BJJNode {id: "mount"})-[:ESCAPE_WITH]->(e:BJJNode) RETURN e.name, e.description
-MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a.name, a.description`;
+MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a.name, a.description
+MATCH (c:BJJNode {id: "marcelo_garcia"})-[:KNOWN_FOR|DEVELOPED]->(t:BJJNode) RETURN c.name, t.name, t.type, type(r) AS rel
+MATCH (s:BJJNode {type: "system"})-[:CENTERS_ON|FEATURES]->(t:BJJNode) WHERE s.id CONTAINS "marcelo" RETURN s.name, t.name, t.type`;
 
 async function generateCypher(question) {
   const msg = await anthropic.messages.create({
