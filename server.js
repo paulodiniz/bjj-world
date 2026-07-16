@@ -67,15 +67,15 @@ async function generateCypher(question) {
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 256,
-    system: `${SCHEMA_CONTEXT}\n\nYour ONLY job is to output a single Cypher query. No explanation. No markdown. No code blocks. No conversational text. If the input is not a BJJ question, output: MATCH (n:BJJNode) RETURN n.name LIMIT 5`,
-    messages: [
-      { role: 'user', content: question },
-      { role: 'assistant', content: 'MATCH' }
-    ]
+    system: SCHEMA_CONTEXT,
+    messages: [{
+      role: 'user',
+      content: `Generate a Cypher query for this BJJ question. Output ONLY the Cypher query, nothing else. If the input is not a BJJ question, return: MATCH (n:BJJNode) RETURN n.name LIMIT 5\n\nQuestion: ${question}`
+    }]
   });
-  const raw = 'MATCH' + msg.content[0].text;
-  const match = raw.match(/(MATCH|WITH|CALL)[\s\S]+/i);
-  return match ? match[0].replace(/```[\s\S]*?```/g, '').trim() : 'MATCH (n:BJJNode) RETURN n.name LIMIT 5';
+  const raw = msg.content[0].text.replace(/```cypher?\n?/gi, '').replace(/```/g, '');
+  const match = raw.match(/(MATCH|WITH|CALL|RETURN)[\s\S]+/i);
+  return match ? match[0].trim() : 'MATCH (n:BJJNode) RETURN n.name LIMIT 5';
 }
 
 async function streamAnswer(question, records, onToken) {
