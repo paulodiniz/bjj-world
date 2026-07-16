@@ -74,14 +74,21 @@
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const lines = decoder.decode(value).split('\n').filter(l => l.startsWith('data: '));
-          for (const line of lines) {
-            const event = JSON.parse(line.slice(6));
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop();
+
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+            let event;
+            try { event = JSON.parse(line.slice(6)); } catch { continue; }
 
             if (event.type === 'status') {
               statusDiv.textContent = event.text;
