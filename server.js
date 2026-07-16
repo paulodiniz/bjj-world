@@ -44,6 +44,11 @@ Node types (stored as the 'type' property, NOT as labels):
 - escape: defensive techniques to escape bad positions (elbow_knee_escape, shrimp_escape, back_escape_roll, granby_roll, running_man_escape)
 - counter: techniques that counter specific attacks (sprawl, posture_up, arm_tuck, stack_defense, frame_and_shrimp)
 - concept: fundamental principles (kuzushi, hip_escape_movement, base_and_posture, framing, grips, weight_distribution, bridge_movement)
+- competitor: famous BJJ practitioners (marcelo_garcia, gordon_ryan, keenan_cornelius, roger_gracie, mikey_musumeci, bernardo_faria, john_danaher, leandro_lo, romulo_barral, andre_galvao)
+- system: named game plans (marcelo_butterfly_back_system, keenan_lapel_guard_system, roger_closed_guard_system, bernardo_half_guard_system, gordon_back_system, dds_leg_lock_system)
+
+Node property gi_requirement: "gi" (gi only), "no_gi" (no-gi focused), "both" (works in both). Default is "both".
+Gi-only techniques include: worm_guard, lasso_guard, spider_guard, bow_and_arrow_choke, baseball_bat_choke, clock_choke, ezekiel_choke.
 
 Relationship types (always uppercase):
 - ATTACK_WITH: can attack from this position with this technique
@@ -55,6 +60,11 @@ Relationship types (always uppercase):
 - ESCAPE_WITH: can escape from this position using this technique
 - COUNTERS: this technique counters that technique
 - REQUIRES: this technique requires this concept/movement
+- DEVELOPED: competitor developed or popularized this system
+- CENTERS_ON: system is built around this position
+- FEATURES: system prominently uses this technique
+- KNOWN_FOR: competitor is known for this technique or position
+- COACHED_BY: competitor was coached by this person
 
 Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).
 
@@ -111,8 +121,8 @@ async function seedDatabase() {
 
     for (const node of graph.nodes) {
       await session.run(
-        'MERGE (n:BJJNode {id: $id}) SET n.name = $name, n.type = $type, n.description = $description',
-        { id: node.id, name: node.name, type: node.type, description: node.description }
+        'MERGE (n:BJJNode {id: $id}) SET n.name = $name, n.type = $type, n.description = $description, n.gi_requirement = $gi_requirement',
+        { id: node.id, name: node.name, type: node.type, description: node.description, gi_requirement: node.gi_requirement || 'both' }
       );
     }
 
