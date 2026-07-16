@@ -50,6 +50,36 @@ async function ollama(systemPrompt, userMessage) {
   return data.message.content;
 }
 
+async function ollamaStream(systemPrompt, userMessage, onToken) {
+  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      stream: true,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ]
+    })
+  });
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const lines = decoder.decode(value).split('\n').filter(l => l.trim());
+    for (const line of lines) {
+      try {
+        const data = JSON.parse(line);
+        if (data.message?.content) onToken(data.message.content);
+      } catch {}
+    }
+  }
+}
+
 async function seedDatabase() {
   const session = driver.session();
   try {
@@ -91,16 +121,24 @@ app.post('/api/chat', async (req, res) => {
   const { question } = req.body;
   if (!question) return res.status(400).json({ error: 'question is required' });
 
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
+
   try {
     // Step 1: Generate Cypher query
+    send('status', { text: 'Generating query...' });
     const cypherRaw = await ollama(
       `${SCHEMA_CONTEXT}\n\nGenerate a single Cypher query to answer the user's BJJ question. Return ONLY the Cypher query with no explanation, no markdown, no code blocks.`,
       question
     );
-
     const cypher = cypherRaw.replace(/```cypher?\n?/gi, '').replace(/```/g, '').trim();
+    send('cypher', { text: cypher });
 
     // Step 2: Run against Neo4j
+    send('status', { text: 'Querying graph...' });
     const session = driver.session();
     let records;
     try {
@@ -110,17 +148,21 @@ app.post('/api/chat', async (req, res) => {
       await session.close();
     }
 
-    // Step 3: Format the answer
-    const answer = await ollama(
+    // Step 3: Stream the answer
+    send('status', { text: 'Answering...' });
+    await ollamaStream(
       'You are a helpful BJJ coach. Answer the user\'s question clearly and concisely based on the graph data provided. Focus on practical advice.',
-      `Question: ${question}\n\nGraph data: ${JSON.stringify(records, null, 2)}`
+      `Question: ${question}\n\nGraph data: ${JSON.stringify(records, null, 2)}`,
+      token => send('token', { text: token })
     );
 
-    res.json({ answer, cypher, records });
+    send('done', {});
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    send('error', { text: err.message });
   }
+
+  res.end();
 });
 
 async function start() {
