@@ -18,6 +18,7 @@ const SEARCH_TERMS = {
   concept: n => `${n.name} BJJ concept explained`,
   competitor: n => `${n.name} BJJ highlights submission`,
   system: n => `${n.name.replace("'s", "")} BJJ system explained`,
+  technique: n => `${n.name} BJJ tutorial`,
 };
 
 async function searchYouTube(query) {

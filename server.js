@@ -68,6 +68,7 @@ Node types (stored as the 'type' property, NOT as labels):
 - takedown: standing techniques (double_leg_takedown, single_leg_takedown, judo_throw, hip_throw, foot_sweep, firemans_carry)
 - escape: defensive techniques to escape bad positions (elbow_knee_escape, shrimp_escape, back_escape_roll, granby_roll, running_man_escape)
 - counter: techniques that counter specific attacks (sprawl, posture_up, arm_tuck, stack_defense, frame_and_shrimp)
+- technique: setups and entries that don't fit other categories (arm_drag, snap_down, body_lock_takedown, guard_pull)
 - concept: fundamental principles (kuzushi, hip_escape_movement, base_and_posture, framing, grips, weight_distribution, bridge_movement)
 - competitor: famous BJJ practitioners (marcelo_garcia, gordon_ryan, keenan_cornelius, roger_gracie, mikey_musumeci, bernardo_faria, john_danaher, leandro_lo, romulo_barral, andre_galvao)
 - system: named game plans (marcelo_butterfly_back_system, keenan_lapel_guard_system, roger_closed_guard_system, bernardo_half_guard_system, gordon_back_system, dds_leg_lock_system)
