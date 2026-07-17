@@ -97,6 +97,7 @@ Cypher syntax rules:
 - To get a relationship type use type(r), NOT "r type": RETURN type(r) AS relationship_type
 - To filter by multiple relationship types use: -[:TYPE_A|TYPE_B]->
 - String properties use double quotes: {id: "closed_guard"}
+- UNION requires ALL sub-queries to return the exact same column names — if unsure, avoid UNION and use a single MATCH with OR or multiple relationship types instead
 
 Example valid queries:
 MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode) RETURN b, r.difficulty, r.conditions
