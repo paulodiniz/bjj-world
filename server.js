@@ -206,15 +206,29 @@ app.post('/api/chat', async (req, res) => {
     const cypher = await generateCypher(question, history);
     send('cypher', { text: cypher });
 
-    // Step 2: Run against Neo4j
+    // Step 2: Run against Neo4j (with one retry on syntax error)
     send('status', { text: 'Querying graph...' });
-    const session = driver.session();
     let records;
-    try {
-      const result = await session.run(cypher);
-      records = result.records.map(r => r.toObject());
-    } finally {
-      await session.close();
+    let finalCypher = cypher;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const session = driver.session();
+      try {
+        const result = await session.run(finalCypher);
+        records = result.records.map(r => r.toObject());
+        break;
+      } catch (err) {
+        await session.close();
+        if (attempt === 1) throw err;
+        // Ask Claude to fix the broken query
+        const fixed = await generateCypher(
+          `The following Cypher query failed with this error: "${err.message}"\n\nBroken query:\n${finalCypher}\n\nFix the query. Original question: ${question}`,
+          history
+        );
+        finalCypher = fixed;
+        send('cypher', { text: finalCypher });
+      } finally {
+        try { await session.close(); } catch {}
+      }
     }
 
     // Step 3: Stream the answer
@@ -222,8 +236,8 @@ app.post('/api/chat', async (req, res) => {
     await streamAnswer(question, records, token => send('token', { text: token }));
 
     // Context-aware YouTube search — skip if fallback query was used
-    if (YOUTUBE_API_KEY && cypher !== FALLBACK_QUERY) {
-      const sourceMatch = cypher.match(/\{id:\s*["'](\w+)["']\}/);
+    if (YOUTUBE_API_KEY && finalCypher !== FALLBACK_QUERY) {
+      const sourceMatch = finalCypher.match(/\{id:\s*["'](\w+)["']\}/);
       const sourceId = sourceMatch ? sourceMatch[1] : null;
 
       const sourceSession = driver.session();
