@@ -131,7 +131,7 @@ async function streamAnswer(question, records, onToken) {
   const stream = await anthropic.messages.stream({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
-    system: 'You are a helpful BJJ coach. Answer the user\'s question clearly and concisely based on the graph data provided. Focus on practical advice.',
+    system: 'You are a helpful BJJ coach embedded in an app that automatically shows relevant YouTube videos alongside your answers. Never say you cannot show videos — the app handles that. Answer questions clearly and concisely based on the graph data provided. Focus on practical advice.',
     messages: [{ role: 'user', content: `Question: ${question}\n\nGraph data: ${JSON.stringify(records, null, 2)}` }]
   });
 
@@ -201,6 +201,33 @@ app.post('/api/chat', async (req, res) => {
   const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
 
   try {
+    // Detect video-only requests — search YouTube from history context instead of querying graph
+    const isVideoRequest = /\b(video|videos|show me|watch|youtube)\b/i.test(question);
+    if (isVideoRequest && YOUTUBE_API_KEY && history.length > 0) {
+      send('status', { text: 'Finding videos...' });
+      const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
+      if (lastAssistant) {
+        const videoSession = driver.session();
+        try {
+          const allNames = await videoSession.run('MATCH (n:BJJNode) RETURN n.name AS name');
+          const knownNames = allNames.records.map(r => r.get('name'));
+          const mentioned = knownNames.filter(n => lastAssistant.content.includes(n));
+          const videos = (await Promise.all(
+            mentioned.slice(0, 3).map(async name => {
+              const url = await searchYouTube(name, null);
+              return url ? { name, url } : null;
+            })
+          )).filter(Boolean);
+          if (videos.length) send('videos', { videos });
+        } finally {
+          await videoSession.close();
+        }
+      }
+      send('token', { text: 'Here are the videos for the techniques we just discussed.' });
+      send('done', {});
+      return;
+    }
+
     // Step 1: Generate Cypher query
     send('status', { text: 'Generating query...' });
     const cypher = await generateCypher(question, history);
