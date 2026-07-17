@@ -106,19 +106,25 @@ MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a
 MATCH (c:BJJNode {id: "marcelo_garcia"})-[:KNOWN_FOR|DEVELOPED]->(t:BJJNode) RETURN c.name, t.name, t.type, type(r) AS rel
 MATCH (s:BJJNode {type: "system"})-[:CENTERS_ON|FEATURES]->(t:BJJNode) WHERE s.id CONTAINS "marcelo" RETURN s.name, t.name, t.type`;
 
-async function generateCypher(question) {
+const FALLBACK_QUERY = 'MATCH (n:BJJNode) RETURN n.name LIMIT 5';
+
+async function generateCypher(question, history = []) {
+  const messages = [
+    ...history,
+    {
+      role: 'user',
+      content: `Generate a Cypher query for this BJJ question. Output ONLY the Cypher query, nothing else. If the input is not a BJJ question, return: ${FALLBACK_QUERY}\n\nQuestion: ${question}`
+    }
+  ];
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 256,
     system: SCHEMA_CONTEXT,
-    messages: [{
-      role: 'user',
-      content: `Generate a Cypher query for this BJJ question. Output ONLY the Cypher query, nothing else. If the input is not a BJJ question, return: MATCH (n:BJJNode) RETURN n.name LIMIT 5\n\nQuestion: ${question}`
-    }]
+    messages
   });
   const raw = msg.content[0].text.replace(/```cypher?\n?/gi, '').replace(/```/g, '');
   const match = raw.match(/(MATCH|WITH|CALL|RETURN)[\s\S]+/i);
-  return match ? match[0].trim() : 'MATCH (n:BJJNode) RETURN n.name LIMIT 5';
+  return match ? match[0].trim() : FALLBACK_QUERY;
 }
 
 async function streamAnswer(question, records, onToken) {
@@ -183,7 +189,7 @@ app.post('/api/chat', async (req, res) => {
     return res.status(429).json({ error: 'Too many requests. Try again later.' });
   }
 
-  const { question } = req.body;
+  const { question, history = [] } = req.body;
   if (!question) return res.status(400).json({ error: 'question is required' });
 
   console.log(`[${new Date().toISOString()}] ip=${ip} question="${question}"`);
@@ -197,7 +203,7 @@ app.post('/api/chat', async (req, res) => {
   try {
     // Step 1: Generate Cypher query
     send('status', { text: 'Generating query...' });
-    const cypher = await generateCypher(question);
+    const cypher = await generateCypher(question, history);
     send('cypher', { text: cypher });
 
     // Step 2: Run against Neo4j
@@ -215,8 +221,8 @@ app.post('/api/chat', async (req, res) => {
     send('status', { text: 'Answering...' });
     await streamAnswer(question, records, token => send('token', { text: token }));
 
-    // Context-aware YouTube search using technique name + source position from cypher
-    if (YOUTUBE_API_KEY) {
+    // Context-aware YouTube search — skip if fallback query was used
+    if (YOUTUBE_API_KEY && cypher !== FALLBACK_QUERY) {
       const sourceMatch = cypher.match(/\{id:\s*["'](\w+)["']\}/);
       const sourceId = sourceMatch ? sourceMatch[1] : null;
 

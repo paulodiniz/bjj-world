@@ -129,6 +129,7 @@
     const chatInput = document.getElementById('chat-input');
     const chatBtn = document.getElementById('chat-btn');
     const messages = document.getElementById('messages');
+    const conversationHistory = []; // [{role, content}]
 
     function addMsg(text, role) {
       const div = document.createElement('div');
@@ -146,6 +147,7 @@
       chatInput.value = '';
       chatBtn.disabled = true;
       addMsg(question, 'user');
+      conversationHistory.push({ role: 'user', content: question });
       const statusDiv = addMsg('', 'thinking');
       const answerDiv = addMsg('', 'assistant');
       let cypherPre = null;
@@ -155,7 +157,7 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question })
+          body: JSON.stringify({ question, history: conversationHistory.slice(-6) })
         });
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -195,6 +197,7 @@
               answerDiv.appendChild(div);
             } else if (event.type === 'done') {
               statusDiv.remove();
+              if (buffer) conversationHistory.push({ role: 'assistant', content: buffer });
             } else if (event.type === 'error') {
               statusDiv.remove();
               answerDiv.textContent = `Error: ${event.text}`;
