@@ -17,6 +17,31 @@ const driver = neo4j.driver(
 );
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+
+// Cache to avoid re-searching same technique+position combo
+const videoCache = new Map();
+
+async function searchYouTube(technique, sourcePosition) {
+  const query = sourcePosition
+    ? `${technique} from ${sourcePosition} BJJ tutorial`
+    : `${technique} BJJ tutorial`;
+  const cacheKey = query.toLowerCase();
+  if (videoCache.has(cacheKey)) return videoCache.get(cacheKey);
+  if (!YOUTUBE_API_KEY) return null;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?q=${encodeURIComponent(query)}&type=video&part=snippet&maxResults=1&key=${YOUTUBE_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const videoId = data.items?.[0]?.id?.videoId;
+    const result = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
+    videoCache.set(cacheKey, result);
+    return result;
+  } catch {
+    return null;
+  }
+}
 
 // Simple in-memory rate limiter: 20 requests per IP per hour
 const rateLimiter = new Map();
@@ -189,18 +214,39 @@ app.post('/api/chat', async (req, res) => {
     send('status', { text: 'Answering...' });
     await streamAnswer(question, records, token => send('token', { text: token }));
 
-    // Look up video URLs by matching node names found in the results
-    const namesInResults = [...new Set(
-      records.flatMap(r => Object.values(r)).filter(v => typeof v === 'string' && v.length > 2)
-    )];
-    if (namesInResults.length) {
+    // Context-aware YouTube search using technique name + source position from cypher
+    if (YOUTUBE_API_KEY) {
+      const sourceMatch = cypher.match(/\{id:\s*["'](\w+)["']\}/);
+      const sourceId = sourceMatch ? sourceMatch[1] : null;
+
+      const sourceSession = driver.session();
+      let sourceName = null;
+      try {
+        if (sourceId) {
+          const r = await sourceSession.run('MATCH (n:BJJNode {id: $id}) RETURN n.name AS name', { id: sourceId });
+          sourceName = r.records[0]?.get('name') || null;
+        }
+      } finally {
+        await sourceSession.close();
+      }
+
+      const techniqueNames = [...new Set(
+        records.flatMap(r => Object.values(r)).filter(v => typeof v === 'string' && v.length > 3)
+      )];
+
       const videoSession = driver.session();
       try {
-        const videoResult = await videoSession.run(
-          'MATCH (n:BJJNode) WHERE n.name IN $names AND n.video_url IS NOT NULL RETURN n.name AS name, n.video_url AS url',
-          { names: namesInResults }
+        const matchResult = await videoSession.run(
+          'MATCH (n:BJJNode) WHERE n.name IN $names RETURN n.name AS name',
+          { names: techniqueNames }
         );
-        const videos = videoResult.records.map(r => ({ name: r.get('name'), url: r.get('url') })).slice(0, 3);
+        const validNames = matchResult.records.map(r => r.get('name')).slice(0, 3);
+        const videos = (await Promise.all(
+          validNames.map(async name => {
+            const url = await searchYouTube(name, sourceName);
+            return url ? { name, url } : null;
+          })
+        )).filter(Boolean);
         if (videos.length) send('videos', { videos });
       } finally {
         await videoSession.close();
