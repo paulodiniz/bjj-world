@@ -1160,6 +1160,102 @@
       "description": "Standard judo grip configuration controlling one sleeve and the collar/lapel to enable throws.",
       "gi_requirement": "gi",
       "video_url": null
+    },
+    {
+      "id": "underhook_control_concept",
+      "name": "Underhook Control",
+      "type": "concept",
+      "description": "The act of threading your arm under an opponent's armpit to control their upper body, hip, and posture. Foundational for wrestling, half guard, and passing.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "whizzer",
+      "name": "Whizzer (Overhook Counter)",
+      "type": "counter",
+      "description": "The overhook counter to an opponent's underhook, used to defend takedowns and half guard passes by controlling the shoulder and creating leverage.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "half_guard_underhook",
+      "name": "Half Guard Underhook",
+      "type": "position",
+      "description": "Bottom half guard variation where the bottom player secures a deep underhook on the top player, enabling sweeps and back takes.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "old_school_sweep",
+      "name": "Old School Sweep",
+      "type": "sweep",
+      "description": "Classic half guard sweep from underhook control where the bottom player hooks the top player's far ankle and rolls them over the shoulder.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "plan_b_back_take",
+      "name": "Plan B Back Take",
+      "type": "technique",
+      "description": "Coming up from half guard with an underhook to take the back when the opponent pushes into you and prevents the sweep.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "dogfight_sweep",
+      "name": "Dogfight Sweep",
+      "type": "sweep",
+      "description": "Sweep from the dogfight position (up on the elbow with underhook) driving into the opponent to roll them over.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "underhook_pass",
+      "name": "Underhook Guard Pass",
+      "type": "guard_pass",
+      "description": "Passing sequence where the top player secures a deep underhook on the far side, controlling the hip and shoulder to flatten and pass.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "shoulder_pressure",
+      "name": "Shoulder Pressure",
+      "type": "concept",
+      "description": "Driving the shoulder into the opponent's jaw or chest, often combined with an underhook, to break posture and prevent recovery.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "underhook_snap_down",
+      "name": "Underhook to Snap Down",
+      "type": "technique",
+      "description": "Wrestling sequence using an underhook to break the opponent's posture and snap them down to front headlock or takedown.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "duck_under_from_underhook",
+      "name": "Duck Under from Underhook",
+      "type": "takedown",
+      "description": "Wrestling takedown where the underhook is used to elevate the opponent's arm and dip under to the back or side.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "underhook_limp_arm",
+      "name": "Limp Arm Escape",
+      "type": "counter",
+      "description": "Counter to an opponent's underhook where you slip your arm out limply to break their control and reset hand fighting.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "tom_deblass",
+      "name": "Tom DeBlass",
+      "type": "competitor",
+      "description": "BJJ black belt known for his half guard system centered on the underhook and knee shield retention.",
+      "gi_requirement": "both",
+      "video_url": null
     }
   ],
   "edges": [
@@ -5415,6 +5511,264 @@
       ],
       "confidence": "high",
       "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_control_concept",
+      "to": "half_guard_underhook",
+      "action": "requires",
+      "conditions": [
+        "deep underhook",
+        "head position"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "half_guard_underhook",
+      "action": "transition_to",
+      "conditions": [
+        "establish underhook",
+        "hip out"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard_underhook",
+      "to": "old_school_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "far ankle hook",
+        "drive shoulder"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard_underhook",
+      "to": "plan_b_back_take",
+      "action": "attack_with",
+      "conditions": [
+        "opponent whizzers",
+        "get to knees"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "plan_b_back_take",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "hooks in"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard_underhook",
+      "to": "dogfight",
+      "action": "transition_to",
+      "conditions": [
+        "come up to elbow"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "dogfight",
+      "to": "dogfight_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "drive forward",
+        "trip near leg"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "whizzer",
+      "to": "half_guard_underhook",
+      "action": "counters",
+      "conditions": [
+        "overhook shoulder",
+        "sprawl hips"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_pass",
+      "to": "side_control",
+      "action": "transition_to",
+      "conditions": [
+        "flatten opponent",
+        "clear legs"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "underhook_pass",
+      "action": "pass_with",
+      "conditions": [
+        "top position",
+        "far side underhook"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_control_concept",
+      "to": "shoulder_pressure",
+      "action": "requires",
+      "conditions": [
+        "head to mat",
+        "drive weight"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "underhook_control_concept",
+      "to": "underhook_snap_down",
+      "action": "attack_with",
+      "conditions": [
+        "opponent posts",
+        "break posture"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_snap_down",
+      "to": "front_headlock",
+      "action": "transition_to",
+      "conditions": [
+        "opponent hands hit mat"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_control_concept",
+      "to": "duck_under_from_underhook",
+      "action": "attack_with",
+      "conditions": [
+        "elevate arm",
+        "level change"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "duck_under_from_underhook",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "get behind opponent"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_limp_arm",
+      "to": "underhook_control_concept",
+      "action": "counters",
+      "conditions": [
+        "slip arm out",
+        "reset ties"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_control_concept",
+      "to": "hand_fighting",
+      "action": "requires",
+      "conditions": [
+        "establish inside control"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "body_lock_takedown",
+      "to": "underhook_control_concept",
+      "action": "requires",
+      "conditions": [
+        "double underhooks"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "bernardo_half_guard_system",
+      "to": "underhook_control_concept",
+      "action": "centers_on",
+      "conditions": [
+        "deep underhook"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "bernardo_half_guard_system",
+      "to": "old_school_sweep",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "tom_deblass",
+      "to": "half_guard_underhook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "body_lock_takedown",
+      "action": "known_for",
+      "conditions": [
+        "double underhooks"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "underhook_control_concept",
+      "to": "kuzushi",
+      "action": "requires",
+      "conditions": [
+        "off-balance opponent"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard_underhook",
+      "to": "dogfight_sweep",
+      "action": "sweep_with",
+      "conditions": [
+        "opponent posts back leg"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook_pass",
+      "to": "mount",
+      "action": "transition_to",
+      "conditions": [
+        "step over"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
     }
   ]
 }
