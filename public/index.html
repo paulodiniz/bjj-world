@@ -648,6 +648,28 @@
     }
 
     /* ── Fight analysis ─────────────────────────────────── */
+    .timeline-thumb {
+      width: 96px;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-radius: 4px;
+      background: var(--surface-2);
+      display: block;
+      flex-shrink: 0;
+    }
+    .timeline-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      padding-top: 1px;
+    }
+    .timeline-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .fight-header {
       display: grid;
       grid-template-columns: 1fr;
@@ -699,11 +721,10 @@
       padding-top: 14px;
     }
     .timeline-row {
-      display: grid;
-      grid-template-columns: 46px auto 1fr;
-      gap: 10px;
-      align-items: baseline;
-      padding: 7px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
       border-bottom: 1px solid var(--border-sub);
       animation: entry-in 150ms ease-out both;
     }
@@ -712,10 +733,8 @@
       font-family: var(--mono);
       font-size: 0.70rem;
       color: var(--accent-text);
-      text-decoration: none;
       white-space: nowrap;
     }
-    .timeline-ts:hover { text-decoration: underline; }
     .timeline-badge {
       font-family: var(--mono);
       font-size: 0.62rem;
@@ -1138,6 +1157,16 @@
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function nearestFrame(frameStore, timestamp) {
+      if (frameStore.size === 0) return null;
+      let best = null, bestDist = Infinity;
+      for (const [ts, data] of frameStore) {
+        const dist = Math.abs(ts - timestamp);
+        if (dist < bestDist) { bestDist = dist; best = data; }
+      }
+      return best;
+    }
+
     // ── REMOVED: YouTube fight analysis (use file upload or direct URL instead) ──
     async function _removed_submitVideoAnalysis(url, videoId) {
       if (abortCtrl) abortCtrl.abort();
@@ -1333,6 +1362,7 @@
       setStreaming(true);
 
       let fightHeader = null, fightTimeline = null, fightSummaryEl = null;
+      const frameStore = new Map(); // timestamp → base64 data
 
       try {
         const formData = new FormData();
@@ -1389,16 +1419,25 @@
                 fightersEl.textContent = `${event.fighter_a} vs ${event.fighter_b}`;
               }
 
+            } else if (event.type === 'frame') {
+              frameStore.set(event.timestamp, event.data);
+
             } else if (event.type === 'analysis-event') {
               if (statusEl.parentNode) statusEl.remove();
               if (!fightTimeline) continue;
               const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', escape:'escape', takedown:'takedown' };
+              const thumb = nearestFrame(frameStore, event.timestamp);
               const row = document.createElement('div');
               row.className = 'timeline-row';
               row.innerHTML = `
-                <span class="timeline-ts">${escHtml(event.label)}</span>
-                <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
-                <span class="timeline-desc">${escHtml(event.description)}</span>`;
+                ${thumb ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="">` : '<div class="timeline-thumb"></div>'}
+                <div class="timeline-info">
+                  <div class="timeline-meta">
+                    <span class="timeline-ts">${escHtml(event.label)}</span>
+                    <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
+                  </div>
+                  <span class="timeline-desc">${escHtml(event.description)}</span>
+                </div>`;
               fightTimeline.appendChild(row);
               entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
@@ -1461,6 +1500,7 @@
       setStreaming(true);
 
       let fightHeader = null, fightTimeline = null, fightSummaryEl = null;
+      const frameStore = new Map();
 
       try {
         const res = await fetch('/api/analyze-video', {
@@ -1515,16 +1555,25 @@
                 fightersEl.textContent = `${event.fighter_a} vs ${event.fighter_b}`;
               }
 
+            } else if (event.type === 'frame') {
+              frameStore.set(event.timestamp, event.data);
+
             } else if (event.type === 'analysis-event') {
               if (statusEl.parentNode) statusEl.remove();
               if (!fightTimeline) continue;
               const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', escape:'escape', takedown:'takedown' };
+              const thumb = nearestFrame(frameStore, event.timestamp);
               const row = document.createElement('div');
               row.className = 'timeline-row';
               row.innerHTML = `
-                <span class="timeline-ts">${escHtml(event.label)}</span>
-                <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
-                <span class="timeline-desc">${escHtml(event.description)}</span>`;
+                ${thumb ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="">` : '<div class="timeline-thumb"></div>'}
+                <div class="timeline-info">
+                  <div class="timeline-meta">
+                    <span class="timeline-ts">${escHtml(event.label)}</span>
+                    <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
+                  </div>
+                  <span class="timeline-desc">${escHtml(event.description)}</span>
+                </div>`;
               fightTimeline.appendChild(row);
               entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
 

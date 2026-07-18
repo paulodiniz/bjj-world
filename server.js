@@ -419,42 +419,48 @@ function buildVisionContent(frames, title, durationSecs, chapters) {
     text: `Video: "${title}" (~${Math.round(durationSecs / 60)} min)
 ${chapterText}
 
-Known BJJ techniques (use exact names): ${knownTechniques}
+Known BJJ positions and techniques (use these exact names when applicable):
+${knownTechniques}
 
 ${frameInstructions}
 
-You have ${frameCount} frames. Generate a granular event timeline. For every meaningful moment:
-- Name the specific position (closed guard, back control, side control, mount, half guard, etc.)
-- Say who has the position / who is on top
-- Note any submission attempt or technique
+You have ${frameCount} frames above. For EVERY frame, emit one event describing exactly what you see:
+- Which named BJJ position is shown (closed guard, half guard, side control, mount, back control, turtle, standing, etc.)
+- Who has the position — use the fighter names from the title
+- If a submission, sweep, pass, or takedown is being attempted, name it
 
-Use fighter names from the video title. Never write "technical exchange" or "grappling continues".
+Rules:
+- Do NOT skip frames. Emit one event per frame.
+- Do NOT write vague phrases like "grappling continues" or "ground work". Always name the specific position.
+- If consecutive frames show the same position, still emit events for each — just say "[position] continues" if nothing changed.
+- Use the EXACT timestamp from the frame label (e.g. if label is [1:20], timestamp is 80).
 
-Good descriptions:
-  "Marcelo pulls guard, establishes closed guard"
-  "Kron passes to side control, Marcelo on bottom"
-  "Marcelo takes the back, both hooks in"
-  "Marcelo attacks rear naked choke, Kron defends chin"
+Good event descriptions:
+  "Marcelo in closed guard bottom, Kron posturing up"
+  "Kron passes to side control on Marcelo's left, Marcelo on bottom"
+  "Marcelo takes the back, both hooks in, hunting rear naked choke"
+  "Marcelo attacks guillotine from guard, Kron defends"
+  "Both standing after scramble"
 
-Return ONLY valid JSON, no markdown:
+Return ONLY valid JSON, no markdown fences:
 {
-  "summary": "2-3 sentence factual summary including the result",
-  "fighter_a": "first fighter name",
-  "fighter_b": "second fighter name",
+  "summary": "2-3 sentence factual summary of the match including result and score if known",
+  "fighter_a": "first fighter full name",
+  "fighter_b": "second fighter full name",
   "events": [
     {
-      "timestamp": 45,
-      "label": "0:45",
+      "timestamp": 80,
+      "label": "1:20",
       "type": "position|transition|submission_attempt|submission|escape|takedown",
-      "position": "exact name or null",
-      "from_position": "for transitions only",
-      "to_position": "for transitions only",
-      "description": "specific: who does what to whom"
+      "position": "exact name from known list or null",
+      "from_position": "for transitions only — starting position",
+      "to_position": "for transitions only — ending position",
+      "description": "specific one sentence: who is in what position, what is happening"
     }
   ]
 }
 
-Timestamps must be integers (seconds). Aim for 20–50 events.`,
+Timestamps must be integers (seconds). You should have roughly one event per frame.`,
   });
 
   return content;
@@ -636,6 +642,7 @@ app.post('/api/analyze-video', async (req, res) => {
     const frames = await extractFramesFromVideo(url);
     if (frames.length === 0) throw new Error('Could not extract frames. Check the URL is a direct video link.');
 
+    for (const f of frames) send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
     send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
     await streamAnalysis(frames, title, frames.length * 10, [], send);
     send('done', {});
@@ -674,6 +681,7 @@ app.post('/api/analyze-upload', upload.single('video'), async (req, res) => {
     const frames = await extractFramesFromVideo(filePath);
     if (frames.length === 0) throw new Error('Could not extract frames from this video file.');
 
+    for (const f of frames) send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
     send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
     await streamAnalysis(frames, title, frames.length * 10, [], send);
     send('done', {});
