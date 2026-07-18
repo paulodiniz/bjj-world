@@ -4,140 +4,660 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BJJ World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #e5e5e5; height: 100vh; display: flex; flex-direction: column; }
+    /* ── Tokens ───────────────────────────────────────────────── */
+    :root {
+      --bg:           oklch(0.10 0 0);
+      --surface:      oklch(0.14 0 0);
+      --surface-2:    oklch(0.17 0 0);
+      --border:       oklch(0.22 0 0);
+      --border-sub:   oklch(0.18 0 0);
+      --ink:          oklch(0.93 0 0);
+      --ink-2:        oklch(0.65 0 0);
+      --ink-3:        oklch(0.55 0 0);
+      --accent:       oklch(0.55 0.22 25);
+      --accent-hi:    oklch(0.62 0.20 25);
+      --accent-text:  oklch(0.68 0.18 25);
+      --accent-dim:   oklch(0.55 0.22 25 / 0.10);
+      --mono-bg:      oklch(0.16 0.006 240);
+      --mono-ink:     oklch(0.78 0.07 240);
 
-    header { padding: 14px 24px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-    header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; }
-    header span { color: #555; font-size: 0.82rem; }
-    nav { display: flex; gap: 2px; margin-left: auto; }
-    nav button { background: none; border: 1px solid #333; border-radius: 6px; padding: 6px 14px; color: #888; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
-    nav button.active { background: #e63946; border-color: #e63946; color: #fff; }
-    nav button:hover:not(.active) { border-color: #555; color: #ccc; }
+      --serif: 'Instrument Serif', Georgia, serif;
+      --sans:  Inter, system-ui, sans-serif;
+      --mono:  'JetBrains Mono', 'Fira Code', monospace;
 
-    .tab { display: none; flex: 1; overflow: hidden; flex-direction: column; }
-    .tab.active { display: flex; }
+      /* Node type colors — all AA-contrast on --surface */
+      --c-position:   oklch(0.68 0.16 145);
+      --c-submission: oklch(0.68 0.18 25);
+      --c-sweep:      oklch(0.68 0.16 240);
+      --c-guard_pass: oklch(0.75 0.15 60);
+      --c-takedown:   oklch(0.70 0.16 295);
+      --c-escape:     oklch(0.75 0.12 210);
+      --c-counter:    oklch(0.70 0.18 38);
+      --c-concept:    oklch(0.68 0.06 240);
+      --c-competitor: oklch(0.84 0.13 78);
+      --c-system:     oklch(0.70 0.17 355);
+      --c-technique:  oklch(0.70 0.12 180);
+    }
 
-    /* ── CHAT ── */
-    #messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
-    .msg { max-width: 720px; line-height: 1.6; }
-    .msg.user { align-self: flex-end; background: #1a1a2e; padding: 10px 16px; border-radius: 12px 12px 2px 12px; color: #a0c4ff; }
-    .msg.assistant { align-self: flex-start; background: #1a1a1a; padding: 12px 16px; border-radius: 2px 12px 12px 12px; border-left: 2px solid #e63946; }
-    .msg.assistant .answer-text h1,.msg.assistant .answer-text h2,.msg.assistant .answer-text h3 { margin: 8px 0 4px; font-size: 1rem; }
-    .msg.assistant .answer-text ul,.msg.assistant .answer-text ol { padding-left: 20px; margin: 4px 0; }
-    .msg.assistant .answer-text strong { color: #fff; }
-    .msg.assistant .answer-text p { margin: 4px 0; }
-    .videos { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .video-embed { border-radius: 8px; overflow: hidden; }
-    .video-embed iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; }
-    .video-label { font-size: 0.75rem; color: #666; padding: 4px 0; }
-    .msg.thinking { color: #555; font-style: italic; font-size: 0.88rem; }
-    #chat-form { padding: 14px 24px; border-top: 1px solid #222; display: flex; gap: 10px; flex-shrink: 0; }
-    #chat-input { flex: 1; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #e5e5e5; font-size: 0.92rem; outline: none; }
-    #chat-input:focus { border-color: #e63946; }
-    #chat-input::placeholder { color: #555; }
-    .send-btn { background: #e63946; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.92rem; cursor: pointer; }
-    .send-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    /* ── Reset ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { color-scheme: dark; }
 
-    /* ── PATH FINDER ── */
-    #path-tab { padding: 28px 24px; flex-direction: column; gap: 20px; overflow-y: auto; }
-    #path-tab h2 { font-size: 1.1rem; color: #fff; }
-    #path-tab p { color: #666; font-size: 0.88rem; }
-    .path-controls { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
-    .path-controls label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: #888; }
-    .path-controls select { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #e5e5e5; font-size: 0.92rem; outline: none; min-width: 200px; }
-    .path-controls select:focus { border-color: #e63946; }
-    #path-btn { background: #e63946; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 0.92rem; cursor: pointer; height: 42px; }
-    #path-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-    #path-result { background: #1a1a1a; border-radius: 10px; padding: 20px; }
-    #path-result h3 { font-size: 0.9rem; color: #888; margin-bottom: 16px; }
-    #path-result h3 strong { color: #fff; }
-    .path-steps { display: flex; flex-direction: column; gap: 8px; }
-    .step-node { background: #222; border-radius: 8px; padding: 8px 14px; font-size: 0.88rem; border-left: 3px solid #555; display: inline-flex; align-items: center; gap: 8px; }
-    .step-node.position { border-left-color: #4CAF50; }
-    .step-node.submission { border-left-color: #e63946; }
-    .step-node.sweep { border-left-color: #2196F3; }
-    .step-node.guard_pass { border-left-color: #FF9800; }
-    .step-node.takedown { border-left-color: #9C27B0; }
-    .step-node.escape { border-left-color: #00BCD4; }
-    .step-node.counter { border-left-color: #FF5722; }
-    .step-type { color: #555; font-size: 0.73rem; }
-    .step-arrow { color: #444; font-size: 0.75rem; padding-left: 14px; display: flex; flex-direction: column; }
-    .step-arrow .rel-type { color: #e63946; font-size: 0.68rem; font-family: monospace; }
-    #path-explanation { margin-top: 16px; padding-top: 16px; border-top: 1px solid #222; font-size: 0.9rem; line-height: 1.6; color: #ccc; }
-    #path-explanation h1,#path-explanation h2,#path-explanation h3 { font-size: 1rem; margin: 8px 0 4px; }
-    #path-explanation ul,#path-explanation ol { padding-left: 20px; margin: 4px 0; }
-    #path-explanation strong { color: #fff; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 24px;
+      height: 52px;
+      border-bottom: 1px solid var(--border-sub);
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .brand-name {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      line-height: 1;
+    }
+    .brand-sub {
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      color: var(--ink-3);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Nav ──────────────────────────────────────────────────── */
+    nav {
+      display: flex;
+      height: 100%;
+      align-items: stretch;
+      margin-left: auto;
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0 16px;
+      color: var(--ink-2);
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 120ms ease-out, border-color 120ms ease-out;
+      position: relative;
+      top: 1px;
+    }
+    .nav-btn.active {
+      color: var(--ink);
+      border-bottom-color: var(--accent);
+    }
+    .nav-btn:hover:not(.active) { color: oklch(0.80 0 0); }
+    .nav-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      border-radius: 2px;
+    }
+
+    /* ── Tab container ────────────────────────────────────────── */
+    .tabs-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .tab {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease-out;
+    }
+    .tab.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ── Messages ─────────────────────────────────────────────── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      scroll-behavior: smooth;
+    }
+    #messages::-webkit-scrollbar { width: 3px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    @keyframes msg-in {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg {
+      max-width: 700px;
+      animation: msg-in 180ms ease-out both;
+    }
+
+    /* User */
+    .msg.user {
+      align-self: flex-end;
+      background: var(--surface);
+      padding: 10px 16px;
+      border-radius: 12px 12px 2px 12px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--ink);
+      max-width: 520px;
+    }
+
+    /* Assistant */
+    .msg.assistant {
+      align-self: flex-start;
+      width: 100%;
+    }
+
+    /* Welcome */
+    .msg.welcome {
+      max-width: 500px;
+    }
+    .msg.welcome p {
+      font-family: var(--serif);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--ink-2);
+      margin-bottom: 5px;
+      text-wrap: pretty;
+    }
+    .msg.welcome p:last-child { margin-bottom: 0; }
+
+    /* Answer prose */
+    .answer-text {
+      font-family: var(--serif);
+      font-size: 1.02rem;
+      line-height: 1.75;
+      color: var(--ink);
+      text-wrap: pretty;
+      max-width: 68ch;
+    }
+    .answer-text h1, .answer-text h2, .answer-text h3 {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: normal;
+      color: var(--ink);
+      margin: 1.1em 0 0.3em;
+      text-wrap: balance;
+    }
+    .answer-text h1 { font-size: 1.2rem; }
+    .answer-text h2 { font-size: 1.1rem; }
+    .answer-text h3 { font-size: 1rem; }
+    .answer-text h1:first-child,
+    .answer-text h2:first-child,
+    .answer-text h3:first-child { margin-top: 0; }
+    .answer-text p { margin: 0.55em 0; }
+    .answer-text p:first-child { margin-top: 0; }
+    .answer-text ul, .answer-text ol { padding-left: 1.5em; margin: 0.5em 0; }
+    .answer-text li { margin: 0.25em 0; }
+    .answer-text strong {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 0.94em;
+      color: var(--ink);
+    }
+    .answer-text em { font-style: italic; }
+    .answer-text code {
+      font-family: var(--mono);
+      font-size: 0.80em;
+      background: var(--mono-bg);
+      color: var(--mono-ink);
+      padding: 0.12em 0.42em;
+      border-radius: 3px;
+    }
+    .answer-text pre {
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 6px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 0.9em 0;
+    }
+    .answer-text pre code { background: none; padding: 0; color: var(--ink-2); }
+    .answer-text a {
+      color: var(--accent-text);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Streaming cursor via ::after on [data-streaming] */
+    .msg.assistant[data-streaming] .answer-text::after {
+      content: '▋';
+      font-family: var(--mono);
+      font-size: 0.78em;
+      color: var(--accent);
+      animation: blink 0.72s ease-in-out infinite;
+      margin-left: 1px;
+      vertical-align: baseline;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* Status indicator */
+    .msg.status {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      animation: msg-in 180ms ease-out both;
+    }
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+    .status-text {
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      color: var(--ink-3);
+      letter-spacing: 0.02em;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.35; transform: scale(0.8); }
+      50%       { opacity: 1;    transform: scale(1.1); }
+    }
+
+    /* ── Videos ───────────────────────────────────────────────── */
+    .videos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .video-label {
+      padding: 8px 12px;
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-2);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border-sub);
+    }
+    .video-card iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+      display: block;
+    }
+
+    /* ── Input form ───────────────────────────────────────────── */
+    #chat-form {
+      flex-shrink: 0;
+      display: flex;
+      gap: 10px;
+      padding: 14px 24px 18px;
+      border-top: 1px solid var(--border-sub);
+    }
+    #chat-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 150ms ease-out;
+    }
+    #chat-input::placeholder { color: var(--ink-3); opacity: 1; }
+    #chat-input:focus { border-color: var(--accent); }
+    .send-btn {
+      background: var(--accent);
+      color: oklch(0.98 0 0);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms ease-out;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .send-btn:hover:not(:disabled) { background: var(--accent-hi); }
+    .send-btn:disabled {
+      background: var(--surface-2);
+      color: var(--ink-3);
+      cursor: not-allowed;
+    }
+    .send-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── Path Finder ──────────────────────────────────────────── */
+    #path-tab {
+      overflow-y: auto;
+      padding: 32px 24px 40px;
+      gap: 28px;
+    }
+
+    .path-header h2 {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 1.3rem;
+      font-weight: normal;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+      text-wrap: balance;
+    }
+    .path-header p {
+      font-size: 0.85rem;
+      color: var(--ink-2);
+      line-height: 1.55;
+    }
+
+    .path-controls {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .path-controls label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .path-label-text {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      letter-spacing: 0.07em;
+    }
+    .path-controls select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      outline: none;
+      min-width: 220px;
+      cursor: pointer;
+      transition: border-color 150ms ease-out;
+    }
+    .path-controls select:focus { border-color: var(--accent); }
+    #path-btn {
+      background: var(--accent);
+      color: oklch(0.98 0 0);
+      border: none;
+      border-radius: 8px;
+      padding: 9px 22px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms ease-out;
+      white-space: nowrap;
+      align-self: flex-end;
+    }
+    #path-btn:hover:not(:disabled) { background: var(--accent-hi); }
+    #path-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
+    #path-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* Path result */
+    #path-result { display: none; }
+
+    .path-result-meta {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-2);
+      letter-spacing: 0.02em;
+      margin-bottom: 20px;
+    }
+    .path-result-meta strong { color: var(--ink); font-weight: 500; }
+
+    /* Step sequence */
+    .step-sequence { display: flex; flex-direction: column; }
+
+    .step-item { display: flex; flex-direction: column; }
+
+    .step-node {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 6px;
+    }
+    .step-badge {
+      font-family: var(--mono);
+      font-size: 0.64rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      opacity: 0.95;
+    }
+    .step-badge.position   { color: var(--c-position); }
+    .step-badge.submission { color: var(--c-submission); }
+    .step-badge.sweep      { color: var(--c-sweep); }
+    .step-badge.guard_pass { color: var(--c-guard_pass); }
+    .step-badge.takedown   { color: var(--c-takedown); }
+    .step-badge.escape     { color: var(--c-escape); }
+    .step-badge.counter    { color: var(--c-counter); }
+    .step-badge.concept    { color: var(--c-concept); }
+    .step-badge.competitor { color: var(--c-competitor); }
+    .step-badge.system     { color: var(--c-system); }
+    .step-badge.technique  { color: var(--c-technique); }
+
+    .step-name {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .step-connector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 16px;
+    }
+    .step-line {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+    }
+    .step-rel {
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      color: var(--accent-text);
+      letter-spacing: 0.02em;
+    }
+
+    /* Path explanation */
+    #path-explanation {
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border-sub);
+      font-family: var(--serif);
+      font-size: 1rem;
+      line-height: 1.75;
+      color: var(--ink-2);
+      text-wrap: pretty;
+      max-width: 68ch;
+    }
+    #path-explanation h1, #path-explanation h2, #path-explanation h3 {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: normal;
+      font-size: 1rem;
+      color: var(--ink);
+      margin: 0.9em 0 0.3em;
+    }
+    #path-explanation ul, #path-explanation ol { padding-left: 1.4em; margin: 0.4em 0; }
+    #path-explanation li { margin: 0.2em 0; }
+    #path-explanation strong {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 0.93em;
+      color: var(--ink);
+    }
+
+    .no-path {
+      font-family: var(--mono);
+      font-size: 0.80rem;
+      color: var(--ink-3);
+      padding: 4px 0;
+    }
+
+    /* ── Reduced motion ───────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      .msg { animation: none; }
+      .tab { transition: none; }
+      .status-dot { animation: none; opacity: 0.7; }
+      .msg.assistant[data-streaming] .answer-text::after {
+        animation: none;
+        opacity: 1;
+      }
+      * { transition-duration: 0ms !important; }
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      header { padding: 0 16px; gap: 12px; }
+      .brand-sub { display: none; }
+      #messages { padding: 20px 16px; gap: 18px; }
+      #chat-form { padding: 12px 16px 16px; }
+      .msg.user { max-width: 88%; }
+      #path-tab { padding: 24px 16px 32px; gap: 24px; }
+      .path-controls { flex-direction: column; align-items: stretch; }
+      .path-controls select { min-width: 0; }
+      #path-btn { width: 100%; }
+      .videos { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>BJJ World <span>knowledge graph</span></h1>
-    <nav>
-      <button class="active" onclick="switchTab('chat')">Chat</button>
-      <button onclick="switchTab('path')">Path Finder</button>
+    <div class="brand">
+      <span class="brand-name">BJJ World</span>
+      <span class="brand-sub">knowledge graph</span>
+    </div>
+    <nav role="tablist" aria-label="App sections">
+      <button class="nav-btn active"
+        role="tab" aria-selected="true" aria-controls="chat-tab"
+        onclick="switchTab('chat')">Chat</button>
+      <button class="nav-btn"
+        role="tab" aria-selected="false" aria-controls="path-tab"
+        onclick="switchTab('path')">Path Finder</button>
     </nav>
   </header>
 
-  <!-- CHAT TAB -->
-  <div id="chat-tab" class="tab active">
-    <div id="messages">
-      <div class="msg assistant">Ask me anything about BJJ — positions, submissions, transitions, sweeps, passes, competitor game plans, or how to get from one position to another.</div>
-    </div>
-    <form id="chat-form">
-      <input id="chat-input" type="text" placeholder="e.g. What submissions can I do from closed guard?" autocomplete="off" />
-      <button type="submit" class="send-btn" id="chat-btn">Ask</button>
-    </form>
-  </div>
+  <div class="tabs-container">
 
-  <!-- PATH FINDER TAB -->
-  <div id="path-tab" class="tab">
-    <h2>Path Finder</h2>
-    <p>Find the shortest route between any two positions or techniques in the graph.</p>
-    <div class="path-controls">
-      <label>From
-        <select id="path-from"><option value="">Loading...</option></select>
-      </label>
-      <label>To
-        <select id="path-to"><option value="">Loading...</option></select>
-      </label>
-      <button id="path-btn" onclick="findPath()">Find Path</button>
+    <!-- ── CHAT ── -->
+    <div id="chat-tab" class="tab active" role="tabpanel" aria-label="BJJ chat">
+      <div id="messages" role="log" aria-live="polite" aria-label="Chat messages">
+        <div class="msg welcome">
+          <p>Ask anything about Brazilian jiu-jitsu — positions, submissions, transitions, sweeps, guard passes, competitor game plans.</p>
+          <p>Or use Path Finder to trace the shortest route between any two techniques.</p>
+        </div>
+      </div>
+      <form id="chat-form" autocomplete="off" aria-label="Ask a BJJ question">
+        <input id="chat-input" type="text"
+          placeholder="e.g. What can I attack from closed guard?"
+          autocomplete="off"
+          aria-label="Your question" />
+        <button type="submit" class="send-btn" id="chat-btn">Ask</button>
+      </form>
     </div>
-    <div id="path-result" style="display:none;"></div>
+
+    <!-- ── PATH FINDER ── -->
+    <div id="path-tab" class="tab" role="tabpanel" aria-label="Path finder" inert aria-hidden="true">
+      <div class="path-header">
+        <h2>Path Finder</h2>
+        <p>Shortest route between any two positions or techniques in the graph.</p>
+      </div>
+      <div class="path-controls">
+        <label>
+          <span class="path-label-text">FROM</span>
+          <select id="path-from" aria-label="Starting position"><option value="">Loading…</option></select>
+        </label>
+        <label>
+          <span class="path-label-text">TO</span>
+          <select id="path-to" aria-label="Destination position"><option value="">Loading…</option></select>
+        </label>
+        <button id="path-btn" onclick="findPath()">Find Path</button>
+      </div>
+      <div id="path-result" aria-live="polite"></div>
+    </div>
+
   </div>
 
   <script>
-    const TYPE_COLORS = {
-      position: '#4CAF50', submission: '#e63946', sweep: '#2196F3',
-      guard_pass: '#FF9800', takedown: '#9C27B0', escape: '#00BCD4',
-      counter: '#FF5722', concept: '#607D8B', competitor: '#FFD700', system: '#E91E63'
-    };
+    // ── Tab switching ──────────────────────────────────────────
+    const TABS = ['chat', 'path'];
 
     function switchTab(name) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      document.getElementById(`${name}-tab`).classList.add('active');
-      document.querySelectorAll('nav button')[['chat','path'].indexOf(name)].classList.add('active');
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        const active = TABS[i] === name;
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-hidden', String(!active));
+        active ? t.removeAttribute('inert') : t.setAttribute('inert', '');
+      });
+      document.querySelectorAll('.nav-btn').forEach((b, i) => {
+        const active = TABS[i] === name;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-selected', String(active));
+      });
       if (name === 'path' && !pathLoaded) loadPathPositions();
     }
 
-    // ── CHAT ──────────────────────────────────────────────────────
-    const chatForm = document.getElementById('chat-form');
+    // ── Chat ──────────────────────────────────────────────────
+    const chatForm  = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
-    const chatBtn = document.getElementById('chat-btn');
-    const messages = document.getElementById('messages');
-    const conversationHistory = []; // [{role, content}]
-
-    function addMsg(text, role) {
-      const div = document.createElement('div');
-      div.className = `msg ${role}`;
-      if (text) div.textContent = text;
-      messages.appendChild(div);
-      messages.scrollTop = messages.scrollHeight;
-      return div;
-    }
+    const chatBtn   = document.getElementById('chat-btn');
+    const messages  = document.getElementById('messages');
+    const conversationHistory = [];
 
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -145,10 +665,27 @@
       if (!question) return;
       chatInput.value = '';
       chatBtn.disabled = true;
-      addMsg(question, 'user');
+
+      // User bubble
+      const userDiv = document.createElement('div');
+      userDiv.className = 'msg user';
+      userDiv.textContent = question;
+      messages.appendChild(userDiv);
       conversationHistory.push({ role: 'user', content: question });
-      const statusDiv = addMsg('', 'thinking');
-      const answerDiv = addMsg('', 'assistant');
+
+      // Status indicator
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'msg status';
+      statusDiv.innerHTML = '<span class="status-dot" aria-hidden="true"></span><span class="status-text">Searching…</span>';
+      messages.appendChild(statusDiv);
+      messages.scrollTop = messages.scrollHeight;
+
+      // Answer container
+      const answerDiv = document.createElement('div');
+      answerDiv.className = 'msg assistant';
+      answerDiv.setAttribute('data-streaming', '');
+      messages.appendChild(answerDiv);
+
       let buffer = '';
 
       try {
@@ -157,9 +694,165 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question, history: conversationHistory.slice(-6) })
         });
-        const reader = res.body.getReader();
+
+        const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let sseBuffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const parts = sseBuffer.split('\n\n');
+          sseBuffer = parts.pop();
+
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+            let event;
+            try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+            if (event.type === 'status') {
+              statusDiv.querySelector('.status-text').textContent = event.text;
+
+            } else if (event.type === 'token') {
+              buffer += event.text;
+              let textEl = answerDiv.querySelector('.answer-text');
+              if (!textEl) {
+                textEl = document.createElement('div');
+                textEl.className = 'answer-text';
+                answerDiv.appendChild(textEl);
+              }
+              textEl.innerHTML = marked.parse(buffer);
+              messages.scrollTop = messages.scrollHeight;
+
+            } else if (event.type === 'videos') {
+              const videosDiv = document.createElement('div');
+              videosDiv.className = 'videos';
+              videosDiv.innerHTML = event.videos.map(v => {
+                const id = new URL(v.url).searchParams.get('v');
+                if (!id) return '';
+                return `<div class="video-card">
+                  <div class="video-label">${v.name}</div>
+                  <iframe
+                    src="https://www.youtube.com/embed/${id}"
+                    title="${v.name} — BJJ tutorial"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+                </div>`;
+              }).join('');
+              answerDiv.appendChild(videosDiv);
+
+            } else if (event.type === 'done') {
+              statusDiv.remove();
+              answerDiv.removeAttribute('data-streaming');
+              if (buffer) conversationHistory.push({ role: 'assistant', content: buffer });
+
+            } else if (event.type === 'error') {
+              statusDiv.remove();
+              answerDiv.removeAttribute('data-streaming');
+              answerDiv.textContent = `Error: ${event.text}`;
+            }
+          }
+        }
+      } catch (err) {
+        statusDiv.remove();
+        answerDiv.removeAttribute('data-streaming');
+        answerDiv.textContent = `Connection error: ${err.message}`;
+      } finally {
+        chatBtn.disabled = false;
+        chatInput.focus();
+      }
+    });
+
+    // ── Path Finder ────────────────────────────────────────────
+    let pathLoaded = false;
+
+    async function loadPathPositions() {
+      try {
+        const data = await fetch('/api/positions').then(r => r.json());
+        const positions = data.filter(n =>
+          ['position','submission','sweep','guard_pass','takedown','escape'].includes(n.type)
+        );
+        ['path-from','path-to'].forEach((id, i) => {
+          const sel = document.getElementById(id);
+          sel.innerHTML = positions.map(p =>
+            `<option value="${p.id}">${p.name} (${p.type.replace('_',' ')})</option>`
+          ).join('');
+          if (i === 1) sel.selectedIndex = Math.min(5, positions.length - 1);
+        });
+        pathLoaded = true;
+      } catch (err) {
+        console.error('Failed to load positions', err);
+      }
+    }
+
+    async function findPath() {
+      const from   = document.getElementById('path-from').value;
+      const to     = document.getElementById('path-to').value;
+      const btn    = document.getElementById('path-btn');
+      const result = document.getElementById('path-result');
+      if (!from || !to) return;
+
+      btn.disabled  = true;
+      btn.textContent = 'Finding…';
+      result.style.display = 'none';
+
+      try {
+        const data = await fetch(`/api/path?from=${from}&to=${to}`).then(r => r.json());
+        result.style.display = 'block';
+
+        if (!data.found) {
+          result.innerHTML = '<p class="no-path">No path found between these two techniques.</p>';
+          return;
+        }
+
+        const stepsHtml = data.steps.map((step, i) => {
+          const badge = step.type.replace('_', ' ');
+          const node  = `<div class="step-node">
+            <span class="step-badge ${step.type}">${badge}</span>
+            <span class="step-name">${step.name}</span>
+          </div>`;
+          if (i < data.transitions.length) {
+            return `<div class="step-item">
+              ${node}
+              <div class="step-connector">
+                <div class="step-line"></div>
+                <span class="step-rel">${data.transitions[i]}</span>
+              </div>
+            </div>`;
+          }
+          return `<div class="step-item">${node}</div>`;
+        }).join('');
+
+        const first = data.steps[0].name;
+        const last  = data.steps[data.steps.length - 1].name;
+
+        result.innerHTML = `
+          <div class="path-result-meta">
+            ${data.steps.length} steps &mdash; <strong>${first}</strong> to <strong>${last}</strong>
+          </div>
+          <div class="step-sequence">${stepsHtml}</div>
+          <div id="path-explanation"></div>
+        `;
+
+        // Stream the coach explanation
+        const pathStr = data.steps.map((s, i) =>
+          i < data.transitions.length ? `${s.name} --[${data.transitions[i]}]-->` : s.name
+        ).join(' ');
+
+        const expEl = document.getElementById('path-explanation');
+        const resp  = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: `Explain this BJJ path step by step as a coach: ${pathStr}. Be concise and practical.`
+          })
+        });
+
+        const reader  = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let sseBuffer = '', text = '';
 
         while (true) {
           const { done, value } = await reader.read();
@@ -170,120 +863,19 @@
           for (const part of parts) {
             const line = part.trim();
             if (!line.startsWith('data: ')) continue;
-            let event; try { event = JSON.parse(line.slice(6)); } catch { continue; }
-
-            if (event.type === 'status') {
-              statusDiv.textContent = event.text;
-            } else if (event.type === 'token') {
-              buffer += event.text;
-              const textEl = answerDiv.querySelector('.answer-text') || (() => {
-                const el = document.createElement('div'); el.className = 'answer-text';
-                answerDiv.appendChild(el); return el;
-              })();
-              textEl.innerHTML = marked.parse(buffer);
-              messages.scrollTop = messages.scrollHeight;
-            } else if (event.type === 'videos') {
-              const div = document.createElement('div');
-              div.className = 'videos';
-              div.innerHTML = event.videos.map(v => {
-                const id = v.url.split('v=')[1];
-                return `<div class="video-embed"><div class="video-label">${v.name}</div><iframe src="https://www.youtube.com/embed/${id}" allowfullscreen loading="lazy"></iframe></div>`;
-              }).join('');
-              answerDiv.appendChild(div);
-            } else if (event.type === 'done') {
-              statusDiv.remove();
-              if (buffer) conversationHistory.push({ role: 'assistant', content: buffer });
-            } else if (event.type === 'error') {
-              statusDiv.remove();
-              answerDiv.textContent = `Error: ${event.text}`;
+            let ev; try { ev = JSON.parse(line.slice(6)); } catch { continue; }
+            if (ev.type === 'token') {
+              text += ev.text;
+              expEl.innerHTML = marked.parse(text);
             }
           }
         }
       } catch (err) {
-        statusDiv.remove();
-        answerDiv.textContent = `Error: ${err.message}`;
-      } finally {
-        chatBtn.disabled = false;
-        chatInput.focus();
-      }
-    });
-
-    // ── PATH FINDER ───────────────────────────────────────────────
-    let pathLoaded = false;
-
-    async function loadPathPositions() {
-      const data = await fetch('/api/positions').then(r => r.json());
-      const positions = data.filter(n => ['position','submission','sweep','guard_pass','takedown','escape'].includes(n.type));
-      ['path-from','path-to'].forEach((id, i) => {
-        const sel = document.getElementById(id);
-        sel.innerHTML = positions.map(p => `<option value="${p.id}">${p.name} (${p.type})</option>`).join('');
-        if (i === 1) sel.selectedIndex = Math.min(5, positions.length - 1);
-      });
-      pathLoaded = true;
-    }
-
-    async function findPath() {
-      const from = document.getElementById('path-from').value;
-      const to = document.getElementById('path-to').value;
-      const btn = document.getElementById('path-btn');
-      const result = document.getElementById('path-result');
-      if (!from || !to) return;
-      btn.disabled = true; btn.textContent = 'Finding...';
-      result.style.display = 'none';
-
-      try {
-        const data = await fetch(`/api/path?from=${from}&to=${to}`).then(r => r.json());
+        result.innerHTML = `<p class="no-path">Error: ${err.message}</p>`;
         result.style.display = 'block';
-
-        if (!data.found) {
-          result.innerHTML = '<p style="color:#666">No path found between these two nodes.</p>';
-          return;
-        }
-
-        const stepsHtml = data.steps.map((step, i) => {
-          const nodeHtml = `<div class="step-node ${step.type}">${step.name}<span class="step-type">${step.type}</span></div>`;
-          if (i < data.transitions.length) {
-            return `<div class="path-steps">${nodeHtml}<div class="step-arrow">↓<span class="rel-type">${data.transitions[i]}</span></div></div>`;
-          }
-          return `<div class="path-steps">${nodeHtml}</div>`;
-        }).join('');
-
-        result.innerHTML = `
-          <h3>${data.steps.length} steps: <strong>${data.steps[0].name}</strong> → <strong>${data.steps[data.steps.length-1].name}</strong></h3>
-          ${stepsHtml}
-          <div id="path-explanation" style="color:#555;font-size:0.82rem">Loading explanation...</div>
-        `;
-
-        const pathDescription = data.steps.map((s, i) =>
-          i < data.transitions.length ? `${s.name} --[${data.transitions[i]}]-->` : s.name
-        ).join(' ');
-
-        const explanation = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: `Explain this BJJ path step by step as a coach: ${pathDescription}. Be concise and practical.` })
-        });
-
-        const reader = explanation.body.getReader();
-        const decoder = new TextDecoder();
-        let sseBuffer = '', text = '';
-        const expEl = document.getElementById('path-explanation');
-        expEl.style.color = '#ccc';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          sseBuffer += decoder.decode(value, { stream: true });
-          const parts = sseBuffer.split('\n\n'); sseBuffer = parts.pop();
-          for (const part of parts) {
-            const line = part.trim();
-            if (!line.startsWith('data: ')) continue;
-            let ev; try { ev = JSON.parse(line.slice(6)); } catch { continue; }
-            if (ev.type === 'token') { text += ev.text; expEl.innerHTML = marked.parse(text); }
-          }
-        }
       } finally {
-        btn.disabled = false; btn.textContent = 'Find Path';
+        btn.disabled  = false;
+        btn.textContent = 'Find Path';
       }
     }
   </script>
