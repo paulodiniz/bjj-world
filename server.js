@@ -1,6 +1,7 @@
 const express = require('express');
 const neo4j = require('neo4j-driver');
 const Anthropic = require('@anthropic-ai/sdk');
+const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
@@ -18,8 +19,11 @@ const driver = neo4j.driver(
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
 
-// Cache to avoid re-searching same technique+position combo
+const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// Video cache
 const videoCache = new Map();
 
 async function searchYouTube(technique, sourcePosition) {
@@ -43,7 +47,7 @@ async function searchYouTube(technique, sourcePosition) {
   }
 }
 
-// Simple in-memory rate limiter: 20 requests per IP per hour
+// Rate limiter: 20 requests per IP per hour
 const rateLimiter = new Map();
 function isRateLimited(ip) {
   const now = Date.now();
@@ -56,92 +60,159 @@ function isRateLimited(ip) {
   return false;
 }
 
-const SCHEMA_CONTEXT = `You are a BJJ (Brazilian Jiu-Jitsu) knowledge assistant with access to a Neo4j graph database.
+// ── RAG ──────────────────────────────────────────────────────────────────────
 
-IMPORTANT: All nodes have the label :BJJNode. There are NO other labels.
-Node properties: id (snake_case e.g. "closed_guard", "triangle_choke"), name, type, description.
-Node types (stored as the 'type' property, NOT as labels):
-- position: guard and dominant positions (closed_guard, mount, back_control, worm_guard, fifty_fifty, ashi_garami, dogfight, z_guard, lasso_guard, rubber_guard, reverse_de_la_riva, etc.)
-- submission: finishing techniques (armbar, triangle_choke, heel_hook, north_south_choke, clock_choke, ezekiel_choke, gogoplata, twister, kneebar, banana_split, calf_slicer, etc.)
-- sweep: techniques to reverse position (scissor_sweep, butterfly_sweep, waiter_sweep, sickle_sweep, lasso_sweep, etc.)
-- guard_pass: techniques to pass the guard (torreando_pass, knee_slice_pass, x_pass, cartwheel_pass, smash_pass, long_step_pass, etc.)
-- takedown: standing techniques (double_leg_takedown, single_leg_takedown, judo_throw, hip_throw, foot_sweep, firemans_carry)
-- escape: defensive techniques to escape bad positions (elbow_knee_escape, shrimp_escape, back_escape_roll, granby_roll, running_man_escape)
-- counter: techniques that counter specific attacks (sprawl, posture_up, arm_tuck, stack_defense, frame_and_shrimp)
-- technique: setups and entries that don't fit other categories (arm_drag, snap_down, body_lock_takedown, guard_pull)
-- concept: fundamental principles (kuzushi, hip_escape_movement, base_and_posture, framing, grips, weight_distribution, bridge_movement)
-- competitor: famous BJJ practitioners (marcelo_garcia, gordon_ryan, keenan_cornelius, roger_gracie, mikey_musumeci, bernardo_faria, john_danaher, leandro_lo, romulo_barral, andre_galvao)
-- system: named game plans (marcelo_butterfly_back_system, keenan_lapel_guard_system, roger_closed_guard_system, bernardo_half_guard_system, gordon_back_system, dds_leg_lock_system)
+let ragChunks = []; // { id, name, type, text } — always in memory for keyword fallback
 
-Node property gi_requirement: "gi" (gi only), "no_gi" (no-gi focused), "both" (works in both). Default is "both".
-Gi-only techniques include: worm_guard, lasso_guard, spider_guard, bow_and_arrow_choke, baseball_bat_choke, clock_choke, ezekiel_choke.
+const ACTION_LABEL = {
+  attack_with:   'Attacks',
+  sweep_with:    'Sweeps',
+  pass_with:     'Guard passes',
+  transition_to: 'Transitions to',
+  follow_up:     'Follow-ups',
+  recover_to:    'Recovers to',
+  escape_with:   'Escapes',
+  counters:      'Counters',
+  requires:      'Requires',
+  developed:     'Developed',
+  centers_on:    'Centers on',
+  features:      'Features',
+  known_for:     'Known for',
+  coached_by:    'Coached by',
+};
 
-Relationship types (always uppercase):
-- ATTACK_WITH: can attack from this position with this technique
-- TRANSITION_TO: can move to this position
-- SWEEP_WITH: can sweep using this technique
-- PASS_WITH: can pass guard using this technique
-- FOLLOW_UP: natural follow-up after this technique
-- RECOVER_TO: can recover to this position
-- ESCAPE_WITH: can escape from this position using this technique
-- COUNTERS: this technique counters that technique
-- REQUIRES: this technique requires this concept/movement
-- DEVELOPED: competitor developed or popularized this system
-- CENTERS_ON: system is built around this position
-- FEATURES: system prominently uses this technique
-- KNOWN_FOR: competitor is known for this technique or position
-- COACHED_BY: competitor was coached by this person
+function buildChunks(graph) {
+  const edgesByFrom = {};
+  for (const edge of graph.edges) {
+    (edgesByFrom[edge.from] ??= []).push(edge);
+  }
+  const nodeMap = Object.fromEntries(graph.nodes.map(n => [n.id, n]));
 
-Relationship properties: conditions (array of strings), confidence (high/medium/low), difficulty (beginner/intermediate/advanced).
+  return graph.nodes.map(node => {
+    const lines = [`[${node.type}] ${node.name}`];
+    if (node.description) lines.push(node.description);
 
-Cypher syntax rules:
-- To get a relationship type use type(r), NOT "r type": RETURN type(r) AS relationship_type
-- To filter by multiple relationship types use: -[:TYPE_A|TYPE_B]->
-- String properties use double quotes: {id: "closed_guard"}
-- UNION requires ALL sub-queries to return the exact same column names — if unsure, avoid UNION and use a single MATCH with OR or multiple relationship types instead
-
-Example valid queries:
-MATCH (a:BJJNode {id: "closed_guard"})-[r:ATTACK_WITH]->(b:BJJNode) RETURN b, r.difficulty, r.conditions
-MATCH (a:BJJNode {id: "mount"})-[:ESCAPE_WITH]->(e:BJJNode) RETURN e
-MATCH (a:BJJNode)-[:COUNTERS]->(b:BJJNode {id: "armbar"}) RETURN a
-MATCH (c:BJJNode {id: "marcelo_garcia"})-[:KNOWN_FOR|DEVELOPED]->(t:BJJNode) RETURN c.name, t.name, t.type, type(r) AS rel
-MATCH (s:BJJNode {type: "system"})-[:CENTERS_ON|FEATURES]->(t:BJJNode) WHERE s.id CONTAINS "marcelo" RETURN s.name, t.name, t.type`;
-
-const FALLBACK_QUERY = 'MATCH (n:BJJNode) RETURN n.name LIMIT 5';
-
-async function generateCypher(question, history = []) {
-  const messages = [
-    ...history,
-    {
-      role: 'user',
-      content: `Generate a Cypher query for this BJJ question. Output ONLY the Cypher query, nothing else. If the input is not a BJJ question, return: ${FALLBACK_QUERY}\n\nQuestion: ${question}`
+    const byAction = {};
+    for (const e of edgesByFrom[node.id] ?? []) {
+      const target = nodeMap[e.to];
+      if (!target) continue;
+      const label = `${target.name}${e.difficulty ? ` (${e.difficulty})` : ''}`;
+      (byAction[e.action] ??= []).push(label);
     }
-  ];
-  const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 256,
-    system: SCHEMA_CONTEXT,
-    messages
+
+    for (const [action, targets] of Object.entries(byAction)) {
+      lines.push(`${ACTION_LABEL[action] ?? action}: ${targets.join(', ')}`);
+    }
+
+    return { id: node.id, name: node.name, type: node.type, text: lines.join('\n') };
   });
-  const raw = msg.content[0].text.replace(/```cypher?\n?/gi, '').replace(/```/g, '');
-  const match = raw.match(/(MATCH|WITH|CALL|RETURN)[\s\S]+/i);
-  return match ? match[0].trim() : FALLBACK_QUERY;
 }
 
-async function streamAnswer(question, records, onToken) {
+async function voyageEmbed(texts, inputType = 'document') {
+  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${VOYAGE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model: 'voyage-3-lite', input: texts, input_type: inputType }),
+  });
+  const data = await res.json();
+  return data.data.map(d => d.embedding);
+}
+
+function keywordScore(query, text) {
+  const words = query.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+  const t = text.toLowerCase();
+  return words.reduce((s, w) => s + (t.includes(w) ? 1 : 0), 0) / (words.length || 1);
+}
+
+async function retrieve(question, k = 7) {
+  if (VOYAGE_API_KEY) {
+    const [qEmb] = await voyageEmbed([question], 'query');
+    const { rows } = await pgPool.query(
+      `SELECT id, name, type, chunk AS text, 1 - (embedding <=> $1::vector) AS score
+       FROM bjj_embeddings
+       ORDER BY embedding <=> $1::vector
+       LIMIT $2`,
+      [JSON.stringify(qEmb), k]
+    );
+    return rows;
+  }
+  return ragChunks
+    .map(chunk => ({ ...chunk, score: keywordScore(question, chunk.text) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, k);
+}
+
+async function initRAG() {
+  const graph = JSON.parse(fs.readFileSync(path.join(__dirname, 'graph.json'), 'utf8'));
+  ragChunks = buildChunks(graph);
+  console.log(`Built ${ragChunks.length} RAG chunks`);
+
+  if (!VOYAGE_API_KEY) {
+    console.log('VOYAGE_API_KEY not set — using keyword search fallback');
+    return;
+  }
+
+  await pgPool.query('CREATE EXTENSION IF NOT EXISTS vector');
+  await pgPool.query(`
+    CREATE TABLE IF NOT EXISTS bjj_embeddings (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      chunk TEXT NOT NULL,
+      embedding vector(512)
+    )
+  `);
+
+  const { rows } = await pgPool.query('SELECT COUNT(*) AS count FROM bjj_embeddings');
+  if (parseInt(rows[0].count) === ragChunks.length) {
+    console.log(`pgvector: ${rows[0].count} embeddings already stored, skipping`);
+    return;
+  }
+
+  console.log('Computing and storing embeddings...');
+  await pgPool.query('TRUNCATE bjj_embeddings');
+
+  const batchSize = 128;
+  for (let i = 0; i < ragChunks.length; i += batchSize) {
+    const batch = ragChunks.slice(i, i + batchSize);
+    const embeddings = await voyageEmbed(batch.map(c => c.text));
+    for (let j = 0; j < batch.length; j++) {
+      const c = batch[j];
+      await pgPool.query(
+        'INSERT INTO bjj_embeddings (id, name, type, chunk, embedding) VALUES ($1, $2, $3, $4, $5)',
+        [c.id, c.name, c.type, c.text, JSON.stringify(embeddings[j])]
+      );
+    }
+  }
+  console.log(`Stored ${ragChunks.length} embeddings in pgvector`);
+}
+
+// ── Answer streaming ──────────────────────────────────────────────────────────
+
+async function streamAnswer(question, chunks, history, onToken) {
+  const context = chunks.map(c => c.text).join('\n\n---\n\n');
+
   const stream = await anthropic.messages.stream({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
-    system: 'You are a helpful BJJ coach embedded in an app that automatically shows relevant YouTube videos alongside your answers. Never say you cannot show videos — the app handles that. Answer questions clearly and concisely based on the graph data provided. Focus on practical advice.',
-    messages: [{ role: 'user', content: `Question: ${question}\n\nGraph data: ${JSON.stringify(records, null, 2)}` }]
+    system: 'You are a helpful BJJ coach embedded in an app that automatically shows relevant YouTube videos alongside your answers. Never say you cannot show videos — the app handles that. Answer questions clearly and concisely based on the knowledge provided. Focus on practical advice.',
+    messages: [
+      ...history,
+      { role: 'user', content: `Question: ${question}\n\nRelevant BJJ knowledge:\n${context}` },
+    ],
   });
 
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      onToken(chunk.delta.text);
+  for await (const event of stream) {
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      onToken(event.delta.text);
     }
   }
 }
+
+// ── Database seeding ──────────────────────────────────────────────────────────
 
 async function seedDatabase() {
   const graph = JSON.parse(fs.readFileSync(path.join(__dirname, 'graph.json'), 'utf8'));
@@ -184,6 +255,8 @@ async function seedDatabase() {
   }
 }
 
+// ── Routes ────────────────────────────────────────────────────────────────────
+
 app.post('/api/chat', async (req, res) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
   if (isRateLimited(ip)) {
@@ -202,104 +275,46 @@ app.post('/api/chat', async (req, res) => {
   const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
 
   try {
-    // Detect video-only requests — search YouTube from history context instead of querying graph
+    // Video-only requests — match names from last answer
     const isVideoRequest = /\b(video|videos|show me|watch|youtube)\b/i.test(question);
     if (isVideoRequest && YOUTUBE_API_KEY && history.length > 0) {
       send('status', { text: 'Finding videos...' });
       const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
       if (lastAssistant) {
-        const videoSession = driver.session();
-        try {
-          const allNames = await videoSession.run('MATCH (n:BJJNode) RETURN n.name AS name');
-          const knownNames = allNames.records.map(r => r.get('name'));
-          const mentioned = knownNames.filter(n => lastAssistant.content.includes(n));
-          const videos = (await Promise.all(
-            mentioned.slice(0, 3).map(async name => {
-              const url = await searchYouTube(name, null);
-              return url ? { name, url } : null;
-            })
-          )).filter(Boolean);
-          if (videos.length) send('videos', { videos });
-        } finally {
-          await videoSession.close();
-        }
+        const mentioned = ragChunks
+          .filter(c => lastAssistant.content.includes(c.name))
+          .slice(0, 3);
+        const videos = (await Promise.all(
+          mentioned.map(async c => {
+            const url = await searchYouTube(c.name, null);
+            return url ? { name: c.name, url } : null;
+          })
+        )).filter(Boolean);
+        if (videos.length) send('videos', { videos });
       }
       send('token', { text: 'Here are the videos for the techniques we just discussed.' });
       send('done', {});
       return;
     }
 
-    // Step 1: Generate Cypher query
-    send('status', { text: 'Generating query...' });
-    const cypher = await generateCypher(question, history);
-    send('cypher', { text: cypher });
+    // Retrieve relevant chunks
+    send('status', { text: 'Searching knowledge base...' });
+    const chunks = await retrieve(question);
 
-    // Step 2: Run against Neo4j (with one retry on syntax error)
-    send('status', { text: 'Querying graph...' });
-    let records;
-    let finalCypher = cypher;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const session = driver.session();
-      try {
-        const result = await session.run(finalCypher);
-        records = result.records.map(r => r.toObject());
-        break;
-      } catch (err) {
-        await session.close();
-        if (attempt === 1) throw err;
-        // Ask Claude to fix the broken query
-        const fixed = await generateCypher(
-          `The following Cypher query failed with this error: "${err.message}"\n\nBroken query:\n${finalCypher}\n\nFix the query. Original question: ${question}`,
-          history
-        );
-        finalCypher = fixed;
-        send('cypher', { text: finalCypher });
-      } finally {
-        try { await session.close(); } catch {}
-      }
-    }
-
-    // Step 3: Stream the answer
+    // Stream answer
     send('status', { text: 'Answering...' });
-    await streamAnswer(question, records, token => send('token', { text: token }));
+    await streamAnswer(question, chunks, history, token => send('token', { text: token }));
 
-    // Context-aware YouTube search — skip if fallback query was used
-    if (YOUTUBE_API_KEY && finalCypher !== FALLBACK_QUERY) {
-      const sourceMatch = finalCypher.match(/\{id:\s*["'](\w+)["']\}/);
-      const sourceId = sourceMatch ? sourceMatch[1] : null;
-
-      const sourceSession = driver.session();
-      let sourceName = null;
-      try {
-        if (sourceId) {
-          const r = await sourceSession.run('MATCH (n:BJJNode {id: $id}) RETURN n.name AS name', { id: sourceId });
-          sourceName = r.records[0]?.get('name') || null;
-        }
-      } finally {
-        await sourceSession.close();
-      }
-
-      const techniqueNames = [...new Set(
-        records.flatMap(r => Object.values(r)).filter(v => typeof v === 'string' && v.length > 3)
-      )];
-
-      const videoSession = driver.session();
-      try {
-        const matchResult = await videoSession.run(
-          'MATCH (n:BJJNode) WHERE n.name IN $names RETURN n.name AS name',
-          { names: techniqueNames }
-        );
-        const validNames = matchResult.records.map(r => r.get('name')).slice(0, 3);
-        const videos = (await Promise.all(
-          validNames.map(async name => {
-            const url = await searchYouTube(name, sourceName);
-            return url ? { name, url } : null;
-          })
-        )).filter(Boolean);
-        if (videos.length) send('videos', { videos });
-      } finally {
-        await videoSession.close();
-      }
+    // YouTube search against retrieved chunks
+    if (YOUTUBE_API_KEY && chunks.length > 0) {
+      const sourceName = chunks[0].name;
+      const videos = (await Promise.all(
+        chunks.slice(0, 3).map(async c => {
+          const url = await searchYouTube(c.name, sourceName !== c.name ? sourceName : null);
+          return url ? { name: c.name, url } : null;
+        })
+      )).filter(Boolean);
+      if (videos.length) send('videos', { videos });
     }
 
     send('done', {});
@@ -338,9 +353,7 @@ app.get('/api/path', async (req, res) => {
       { from, to }
     );
 
-    if (result.records.length === 0) {
-      return res.json({ found: false });
-    }
+    if (result.records.length === 0) return res.json({ found: false });
 
     const record = result.records[0];
     res.json({ found: true, steps: record.get('steps'), transitions: record.get('transitions') });
@@ -349,6 +362,7 @@ app.get('/api/path', async (req, res) => {
   }
 });
 
+// ── Startup ───────────────────────────────────────────────────────────────────
 
 async function start() {
   try {
@@ -356,6 +370,8 @@ async function start() {
   } catch (err) {
     console.error('Seed failed (DB may not be ready yet):', err.message);
   }
+
+  await initRAG();
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`BJJ Chat running on port ${port}`));

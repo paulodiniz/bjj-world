@@ -29,7 +29,6 @@
     .msg.assistant .answer-text ul,.msg.assistant .answer-text ol { padding-left: 20px; margin: 4px 0; }
     .msg.assistant .answer-text strong { color: #fff; }
     .msg.assistant .answer-text p { margin: 4px 0; }
-    .msg.assistant .cypher { margin-top: 10px; background: #111; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #666; white-space: pre-wrap; }
     .videos { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
     .video-embed { border-radius: 8px; overflow: hidden; }
     .video-embed iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; }
@@ -150,7 +149,6 @@
       conversationHistory.push({ role: 'user', content: question });
       const statusDiv = addMsg('', 'thinking');
       const answerDiv = addMsg('', 'assistant');
-      let cypherPre = null;
       let buffer = '';
 
       try {
@@ -176,14 +174,11 @@
 
             if (event.type === 'status') {
               statusDiv.textContent = event.text;
-            } else if (event.type === 'cypher') {
-              if (!cypherPre) { cypherPre = document.createElement('pre'); cypherPre.className = 'cypher'; answerDiv.appendChild(cypherPre); }
-              cypherPre.textContent = event.text;
             } else if (event.type === 'token') {
               buffer += event.text;
               const textEl = answerDiv.querySelector('.answer-text') || (() => {
                 const el = document.createElement('div'); el.className = 'answer-text';
-                answerDiv.insertBefore(el, cypherPre || null); return el;
+                answerDiv.appendChild(el); return el;
               })();
               textEl.innerHTML = marked.parse(buffer);
               messages.scrollTop = messages.scrollHeight;
