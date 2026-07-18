@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 // Usage: node scripts/expand-graph.js "leg lock system" [--dry-run]
 
+// Load .env if present
+const envPath = require('path').join(__dirname, '..', '.env');
+if (require('fs').existsSync(envPath)) {
+  require('fs').readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const [k, ...v] = line.split('=');
+    if (k && v.length && !process.env[k.trim()]) process.env[k.trim()] = v.join('=').trim();
+  });
+}
+
 const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
@@ -125,10 +134,20 @@ Respond with ONLY this JSON structure, no trailing text:
     if (edge.difficulty && !VALID_DIFFICULTY.includes(edge.difficulty)) errors.push(`Invalid difficulty "${edge.difficulty}"`);
   }
 
-  if (errors.length > 0) {
-    console.error('Validation errors:');
-    errors.forEach(e => console.error(' -', e));
+  const unknownRefs = new Set(
+    errors.filter(e => e.startsWith('Edge references unknown')).map(e => e.match(/"([^"]+)"$/)?.[1]).filter(Boolean)
+  );
+  const fatalErrors = errors.filter(e => !e.startsWith('Edge references unknown'));
+
+  if (fatalErrors.length > 0) {
+    console.error('Fatal validation errors:');
+    fatalErrors.forEach(e => console.error(' -', e));
     process.exit(1);
+  }
+
+  if (unknownRefs.size > 0) {
+    console.warn(`Dropping edges with unknown node refs: ${[...unknownRefs].join(', ')}`);
+    generated.edges = generated.edges.filter(e => !unknownRefs.has(e.from) && !unknownRefs.has(e.to));
   }
 
   // Preview

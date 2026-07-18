@@ -952,6 +952,102 @@
       "description": "Danaher Death Squad original member and pioneer of the modern heel hook system.",
       "gi_requirement": "both",
       "video_url": null
+    },
+    {
+      "id": "high_crotch",
+      "name": "High Crotch",
+      "type": "takedown",
+      "description": "A wrestling takedown where you shoot on one leg while your head is on the inside, driving up under the hip. Often chains to a double leg finish.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "ankle_pick",
+      "name": "Ankle Pick",
+      "type": "takedown",
+      "description": "A takedown where you break the opponent's posture down and reach to grab their ankle while driving them backward. Excellent from collar tie or wrist control.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "duck_under",
+      "name": "Duck Under",
+      "type": "takedown",
+      "description": "A wrestling takedown where you dip under the opponent's arm from a tie-up to take the back or angle behind them. Works well against opponents pushing into you.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "blast_double",
+      "name": "Blast Double",
+      "type": "takedown",
+      "description": "An explosive double leg takedown where you drive straight through the opponent without changing levels dramatically. High-percentage in freestyle and MMA.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "russian_tie",
+      "name": "Russian Tie",
+      "type": "technique",
+      "description": "A wrestling upper-body control grip on the opponent's arm used to set up drags, duck unders, and takedowns. Central to Russian wrestling systems.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "collar_tie",
+      "name": "Collar Tie",
+      "type": "technique",
+      "description": "A dominant clinch grip behind the opponent's neck used to control posture and set up snap downs, ankle picks, and level changes.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "underhook",
+      "name": "Underhook",
+      "type": "technique",
+      "description": "A control grip where your arm passes under the opponent's armpit. Foundational for body lock takedowns, throws, and pass prevention.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "level_change",
+      "name": "Level Change",
+      "type": "concept",
+      "description": "The action of lowering your hips and center of gravity before shooting a takedown. Essential for setting up leg attacks without telegraphing.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "penetration_step",
+      "name": "Penetration Step",
+      "type": "concept",
+      "description": "The deep forward step that closes distance during a shot, planting the lead knee inside the opponent's stance. The foundation of leg-attack takedowns.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "hand_fighting",
+      "name": "Hand Fighting",
+      "type": "concept",
+      "description": "The tactical battle for grips, ties, and inside control before takedowns. Wins and losses in wrestling often come from hand fighting exchanges.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "sprawl_and_brawl",
+      "name": "Sprawl and Brawl Defense",
+      "type": "counter",
+      "description": "A defensive framework where sprawling stops the shot and hips are driven down to flatten the attacker. Leads to front headlock counters.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "front_headlock",
+      "name": "Front Headlock",
+      "type": "position",
+      "description": "A dominant position after stuffing a shot, controlling the opponent's head and one arm. Gateway to guillotines, D'Arces, and back takes.",
+      "gi_requirement": "both",
+      "video_url": null
     }
   ],
   "edges": [
@@ -4710,6 +4806,240 @@
     {
       "from": "eddie_cummings",
       "to": "inside_heel_hook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "standing",
+      "to": "high_crotch",
+      "action": "attack_with",
+      "conditions": [
+        "opponent square stance"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "ankle_pick",
+      "action": "attack_with",
+      "conditions": [
+        "collar tie established"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "duck_under",
+      "action": "attack_with",
+      "conditions": [
+        "opponent posts arm"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "blast_double",
+      "action": "attack_with",
+      "conditions": [
+        "opponent flat-footed"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "high_crotch",
+      "to": "double_leg_takedown",
+      "action": "transition_to",
+      "conditions": [
+        "opponent sprawls hip"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "duck_under",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "clear the arm"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "collar_tie",
+      "to": "snap_down",
+      "action": "follow_up",
+      "conditions": [
+        "opponent posture forward"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "collar_tie",
+      "to": "ankle_pick",
+      "action": "follow_up",
+      "conditions": [
+        "break posture"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "russian_tie",
+      "to": "duck_under",
+      "action": "follow_up",
+      "conditions": [
+        "opponent resists pull"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "russian_tie",
+      "to": "arm_drag",
+      "action": "follow_up",
+      "conditions": [
+        "opponent pulls back"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "underhook",
+      "to": "body_lock_takedown",
+      "action": "follow_up",
+      "conditions": [
+        "close distance"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "double_leg_takedown",
+      "to": "level_change",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "single_leg_takedown",
+      "to": "level_change",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "double_leg_takedown",
+      "to": "penetration_step",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "high_crotch",
+      "to": "penetration_step",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "hand_fighting",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "sprawl",
+      "to": "front_headlock",
+      "action": "transition_to",
+      "conditions": [
+        "control head after stuff"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "front_headlock",
+      "to": "guillotine",
+      "action": "attack_with",
+      "conditions": [
+        "arm not trapped"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "front_headlock",
+      "to": "darce_choke",
+      "action": "attack_with",
+      "conditions": [
+        "far arm in"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "front_headlock",
+      "to": "peruvian_necktie",
+      "action": "attack_with",
+      "conditions": [
+        "opponent knees"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "front_headlock",
+      "to": "back_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent stands"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "sprawl_and_brawl",
+      "to": "sprawl",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "sprawl_and_brawl",
+      "action": "counters",
+      "to": "double_leg_takedown",
+      "conditions": [
+        "early recognition"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "body_lock_takedown",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "andre_galvao",
+      "to": "single_leg_takedown",
       "action": "known_for",
       "conditions": [],
       "confidence": "high",
