@@ -6,7 +6,7 @@
   <title>BJJ World</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     /* ── Tokens ─────────────────────────────────────────── */
@@ -25,9 +25,8 @@
       --mono-bg:     oklch(0.16 0.006 240);
       --mono-ink:    oklch(0.78 0.07 240);
 
-      --serif: 'Instrument Serif', Georgia, serif;
-      --sans:  Inter, system-ui, sans-serif;
-      --mono:  'JetBrains Mono', 'Fira Code', monospace;
+      --sans:  'IBM Plex Sans', system-ui, sans-serif;
+      --mono:  'IBM Plex Mono', 'Fira Code', monospace;
 
       --c-position:   oklch(0.68 0.16 145);
       --c-submission: oklch(0.68 0.18 25);
@@ -79,11 +78,12 @@
       flex-shrink: 0;
     }
     .header-brand-name {
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-style: italic;
+      font-weight: 600;
       font-size: 1rem;
       color: var(--ink);
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
     }
     .header-brand-sub {
       font-family: var(--mono);
@@ -182,11 +182,11 @@
       margin-bottom: 36px;
     }
     .landing-title {
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-style: italic;
       font-size: clamp(2rem, 5vw, 2.8rem);
-      font-weight: normal;
-      letter-spacing: -0.02em;
+      font-weight: 600;
+      letter-spacing: -0.03em;
       color: var(--ink);
       line-height: 1;
       margin-bottom: 10px;
@@ -346,17 +346,19 @@
 
     /* Answer prose */
     .answer-text {
-      font-family: var(--serif);
-      font-size: 1.02rem;
-      line-height: 1.75;
+      font-family: var(--sans);
+      font-size: 0.97rem;
+      line-height: 1.78;
+      letter-spacing: 0.01em;
       color: var(--ink);
       text-wrap: pretty;
       max-width: 64ch;
     }
     .answer-text h1, .answer-text h2, .answer-text h3 {
-      font-family: var(--serif);
+      font-family: var(--sans);
+      font-weight: 600;
       font-style: italic;
-      font-weight: normal;
+      letter-spacing: -0.01em;
       color: var(--ink);
       margin: 1em 0 0.3em;
       text-wrap: balance;
@@ -369,7 +371,7 @@
     .answer-text p:first-child { margin-top: 0; }
     .answer-text ul, .answer-text ol { padding-left: 1.5em; margin: 0.5em 0; }
     .answer-text li { margin: 0.2em 0; }
-    .answer-text strong { font-family: var(--sans); font-weight: 600; font-size: 0.94em; color: var(--ink); }
+    .answer-text strong { font-weight: 600; font-size: 0.94em; color: var(--ink); }
     .answer-text code {
       font-family: var(--mono);
       font-size: 0.80em;
@@ -500,12 +502,12 @@
     }
 
     .path-head h2 {
-      font-family: var(--serif);
+      font-family: var(--sans);
       font-style: italic;
-      font-size: 1.3rem;
-      font-weight: normal;
+      font-size: 1.25rem;
+      font-weight: 600;
       color: var(--ink);
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
       margin-bottom: 6px;
       text-wrap: balance;
     }
@@ -600,23 +602,25 @@
       margin-top: 28px;
       padding-top: 22px;
       border-top: 1px solid var(--border-sub);
-      font-family: var(--serif);
-      font-size: 1rem;
-      line-height: 1.75;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      line-height: 1.78;
+      letter-spacing: 0.01em;
       color: var(--ink-2);
       text-wrap: pretty;
       max-width: 64ch;
     }
     #path-explanation h1, #path-explanation h2, #path-explanation h3 {
-      font-family: var(--serif);
+      font-family: var(--sans);
+      font-weight: 600;
       font-style: italic;
-      font-weight: normal;
-      font-size: 1rem;
+      font-size: 0.97rem;
+      letter-spacing: -0.01em;
       color: var(--ink);
       margin: 0.9em 0 0.3em;
     }
     #path-explanation ul, #path-explanation ol { padding-left: 1.4em; margin: 0.4em 0; }
-    #path-explanation strong { font-family: var(--sans); font-weight: 600; font-size: 0.93em; color: var(--ink); }
+    #path-explanation strong { font-weight: 600; font-size: 0.93em; color: var(--ink); }
 
     .path-no-result {
       font-family: var(--mono);
