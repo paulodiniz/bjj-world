@@ -840,6 +840,118 @@
       "gi_requirement": "both",
       "description": "Position from turtle where the top player traps one arm between their legs and controls the other arm, leaving the opponent's neck fully exposed. Allows chokes and armbars with no defense available.",
       "video_url": "https://www.youtube.com/watch?v=wz79m3AY964"
+    },
+    {
+      "id": "saddle",
+      "name": "Saddle (Inside Sankaku)",
+      "type": "position",
+      "description": "Inside position with legs entangled around opponent's leg, primary control for inside heel hooks and knee attacks.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "outside_ashi",
+      "name": "Outside Ashi Garami",
+      "type": "position",
+      "description": "Leg entanglement with attacker's legs outside opponent's leg, used for straight ankle locks and Achilles attacks.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "cross_ashi",
+      "name": "Cross Ashi (Cross Body Ashi)",
+      "type": "position",
+      "description": "Leg entanglement crossing to opponent's far side, strong for controlling and finishing heel hooks with reduced 50/50 exchange risk.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "honey_hole",
+      "name": "Honey Hole (Inside Sankaku)",
+      "type": "position",
+      "description": "Danaher-style term for the saddle position, allowing devastating inside heel hooks with rotational control.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "toe_hold",
+      "name": "Toe Hold",
+      "type": "submission",
+      "description": "Foot lock applying rotational pressure to the ankle joint by twisting the toes and foot.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "inside_heel_hook",
+      "name": "Inside Heel Hook",
+      "type": "submission",
+      "description": "Devastating rotational knee attack targeting ligaments (ACL/MCL) via inside heel torque, most powerful from saddle.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "outside_heel_hook",
+      "name": "Outside Heel Hook",
+      "type": "submission",
+      "description": "Rotational knee submission attacking the heel from the outside, common from 50/50 and outside ashi.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "estima_lock",
+      "name": "Estima Lock",
+      "type": "submission",
+      "description": "Foot lock developed by the Estima brothers, isolating the foot and creating pressure on the ankle from a top position.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "leg_entry_concept",
+      "name": "Leg Entry Systems",
+      "type": "concept",
+      "description": "Systematic entries into leg entanglements from guard, passing, and top positions, foundational to modern leg locking.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "backstep_entry",
+      "name": "Backstep Entry",
+      "type": "technique",
+      "description": "Entry into leg entanglements by stepping over the opponent's leg to establish ashi garami or saddle control.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "leg_lock_defense",
+      "name": "Leg Lock Defense",
+      "type": "escape",
+      "description": "Systematic escapes from leg entanglements including hiding the heel, boot escape, and hip clearing.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "craig_jones",
+      "name": "Craig Jones",
+      "type": "competitor",
+      "description": "Australian black belt renowned for his leg lock game, especially heel hooks from 50/50 and z-guard.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "lachlan_giles",
+      "name": "Lachlan Giles",
+      "type": "competitor",
+      "description": "Australian black belt famous for submitting heavyweights via heel hooks at ADCC 2019.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "eddie_cummings",
+      "name": "Eddie Cummings",
+      "type": "competitor",
+      "description": "Danaher Death Squad original member and pioneer of the modern heel hook system.",
+      "gi_requirement": "both",
+      "video_url": null
     }
   ],
   "edges": [
@@ -4377,6 +4489,230 @@
         "one arm extended from crucifix"
       ],
       "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "saddle",
+      "action": "centers_on",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "inside_heel_hook",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "dds_leg_lock_system",
+      "to": "leg_entry_concept",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "john_danaher",
+      "to": "dds_leg_lock_system",
+      "action": "developed",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "john_danaher",
+      "action": "coached_by",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "eddie_cummings",
+      "to": "john_danaher",
+      "action": "coached_by",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "saddle",
+      "to": "inside_heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "heel exposed"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "saddle",
+      "to": "kneebar",
+      "action": "attack_with",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "honey_hole",
+      "to": "inside_heel_hook",
+      "action": "attack_with",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "outside_ashi",
+      "to": "ankle_lock",
+      "action": "attack_with",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "outside_ashi",
+      "to": "toe_hold",
+      "action": "attack_with",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "cross_ashi",
+      "to": "outside_heel_hook",
+      "action": "attack_with",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "fifty_fifty",
+      "to": "outside_heel_hook",
+      "action": "attack_with",
+      "conditions": [
+        "control leg line"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "single_leg_x_guard",
+      "to": "outside_ashi",
+      "action": "transition_to",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "saddle",
+      "action": "transition_to",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "ashi_garami",
+      "to": "cross_ashi",
+      "action": "transition_to",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "backstep_entry",
+      "to": "saddle",
+      "action": "transition_to",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "leg_entry_concept",
+      "to": "backstep_entry",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "x_guard",
+      "to": "outside_ashi",
+      "action": "transition_to",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "z_guard",
+      "to": "outside_ashi",
+      "action": "transition_to",
+      "conditions": [],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "half_guard",
+      "to": "estima_lock",
+      "action": "attack_with",
+      "conditions": [
+        "top position"
+      ],
+      "confidence": "medium",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "leg_lock_defense",
+      "to": "inside_heel_hook",
+      "action": "counters",
+      "conditions": [
+        "hide heel"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "leg_lock_defense",
+      "to": "outside_heel_hook",
+      "action": "counters",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "craig_jones",
+      "to": "outside_heel_hook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "lachlan_giles",
+      "to": "inside_heel_hook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "gordon_ryan",
+      "to": "dds_leg_lock_system",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "eddie_cummings",
+      "to": "inside_heel_hook",
+      "action": "known_for",
+      "conditions": [],
+      "confidence": "high",
       "difficulty": "advanced"
     }
   ]
