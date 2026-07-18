@@ -259,11 +259,14 @@ async function streamAnswer(question, chunks, history, onToken) {
     ],
   });
 
+  let fullText = '';
   for await (const event of stream) {
     if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      fullText += event.delta.text;
       onToken(event.delta.text);
     }
   }
+  return fullText;
 }
 
 // ── Database seeding ──────────────────────────────────────────────────────────
@@ -355,14 +358,17 @@ app.post('/api/chat', async (req, res) => {
 
     // Stream answer
     send('status', { text: 'Answering...' });
-    await streamAnswer(question, chunks, history, token => send('token', { text: token }));
+    const answerText = await streamAnswer(question, chunks, history, token => send('token', { text: token }));
 
-    // YouTube search against retrieved chunks
-    if (YOUTUBE_API_KEY && chunks.length > 0) {
-      const sourceName = chunks[0].name;
+    // YouTube search — only for techniques actually mentioned in the answer
+    if (YOUTUBE_API_KEY && answerText) {
+      const mentioned = ragChunks
+        .filter(c => answerText.toLowerCase().includes(c.name.toLowerCase()))
+        .slice(0, 3);
+      const pool = mentioned.length > 0 ? mentioned : chunks.slice(0, 3);
       const videos = (await Promise.all(
-        chunks.slice(0, 3).map(async c => {
-          const url = await searchYouTube(c.name, sourceName !== c.name ? sourceName : null);
+        pool.map(async c => {
+          const url = await searchYouTube(c.name, null);
           return url ? { name: c.name, url } : null;
         })
       )).filter(Boolean);
