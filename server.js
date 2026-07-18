@@ -424,18 +424,18 @@ ${knownTechniques}
 
 ${frameInstructions}
 
-You are a BJJ analyst. Scan the ${frameCount} frames and emit an event for each meaningful moment:
-- A position is established or changes
-- A submission attempt begins or ends
-- A sweep, pass, takedown, or escape occurs
-- A scramble resolves
+You are a BJJ analyst. For EACH of the ${frameCount} frames above, write one event describing exactly what you see. Do not skip any frame.
 
-For each event, pick the most specific technique/position name from the known list above. Say who holds the position and what is actively happening.
+For each frame:
+- Name the specific BJJ position (use names from the list above when possible)
+- Say who holds the position and who is on the receiving end
+- If a submission, sweep, pass, or takedown is being attempted, name it
+- Use the fighter names from the video title
 
 Rules:
-- Use fighter names from the video title.
-- Always name the specific position — never "grappling continues" or "ground work".
-- Use the EXACT timestamp from the frame label (e.g. [1:20] → 80).
+- Never write vague phrases like "grappling continues" or "ground work" — always name the specific position
+- Use the EXACT timestamp from the frame label (e.g. [1:20] → timestamp 80)
+- Timestamps must be integers (seconds)
 
 Return ONLY valid JSON, no markdown fences:
 {
@@ -453,7 +453,7 @@ Return ONLY valid JSON, no markdown fences:
   ]
 }
 
-Timestamps must be integers (seconds). Aim for 15–35 events.`,
+You must produce one event per frame — you have ${frameCount} frames so the events array must have ${frameCount} entries.`,
   });
 
   return content;
@@ -478,8 +478,9 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
     return;
   }
 
-  const events = analysis.events || [];
+  const events = Array.isArray(analysis.events) ? analysis.events : [];
   console.log(`[analysis] "${title}" → ${events.length} events`);
+  if (events.length === 0) console.log('[analysis] raw response:', rawText.slice(0, 500));
 
   send('analysis-summary', {
     summary: analysis.summary || '',
