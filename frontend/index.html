@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BJJ World</title>
+  <title>Tapcodex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1454,9 +1454,9 @@
 <body>
 
   <!-- ── Compact header (results + path modes) ── -->
-  <header class="app-header" aria-label="BJJ World">
+  <header class="app-header" aria-label="Tapcodex">
     <div class="header-brand">
-      <span class="header-brand-name">BJJ World</span>
+      <span class="header-brand-name">Tapcodex</span>
       <span class="header-brand-sub">knowledge graph</span>
     </div>
 
@@ -1487,10 +1487,10 @@
     </div>
   </header>
 
-  <dialog id="auth-dialog" aria-label="Sign in to BJJ World">
+  <dialog id="auth-dialog" aria-label="Sign in to Tapcodex">
     <div class="auth-dialog-inner">
       <div id="auth-form-state">
-        <h2 class="auth-dialog-title">Sign in to BJJ World</h2>
+        <h2 class="auth-dialog-title">Sign in to Tapcodex</h2>
         <p class="auth-dialog-sub">We'll send a magic link to your email</p>
         <input type="email" class="auth-email-input" id="auth-email"
           placeholder="your@email.com" autocomplete="email" />
@@ -1512,7 +1512,7 @@
   </dialog>
 
   <!-- ── Landing ── -->
-  <div class="landing" role="main" aria-label="BJJ World — knowledge graph">
+  <div class="landing" role="main" aria-label="Tapcodex — knowledge graph">
     <div class="landing-topbar">
       <button type="button" class="landing-signin-btn" id="landing-signin-btn"
         onclick="openAuthDialog()" style="display:none">Sign in</button>
@@ -1520,7 +1520,7 @@
         onclick="handleUserClick()" style="display:none"></button>
     </div>
     <div class="landing-brand">
-      <h1 class="landing-title">BJJ World</h1>
+      <h1 class="landing-title">Tapcodex</h1>
       <p class="landing-sub">knowledge graph</p>
     </div>
 
@@ -2107,10 +2107,12 @@
               pre.textContent = event.text;
               entryA.appendChild(pre);
 
+            } else if (event.type === 'analysis_id') {
+              history.pushState({ analysis_id: event.id }, '', `/a/${event.id}`);
+
             } else if (event.type === 'done') {
               entryA.removeAttribute('data-streaming');
               if (statusEl.parentNode) statusEl.remove();
-              // Apply graph chips to all timeline descriptions
               if (fightTimeline) {
                 fightTimeline.querySelectorAll('.timeline-desc').forEach(el => applyChips(el));
               }
@@ -2281,6 +2283,9 @@
               pre.className = 'analysis-raw';
               pre.textContent = event.text;
               entryA.appendChild(pre);
+
+            } else if (event.type === 'analysis_id') {
+              history.pushState({ analysis_id: event.id }, '', `/a/${event.id}`);
 
             } else if (event.type === 'done') {
               entryA.removeAttribute('data-streaming');
@@ -2591,40 +2596,73 @@
       return groups.filter(g => g.items.length > 0);
     }
 
+    function buildHistoryItems(items, onClickFn, onDeleteFn, listEl) {
+      const groups = groupConversations(items.map(i => ({ ...i, updated_at: i.updated_at || i.created_at })));
+      for (const group of groups) {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'history-group';
+        groupEl.innerHTML = `<div class="history-group-label">${group.label}</div><div class="history-list"></div>`;
+        const ul = groupEl.querySelector('.history-list');
+        for (const item of group.items) {
+          const el = document.createElement('div');
+          el.className = 'history-item';
+          el.innerHTML = `
+            <span class="history-item-title">${escHtml(item.title)}</span>
+            <span class="history-item-date">${relativeDate(item.updated_at || item.created_at)}</span>
+            <button class="history-item-del" title="Delete" aria-label="Delete">✕</button>`;
+          el.querySelector('.history-item-del').addEventListener('click', async e => {
+            e.stopPropagation();
+            await onDeleteFn(item.id);
+            el.remove();
+          });
+          el.addEventListener('click', () => onClickFn(item.id));
+          ul.appendChild(el);
+        }
+        listEl.appendChild(groupEl);
+      }
+    }
+
     async function loadHistory() {
       const listEl = document.getElementById('history-list');
       listEl.innerHTML = `<p class="history-empty">Loading…</p>`;
       try {
-        const res  = await fetch('/api/conversations');
-        if (res.status === 401) { listEl.innerHTML = `<p class="history-empty">Sign in to see your history.</p>`; return; }
-        const data = await res.json();
-        const convs = data.conversations || [];
-        if (!convs.length) { listEl.innerHTML = `<p class="history-empty">No conversations yet.</p>`; return; }
+        const [convRes, anlRes] = await Promise.all([
+          fetch('/api/conversations'),
+          fetch('/api/analyses'),
+        ]);
+        if (convRes.status === 401) {
+          listEl.innerHTML = `<p class="history-empty">Sign in to see your history.</p>`;
+          return;
+        }
+        const convData = await convRes.json();
+        const anlData  = anlRes.ok ? await anlRes.json() : { analyses: [] };
+        const convs    = convData.conversations || [];
+        const analyses = anlData.analyses || [];
 
-        const groups = groupConversations(convs);
+        if (!convs.length && !analyses.length) {
+          listEl.innerHTML = `<p class="history-empty">No history yet.</p>`;
+          return;
+        }
+
         listEl.innerHTML = '';
-        for (const group of groups) {
-          const groupEl = document.createElement('div');
-          groupEl.className = 'history-group';
-          groupEl.innerHTML = `<div class="history-group-label">${group.label}</div><div class="history-list"></div>`;
-          const ul = groupEl.querySelector('.history-list');
-          for (const conv of group.items) {
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-              <span class="history-item-title">${escHtml(conv.title)}</span>
-              <span class="history-item-date">${relativeDate(conv.updated_at)}</span>
-              <button class="history-item-del" title="Delete" aria-label="Delete conversation">✕</button>`;
-            item.querySelector('.history-item-del').addEventListener('click', async e => {
-              e.stopPropagation();
-              await fetch(`/api/conversations/${conv.id}`, { method: 'DELETE' });
-              item.remove();
-              if (!listEl.querySelector('.history-item')) listEl.innerHTML = `<p class="history-empty">No conversations yet.</p>`;
-            });
-            item.addEventListener('click', () => resumeConversation(conv.id));
-            ul.appendChild(item);
-          }
-          listEl.appendChild(groupEl);
+
+        if (convs.length) {
+          const section = document.createElement('div');
+          section.innerHTML = `<div class="history-group-label" style="margin-bottom:12px">Conversations</div>`;
+          listEl.appendChild(section);
+          buildHistoryItems(convs, id => resumeConversation(id), async id => {
+            await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
+          }, listEl);
+        }
+
+        if (analyses.length) {
+          const section = document.createElement('div');
+          section.style.marginTop = '28px';
+          section.innerHTML = `<div class="history-group-label" style="margin-bottom:12px">Video analyses</div>`;
+          listEl.appendChild(section);
+          buildHistoryItems(analyses, id => loadAnalysisFromHistory(id), async id => {
+            await fetch(`/api/analyses/${id}`, { method: 'DELETE' });
+          }, listEl);
         }
       } catch {
         listEl.innerHTML = `<p class="history-empty">Failed to load history.</p>`;
@@ -2675,6 +2713,59 @@
         entries.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       } catch {
         console.error('Failed to load conversation');
+      }
+    }
+
+    // ── Saved analyses ───────────────────────────────────────
+    async function loadAnalysisFromHistory(id, push = true) {
+      try {
+        const res  = await fetch(`/api/analyses/${id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (push) history.pushState({ analysis_id: id }, '', `/a/${id}`);
+        entries.innerHTML = '';
+        hasResults = true;
+        setMode('results');
+
+        // Header
+        const entry = document.createElement('div');
+        entry.className = 'entry';
+
+        const entryQ = document.createElement('div');
+        entryQ.className = 'entry-q';
+        entryQ.innerHTML = `<span class="entry-q-glyph" aria-hidden="true">▶</span>
+          <span class="entry-q-text">${escHtml(data.title)}</span>`;
+        entry.appendChild(entryQ);
+
+        const entryA = document.createElement('div');
+        entryA.className = 'entry-a';
+
+        const header = document.createElement('div');
+        header.className = 'fight-header';
+        header.innerHTML = `
+          <div class="fight-meta">
+            <div class="fight-title">${escHtml(data.title)}</div>
+            <div class="fight-summary">${escHtml(data.summary || '')}</div>
+            ${data.fighter_a && data.fighter_a !== 'Fighter A'
+              ? `<div class="fight-fighters">${escHtml(data.fighter_a)} vs ${escHtml(data.fighter_b)}</div>`
+              : ''}
+          </div>`;
+        entryA.appendChild(header);
+
+        const timeline = document.createElement('div');
+        timeline.className = 'fight-timeline';
+        for (const ev of data.events || []) {
+          const row = buildTimelineRow(ev, new Map());
+          timeline.appendChild(row);
+        }
+        applyChips(timeline);
+        entryA.appendChild(timeline);
+        entry.appendChild(entryA);
+        entries.appendChild(entry);
+        entry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        console.error('Failed to load analysis');
       }
     }
 
@@ -2987,7 +3078,7 @@
           if (!r.ok) throw new Error('Not found');
           return r.json();
         });
-        document.title = `${data.name} — BJJ World`;
+        document.title = `${data.name} — Tapcodex`;
         renderTechnique(data);
       } catch {
         container.innerHTML = `<p style="color:var(--ink-3);font-size:0.88rem">Technique not found.</p>`;
@@ -3118,8 +3209,9 @@
       if (path.match(/^\/technique\/(.+)$/)) {
         loadTechnique(decodeURIComponent(path.slice('/technique/'.length)), false);
       } else if (path.match(/^\/c\/([a-f0-9-]+)$/)) {
-        const id = path.slice('/c/'.length);
-        resumeConversation(id, false);
+        resumeConversation(path.slice('/c/'.length), false);
+      } else if (path.match(/^\/a\/([a-f0-9-]+)$/)) {
+        loadAnalysisFromHistory(path.slice('/a/'.length), false);
       }
 
       window.addEventListener('popstate', () => {
@@ -3128,6 +3220,8 @@
           loadTechnique(decodeURIComponent(p.slice('/technique/'.length)), false);
         } else if (p.match(/^\/c\/([a-f0-9-]+)$/)) {
           resumeConversation(p.slice('/c/'.length), false);
+        } else if (p.match(/^\/a\/([a-f0-9-]+)$/)) {
+          loadAnalysisFromHistory(p.slice('/a/'.length), false);
         } else {
           document.title = 'Tapcodex';
           currentConversationId = null;

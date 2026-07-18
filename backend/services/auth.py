@@ -7,7 +7,7 @@ import resend
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
 
-MAIL_FROM = os.getenv("MAIL_FROM", "BJJ World <noreply@bjj-world.app>")
+MAIL_FROM = os.getenv("MAIL_FROM", "Tapcodex <noreply@tapcodex.app>")
 TOKEN_TTL_MINUTES = 15
 SESSION_TTL_DAYS = 30
 
@@ -67,7 +67,7 @@ def _send_email(to: str, magic_link: str) -> None:
     resend.Emails.send({
         "from": MAIL_FROM,
         "to": [to],
-        "subject": "Sign in to BJJ World",
+        "subject": "Sign in to Tapcodex",
         "html": f"""
 <!DOCTYPE html>
 <html>
@@ -78,7 +78,7 @@ def _send_email(to: str, magic_link: str) -> None:
         style="background:#1a1a1a;border-radius:10px;border:1px solid #333;padding:40px;">
         <tr><td>
           <p style="margin:0 0 8px;font-style:italic;font-weight:600;font-size:1.3rem;
-            letter-spacing:-0.03em;color:#ededed;">BJJ World</p>
+            letter-spacing:-0.03em;color:#ededed;">Tapcodex</p>
           <p style="margin:0 0 32px;font-size:0.72rem;color:#888;letter-spacing:0.06em;">
             KNOWLEDGE GRAPH</p>
           <p style="margin:0 0 28px;font-size:0.88rem;color:#aaa;line-height:1.7;">
@@ -88,7 +88,7 @@ def _send_email(to: str, magic_link: str) -> None:
             style="display:inline-block;background:#c0392b;color:#fff;
               text-decoration:none;padding:12px 28px;border-radius:6px;
               font-size:0.85rem;font-weight:500;letter-spacing:0.01em;">
-            Sign in to BJJ World →
+            Sign in to Tapcodex →
           </a>
           <p style="margin:36px 0 0;font-size:0.70rem;color:#555;line-height:1.6;">
             If you didn't request this, you can safely ignore this email.</p>

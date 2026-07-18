@@ -10,7 +10,7 @@ Hobbyist BJJ practitioners — white to purple belt — studying between classes
 
 ## Product Purpose
 
-BJJ World is a knowledge graph chat tool for Brazilian jiu-jitsu. It lets grapplers explore how techniques, positions, and submissions connect — asking natural questions and getting coach-quality answers backed by a structured graph of 180+ nodes. The Path Finder lets them find the shortest route between any two positions. Success looks like a practitioner walking into their next class with a clearer mental map of the game.
+Tapcodex is a knowledge graph chat tool for Brazilian jiu-jitsu. It lets grapplers explore how techniques, positions, and submissions connect — asking natural questions and getting coach-quality answers backed by a structured graph of 180+ nodes. The Path Finder lets them find the shortest route between any two positions. Success looks like a practitioner walking into their next class with a clearer mental map of the game.
 
 ## Brand Personality
 

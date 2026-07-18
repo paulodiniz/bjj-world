@@ -6,10 +6,12 @@ import time
 from collections import defaultdict
 
 from anthropic import AsyncAnthropic
-from fastapi import APIRouter, Request, UploadFile, File
+from fastapi import APIRouter, Cookie, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 
 import services.rag as _rag
+from services.analyses import save_analysis
+from services.auth import get_user_by_session
 from services.rag import retrieve
 from services.video import extract_frames, format_timestamp
 
@@ -115,7 +117,7 @@ def _get_ip(request: Request) -> str:
     return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or request.client.host
 
 
-async def _analyze_stream(frames: list[dict], title: str):
+async def _analyze_stream(frames: list[dict], title: str, collected: dict | None = None):
     if not frames:
         yield _sse("error", {"text": "Could not extract frames from this video."})
         return
@@ -131,11 +133,20 @@ async def _analyze_stream(frames: list[dict], title: str):
     events = result.get("events") or [] if result else []
     print(f"[analysis] \"{title}\" → {len(events)} events")
 
+    summary    = result.get("summary", "")
+    fighter_a  = result.get("fighter_a", "Fighter A")
+    fighter_b  = result.get("fighter_b", "Fighter B")
+
     yield _sse("analysis-summary", {
-        "summary": result.get("summary", ""),
-        "fighter_a": result.get("fighter_a", "Fighter A"),
-        "fighter_b": result.get("fighter_b", "Fighter B"),
+        "summary": summary,
+        "fighter_a": fighter_a,
+        "fighter_b": fighter_b,
     })
+
+    if collected is not None:
+        collected["summary"]   = summary
+        collected["fighter_a"] = fighter_a
+        collected["fighter_b"] = fighter_b
 
     rag_results = await asyncio.gather(
         *[retrieve(f"{ev.get('position', '')} {ev.get('description', '')}", 3) for ev in events],
@@ -149,20 +160,23 @@ async def _analyze_stream(frames: list[dict], title: str):
                 {"id": c["id"], "name": c["name"], "type": c["type"]}
                 for c in rag if c.get("score", 0) > 0.05
             ]
-        yield _sse("analysis-event", {
+        event_payload = {
             "timestamp": ev.get("timestamp", 0),
             "label": ev.get("label") or format_timestamp(ev.get("timestamp", 0)),
             "badge": ev.get("type", "position"),
             "description": ev.get("description", ""),
             "related": related,
-        })
+        }
+        if collected is not None:
+            collected["events"].append(event_payload)
+        yield _sse("analysis-event", event_payload)
         await asyncio.sleep(0.04)
 
     yield _sse("done", {})
 
 
 @router.post("/api/analyze-video")
-async def analyze_video(request: Request):
+async def analyze_video(request: Request, bjj_session: str = Cookie(default=None)):
     ip = _get_ip(request)
     if _is_analysis_limited(ip):
         return StreamingResponse(
@@ -182,6 +196,7 @@ async def analyze_video(request: Request):
             status_code=400,
         )
 
+    user = await get_user_by_session(bjj_session) if bjj_session else None
     print(f"ip={ip} analyze-video url={url[:80]!r}")
 
     async def generate():
@@ -192,8 +207,16 @@ async def analyze_video(request: Request):
             frames.append(frame)
             yield _sse("frame", {"timestamp": frame["timestamp"], "label": frame["label"], "data": frame["data"]})
         try:
-            async for chunk in _analyze_stream(frames, title):
+            collected = {"summary": None, "fighter_a": None, "fighter_b": None, "events": []}
+            async for chunk in _analyze_stream(frames, title, collected):
                 yield chunk
+            if user and collected["events"]:
+                analysis_id = await save_analysis(
+                    str(user["id"]), title,
+                    collected["summary"], collected["fighter_a"], collected["fighter_b"],
+                    collected["events"],
+                )
+                yield _sse("analysis_id", {"id": analysis_id})
         except Exception as exc:
             yield _sse("error", {"text": str(exc)})
 
@@ -201,7 +224,7 @@ async def analyze_video(request: Request):
 
 
 @router.post("/api/analyze-upload")
-async def analyze_upload(request: Request, video: UploadFile = File(...)):
+async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_session: str = Cookie(default=None)):
     ip = _get_ip(request)
     if _is_analysis_limited(ip):
         return StreamingResponse(
@@ -231,6 +254,7 @@ async def analyze_upload(request: Request, video: UploadFile = File(...)):
     with open(tmp_path, "wb") as f:
         f.write(contents)
 
+    user = await get_user_by_session(bjj_session) if bjj_session else None
     print(f"ip={ip} analyze-upload \"{video.filename}\" {size_mb:.1f}MB")
 
     async def generate():
@@ -241,8 +265,16 @@ async def analyze_upload(request: Request, video: UploadFile = File(...)):
             async for frame in extract_frames(tmp_path, target_frames=20, is_url=False):
                 frames.append(frame)
                 yield _sse("frame", {"timestamp": frame["timestamp"], "label": frame["label"], "data": frame["data"]})
-            async for chunk in _analyze_stream(frames, title):
+            collected = {"summary": None, "fighter_a": None, "fighter_b": None, "events": []}
+            async for chunk in _analyze_stream(frames, title, collected):
                 yield chunk
+            if user and collected["events"]:
+                analysis_id = await save_analysis(
+                    str(user["id"]), title,
+                    collected["summary"], collected["fighter_a"], collected["fighter_b"],
+                    collected["events"],
+                )
+                yield _sse("analysis_id", {"id": analysis_id})
         except Exception as exc:
             yield _sse("error", {"text": str(exc)})
         finally:
