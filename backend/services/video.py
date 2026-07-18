@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import json
 import os
 import re
 import shutil
@@ -34,8 +35,26 @@ def _read_new_frames(tmp_dir: str, seen: set[str]) -> list[dict]:
     return frames
 
 
+async def _has_video_stream(source: str) -> bool:
+    proc = await asyncio.create_subprocess_exec(
+        "ffprobe", "-v", "quiet", "-show_streams", "-select_streams", "v",
+        "-of", "json", source,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    stdout, _ = await proc.communicate()
+    try:
+        return len(json.loads(stdout).get("streams", [])) > 0
+    except Exception:
+        return False
+
+
 async def extract_frames(source: str, target_frames: int = 20, is_url: bool = True) -> AsyncGenerator[dict, None]:
     url = normalize_video_url(source) if is_url else source
+
+    if not await _has_video_stream(url):
+        raise RuntimeError("This file has no video stream. Make sure you're uploading a video file, not audio-only.")
+
     tmp_dir = tempfile.mkdtemp(prefix="bjj-frames-")
 
     try:
