@@ -1102,7 +1102,7 @@
       const err = document.createElement('div');
       err.className = 'entry-error';
       err.innerHTML = `
-        <span class="entry-error-msg">Something went wrong — try asking again.</span>
+        <span class="entry-error-msg">${escHtml(msg || 'Something went wrong — try asking again.')}</span>
         <button class="retry-btn" type="button">Retry</button>`;
       err.querySelector('.retry-btn').addEventListener('click', () => {
         container.innerHTML = '';

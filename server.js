@@ -499,7 +499,13 @@ app.post('/api/analyze-fight', async (req, res) => {
     send('status', { text: 'Extracting frames…' });
 
     // ── 2. Get video info and pick format ────────────────────
-    const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
+    let videoInfo;
+    try {
+      videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
+    } catch (e) {
+      throw new Error(`Could not access this video — it may be private, age-restricted, or region-locked. (${e.message})`);
+    }
+
     const durationSecs = parseInt(videoInfo.videoDetails.lengthSeconds, 10) || 0;
 
     // Scale frame interval to never exceed 18 frames (API image limit headroom)
@@ -509,34 +515,44 @@ app.post('/api/analyze-fight', async (req, res) => {
       : 30;
 
     // Choose lowest quality video-only format to minimise download
-    const format = ytdl.chooseFormat(videoInfo.formats, {
-      quality: 'lowestvideo',
-      filter: f => f.hasVideo && !f.hasAudio,
-    }) || ytdl.chooseFormat(videoInfo.formats, { quality: 'lowest' });
+    let format;
+    try {
+      format = ytdl.chooseFormat(videoInfo.formats, {
+        quality: 'lowestvideo',
+        filter: f => f.hasVideo && !f.hasAudio,
+      }) || ytdl.chooseFormat(videoInfo.formats, { quality: 'lowest' });
+    } catch (e) {
+      throw new Error(`No downloadable video format found. The video may be DRM-protected or unavailable. (${e.message})`);
+    }
 
     // ── 3. Extract frames via ffmpeg ─────────────────────────
     const tmpDir = `/tmp/bjj-${videoId}-${Date.now()}`;
     fs.mkdirSync(tmpDir, { recursive: true });
 
-    await new Promise((resolve, reject) => {
-      const videoStream = ytdl.downloadFromInfo(videoInfo, { format });
-      ffmpeg(videoStream)
-        .outputOptions([
-          `-vf`, `fps=1/${intervalSecs},scale=640:-2`,
-          `-frames:v`, String(maxFrames),
-          `-q:v`, `5`,
-        ])
-        .output(path.join(tmpDir, 'frame_%04d.jpg'))
-        .on('end', resolve)
-        .on('error', reject)
-        .run();
-    });
+    try {
+      await new Promise((resolve, reject) => {
+        const videoStream = ytdl.downloadFromInfo(videoInfo, { format });
+        videoStream.on('error', reject);
+        ffmpeg(videoStream)
+          .outputOptions([
+            `-vf`, `fps=1/${intervalSecs},scale=640:-2`,
+            `-frames:v`, String(maxFrames),
+            `-q:v`, `5`,
+          ])
+          .output(path.join(tmpDir, 'frame_%04d.jpg'))
+          .on('end', resolve)
+          .on('error', reject)
+          .run();
+      });
+    } catch (e) {
+      throw new Error(`Frame extraction failed — video stream could not be processed. (${e.message})`);
+    }
 
     const frameFiles = fs.readdirSync(tmpDir)
       .filter(f => f.endsWith('.jpg'))
       .sort();
 
-    if (frameFiles.length === 0) throw new Error('No frames extracted from video');
+    if (frameFiles.length === 0) throw new Error('No frames were extracted — the video may be too short or in an unsupported format.');
 
     send('status', { text: `Analysing ${frameFiles.length} frames with vision…` });
 
