@@ -272,16 +272,54 @@
     .hint-pill:hover { border-color: var(--ink-2); color: var(--ink); }
     .hint-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 20px; }
 
-    .upload-label {
-      margin-top: 12px;
-      font-family: var(--mono);
-      font-size: 0.70rem;
-      color: var(--ink-3);
+    .upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 100%;
+      max-width: 580px;
+      margin-top: 16px;
+      padding: 12px 20px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
       cursor: pointer;
-      letter-spacing: 0.04em;
-      transition: color 150ms;
+      text-align: center;
+      transition: border-color 150ms ease-out, background 150ms ease-out;
     }
-    .upload-label:hover { color: var(--ink-2); }
+    .upload-zone:hover { border-color: var(--ink-3); }
+    .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: color-mix(in oklch, var(--accent) 6%, transparent);
+    }
+    .upload-zone-glyph {
+      font-family: var(--mono);
+      font-size: 1rem;
+      color: var(--ink-3);
+      line-height: 1;
+      transition: color 150ms ease-out;
+    }
+    .upload-zone:hover .upload-zone-glyph { color: var(--ink-2); }
+    .upload-zone-text {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-2);
+      letter-spacing: 0.02em;
+    }
+    .upload-zone-meta {
+      font-family: var(--mono);
+      font-size: 0.63rem;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      margin-top: 2px;
+    }
+    .upload-zone-error {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--accent-text);
+      margin-top: 4px;
+      letter-spacing: 0.02em;
+    }
 
     .landing-path-link {
       margin-top: 24px;
@@ -831,8 +869,10 @@
         onclick="useHint(this)">What are the best submissions from back control?</button>
     </div>
 
-    <label class="upload-label" for="video-file-input">
-      ↑ or upload a video file
+    <label class="upload-zone" id="upload-zone" for="video-file-input">
+      <span class="upload-zone-glyph" aria-hidden="true">↑</span>
+      <span class="upload-zone-text">Upload a video to analyse</span>
+      <span class="upload-zone-meta">mp4 · mov · webm · up to 60 MB</span>
       <input type="file" id="video-file-input" accept="video/*" style="display:none">
     </label>
 
@@ -1375,11 +1415,44 @@
       if (!file) return;
       e.target.value = '';
       if (file.size > MAX_UPLOAD_BYTES) {
-        alert(`File too large (${(file.size / 1e6).toFixed(0)} MB). Maximum upload size is 60 MB.`);
+        showUploadError(`File too large (${(file.size / 1e6).toFixed(0)} MB — max 60 MB)`);
         return;
       }
       submitFileAnalysis(file);
     });
+
+    function showUploadError(msg) {
+      const zone = document.getElementById('upload-zone');
+      if (!zone) return;
+      let err = zone.querySelector('.upload-zone-error');
+      if (!err) {
+        err = document.createElement('span');
+        err.className = 'upload-zone-error';
+        zone.appendChild(err);
+      }
+      err.textContent = msg;
+      clearTimeout(zone._errTimer);
+      zone._errTimer = setTimeout(() => { if (err.parentNode) err.remove(); }, 4000);
+    }
+
+    const uploadZone = document.getElementById('upload-zone');
+    if (uploadZone) {
+      uploadZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        uploadZone.classList.add('drag-over');
+      });
+      uploadZone.addEventListener('dragleave', e => {
+        if (!uploadZone.contains(e.relatedTarget)) uploadZone.classList.remove('drag-over');
+      });
+      uploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('video/')) return;
+        if (file.size > MAX_UPLOAD_BYTES) { showUploadError(`File too large (${(file.size / 1e6).toFixed(0)} MB — max 60 MB)`); return; }
+        submitFileAnalysis(file);
+      });
+    }
 
     async function submitFileAnalysis(file) {
       if (abortCtrl) abortCtrl.abort();

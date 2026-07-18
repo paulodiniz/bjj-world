@@ -555,22 +555,20 @@ app.post('/api/chat', async (req, res) => {
   const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
 
   try {
-    // Video-only requests — match names from last answer
+    // Video-only requests — use RAG on the last assistant message
     const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
     const isVideoRequest = /\b(video|videos|watch|youtube)\b/i.test(question);
     if (isVideoRequest && YOUTUBE_API_KEY && lastAssistant) {
       send('status', { text: 'Finding videos...' });
-      const mentioned = ragChunks
-        .filter(c => lastAssistant.content.includes(c.name))
-        .slice(0, 3);
+      const chunks = await retrieve(lastAssistant.content, 3);
       const videos = (await Promise.all(
-        mentioned.map(async c => {
+        chunks.map(async c => {
           const url = await searchYouTube(c.name, null);
           return url ? { name: c.name, url } : null;
         })
       )).filter(Boolean);
       if (videos.length) send('videos', { videos });
-      send('token', { text: 'Here are the videos for the techniques we just discussed.' });
+      send('token', { text: videos.length ? 'Here are some videos for the techniques we discussed.' : 'Sorry, I couldn\'t find videos for those techniques right now.' });
       send('done', {});
       return;
     }
