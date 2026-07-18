@@ -738,6 +738,37 @@
       border-radius: 50%;
       flex-shrink: 0;
     }
+    .graph-filters {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 0 16px;
+      z-index: 10;
+      max-width: 100%;
+    }
+    .graph-filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 3px 10px;
+      font-family: var(--mono);
+      font-size: 0.63rem;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: border-color 120ms, color 120ms, background 120ms;
+      white-space: nowrap;
+    }
+    .graph-filter-btn.active {
+      border-color: var(--fc);
+      color: var(--fc);
+      background: color-mix(in oklch, var(--fc) 12%, transparent);
+    }
+
     .graph-loading {
       position: absolute;
       inset: 0;
@@ -1153,6 +1184,7 @@
   <!-- ── Graph ── -->
   <div class="graph-area" aria-label="BJJ knowledge graph">
     <div class="graph-loading" id="graph-loading">Loading graph…</div>
+    <div class="graph-filters" id="graph-filters"></div>
     <svg id="graph-svg" aria-hidden="true"></svg>
     <div class="graph-legend" id="graph-legend"></div>
   </div>
@@ -2187,14 +2219,44 @@
         } catch {}
       });
 
-      // Legend
-      const legend = document.getElementById('graph-legend');
+      // Legend + filters
       const seenTypes = [...new Set(nodes.map(n => n.type))].sort();
+
+      const legend = document.getElementById('graph-legend');
       legend.innerHTML = seenTypes.map(t => `
         <div class="graph-legend-row">
           <div class="graph-legend-dot" style="background:${typeColor(t)}"></div>
           <span>${t.replace(/_/g, ' ')}</span>
         </div>`).join('');
+
+      const activeTypes = new Set(seenTypes);
+
+      function applyFilter() {
+        node
+          .style('opacity', d => activeTypes.has(d.type) ? 1 : 0)
+          .style('pointer-events', d => activeTypes.has(d.type) ? 'all' : 'none');
+        link.style('opacity', l =>
+          activeTypes.has(l.source.type) && activeTypes.has(l.target.type) ? 0.5 : 0);
+      }
+
+      const filterBar = document.getElementById('graph-filters');
+      seenTypes.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'graph-filter-btn active';
+        btn.style.setProperty('--fc', typeColor(t));
+        btn.textContent = t.replace(/_/g, ' ');
+        btn.addEventListener('click', () => {
+          if (activeTypes.has(t)) {
+            activeTypes.delete(t);
+            btn.classList.remove('active');
+          } else {
+            activeTypes.add(t);
+            btn.classList.add('active');
+          }
+          applyFilter();
+        });
+        filterBar.appendChild(btn);
+      });
     }
 
     // ── Technique page ──────────────────────────────────────
