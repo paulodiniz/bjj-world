@@ -176,7 +176,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 0 24px 80px;
+      padding: 0 24px 60px;
+      overflow-y: auto;
     }
     [data-mode="landing"] .landing { display: flex; }
 
@@ -275,6 +276,79 @@
     .hint-pill:hover { border-color: var(--ink-2); color: var(--ink); }
     .hint-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 20px; }
 
+    .landing-modes {
+      width: 100%;
+      max-width: 580px;
+      margin-top: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .landing-mode {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border: none;
+      border-bottom: 1px solid var(--border-sub);
+      background: none;
+      width: 100%;
+      cursor: pointer;
+      text-align: left;
+      transition: background 120ms ease-out;
+    }
+    .landing-mode:last-child { border-bottom: none; }
+    .landing-mode:hover { background: var(--surface); }
+    .landing-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 0; }
+    .landing-mode-glyph {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--ink-3);
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center;
+      transition: color 120ms;
+    }
+    .landing-mode:hover .landing-mode-glyph { color: var(--ink-2); }
+    .landing-mode-body {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      min-width: 0;
+    }
+    .landing-mode-name {
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--ink);
+      flex-shrink: 0;
+      letter-spacing: -0.01em;
+    }
+    .landing-mode-desc {
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      color: var(--ink-3);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .landing-mode-arrow {
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-3);
+      flex-shrink: 0;
+      transition: color 120ms, transform 120ms;
+    }
+    .landing-mode:hover .landing-mode-arrow {
+      color: var(--accent-text);
+      transform: translateX(3px);
+    }
+    @media (max-width: 420px) {
+      .landing-mode-desc { display: none; }
+    }
+
     .upload-zone {
       display: flex;
       flex-direction: column;
@@ -323,25 +397,6 @@
       margin-top: 4px;
       letter-spacing: 0.02em;
     }
-
-    .landing-path-link {
-      margin-top: 24px;
-      font-family: var(--mono);
-      font-size: 0.70rem;
-      color: var(--ink-3);
-    }
-    .landing-path-link button {
-      background: none;
-      border: none;
-      color: var(--accent-text);
-      font-family: var(--mono);
-      font-size: 0.70rem;
-      cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      padding: 0;
-    }
-    .landing-path-link button:hover { color: var(--ink); }
 
     /* ── Results ────────────────────────────────────────── */
     .results-area {
@@ -1130,21 +1185,42 @@
         onclick="useHint(this)">How does Gordon Ryan approach back control?</button>
       <button class="hint-pill" role="listitem" type="button"
         onclick="useHint(this)">What are my options from half guard?</button>
-      <button class="hint-pill" role="listitem" type="button"
-        onclick="useHint(this)">What are the best submissions from back control?</button>
     </div>
+
+    <nav class="landing-modes" aria-label="Explore tools">
+      <button class="landing-mode" type="button" onclick="togglePath()">
+        <span class="landing-mode-glyph" aria-hidden="true">◆</span>
+        <span class="landing-mode-body">
+          <span class="landing-mode-name">Path Finder</span>
+          <span class="landing-mode-desc">Shortest route between any two positions</span>
+        </span>
+        <span class="landing-mode-arrow" aria-hidden="true">→</span>
+      </button>
+      <button class="landing-mode" type="button" onclick="toggleGraph()">
+        <span class="landing-mode-glyph" aria-hidden="true">⬡</span>
+        <span class="landing-mode-body">
+          <span class="landing-mode-name">Graph</span>
+          <span class="landing-mode-desc">Explore 180+ nodes as a live knowledge map</span>
+        </span>
+        <span class="landing-mode-arrow" aria-hidden="true">→</span>
+      </button>
+      <button class="landing-mode" type="button"
+        onclick="document.getElementById('video-file-input').click()">
+        <span class="landing-mode-glyph" aria-hidden="true">▶</span>
+        <span class="landing-mode-body">
+          <span class="landing-mode-name">Video Analysis</span>
+          <span class="landing-mode-desc">Upload a match — AI reads every position</span>
+        </span>
+        <span class="landing-mode-arrow" aria-hidden="true">→</span>
+      </button>
+    </nav>
 
     <label class="upload-zone" id="upload-zone" for="video-file-input">
       <span class="upload-zone-glyph" aria-hidden="true">↑</span>
-      <span class="upload-zone-text">Upload a video to analyse</span>
+      <span class="upload-zone-text">or drag and drop a video file here</span>
       <span class="upload-zone-meta">mp4 · mov · webm · up to 60 MB</span>
       <input type="file" id="video-file-input" accept="video/*" style="display:none">
     </label>
-
-    <p class="landing-path-link">
-      Looking for a specific route?
-      <button type="button" onclick="togglePath()">Use Path Finder →</button>
-    </p>
   </div>
 
   <!-- ── Results ── -->
