@@ -78,12 +78,11 @@ function isAnalysisLimited(ip) {
   return false;
 }
 
-function extractYouTubeId(url) {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
-    return u.searchParams.get('v') || null;
-  } catch { return null; }
+function extractYouTubeId(text) {
+  const m = text.match(
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return m ? m[1] : null;
 }
 
 function formatTimestamp(seconds) {

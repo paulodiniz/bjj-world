@@ -941,13 +941,12 @@
     let abortCtrl = null;
     let lastQuestion  = '';
 
-    function extractYouTubeId(url) {
-      try {
-        const u = new URL(url.trim());
-        if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
-        if (u.hostname.includes('youtube.com')) return u.searchParams.get('v') || null;
-        return null;
-      } catch { return null; }
+    function extractYouTubeId(text) {
+      // Match a YouTube URL anywhere in the input string
+      const m = text.match(
+        /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      );
+      return m ? m[1] : null;
     }
 
     document.getElementById('landing-form').addEventListener('submit', e => {
