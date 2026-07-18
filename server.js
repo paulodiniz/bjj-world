@@ -10,7 +10,7 @@ const ffmpegPath = require('ffmpeg-static');
 const multer = require('multer');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-const upload = multer({ dest: '/tmp/', limits: { fileSize: 500 * 1024 * 1024 } });
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 60 * 1024 * 1024 } });
 
 const app = express();
 app.use(express.json());
@@ -419,35 +419,27 @@ function buildVisionContent(frames, title, durationSecs, chapters) {
     text: `Video: "${title}" (~${Math.round(durationSecs / 60)} min)
 ${chapterText}
 
-Known BJJ positions and techniques (use these exact names when applicable):
+Known BJJ positions and techniques — use these EXACT names whenever you recognise them:
 ${knownTechniques}
 
 ${frameInstructions}
 
-You have ${frameCount} frames above. Analyse them and emit an event ONLY when something meaningful happens:
-- A position CHANGES (e.g. guard to side control, standing to guard pull)
-- A submission attempt starts or ends
+You are a BJJ analyst. Scan the ${frameCount} frames and emit an event for each meaningful moment:
+- A position is established or changes
+- A submission attempt begins or ends
 - A sweep, pass, takedown, or escape occurs
-- A scramble resolves into a new position
+- A scramble resolves
 
-Do NOT emit an event if the position from the previous frame is unchanged.
+For each event, pick the most specific technique/position name from the known list above. Say who holds the position and what is actively happening.
 
 Rules:
 - Use fighter names from the video title.
-- Never write vague phrases like "grappling continues", "ground work", or "technical exchange". Always name the specific position and who holds it.
-- Use the EXACT timestamp from the frame label (e.g. if label is [1:20], timestamp is 80).
-
-Good event descriptions:
-  "Marcelo pulls guard, establishes closed guard — Kron on top"
-  "Kron passes to side control on Marcelo's left"
-  "Marcelo takes the back, both hooks in"
-  "Marcelo attacks guillotine from guard — Kron defends, postures up"
-  "Scramble — both return to standing"
-  "Kron attempts arm lock from top half guard — Marcelo defends"
+- Always name the specific position — never "grappling continues" or "ground work".
+- Use the EXACT timestamp from the frame label (e.g. [1:20] → 80).
 
 Return ONLY valid JSON, no markdown fences:
 {
-  "summary": "2-3 sentence factual summary of the match including result and score if known",
+  "summary": "2-3 sentence factual summary of the match including result if known",
   "fighter_a": "first fighter full name",
   "fighter_b": "second fighter full name",
   "events": [
@@ -455,12 +447,13 @@ Return ONLY valid JSON, no markdown fences:
       "timestamp": 80,
       "label": "1:20",
       "type": "position|transition|submission_attempt|submission|sweep|guard_pass|takedown|escape",
-      "description": "specific one sentence: who does what, who ends up where"
+      "position": "exact name from known list, or null",
+      "description": "one sentence: who is where and what is happening"
     }
   ]
 }
 
-Timestamps must be integers (seconds). Aim for 15–40 events covering the meaningful moments of the match.`,
+Timestamps must be integers (seconds). Aim for 15–35 events.`,
   });
 
   return content;
@@ -485,18 +478,32 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
     return;
   }
 
+  const events = analysis.events || [];
+  console.log(`[analysis] "${title}" → ${events.length} events`);
+
   send('analysis-summary', {
     summary: analysis.summary || '',
     fighter_a: analysis.fighter_a || 'Fighter A',
     fighter_b: analysis.fighter_b || 'Fighter B',
   });
 
-  for (const ev of (analysis.events || [])) {
+  // Parallel RAG lookup for all events
+  const ragResults = await Promise.all(
+    events.map(ev => retrieve(`${ev.position || ''} ${ev.description}`, 3).catch(() => []))
+  );
+
+  for (let i = 0; i < events.length; i++) {
+    const ev = events[i];
+    const related = ragResults[i]
+      .filter(c => c.score > 0.05)
+      .map(c => ({ id: c.id, name: c.name, type: c.type }));
+
     send('analysis-event', {
       timestamp: ev.timestamp || 0,
       label: ev.label || formatTimestamp(ev.timestamp || 0),
       type: ev.type || 'position',
       description: ev.description || '',
+      related,
     });
     await new Promise(r => setTimeout(r, 40));
   }
@@ -653,7 +660,15 @@ app.post('/api/analyze-video', async (req, res) => {
 
 // ── File upload analysis ──────────────────────────────────────────────────────
 
-app.post('/api/analyze-upload', upload.single('video'), async (req, res) => {
+app.post('/api/analyze-upload', (req, res, next) => {
+  upload.single('video')(req, res, err => {
+    if (err?.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'File too large. Maximum upload size is 60 MB.' });
+    }
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
   if (isAnalysisLimited(ip)) {
     if (req.file) fs.unlinkSync(req.file.path);

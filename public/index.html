@@ -754,6 +754,12 @@
       color: var(--ink-2);
       line-height: 1.5;
     }
+    .timeline-related {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
     .analysis-raw {
       font-size: 0.88rem;
       color: var(--ink-2);
@@ -1167,6 +1173,43 @@
       return best;
     }
 
+    function buildTimelineRow(event, frameStore) {
+      const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', sweep:'sweep', guard_pass:'guard pass', escape:'escape', takedown:'takedown' };
+      const thumb = nearestFrame(frameStore, event.timestamp);
+      const row = document.createElement('div');
+      row.className = 'timeline-row';
+
+      const thumbEl = thumb
+        ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="">`
+        : '<div class="timeline-thumb"></div>';
+
+      const relatedHtml = (event.related || []).length > 0
+        ? `<div class="timeline-related">${event.related.map(n =>
+            `<span class="nc nc-${escHtml(n.type)}" role="button" tabindex="0" title="${escHtml(n.type.replace('_',' '))}">${escHtml(n.name)}</span>`
+          ).join('')}</div>`
+        : '';
+
+      row.innerHTML = `
+        ${thumbEl}
+        <div class="timeline-info">
+          <div class="timeline-meta">
+            <span class="timeline-ts">${escHtml(event.label)}</span>
+            <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
+          </div>
+          <span class="timeline-desc">${escHtml(event.description)}</span>
+          ${relatedHtml}
+        </div>`;
+
+      // wire up related chip clicks
+      row.querySelectorAll('.timeline-related .nc').forEach(chip => {
+        const name = chip.textContent;
+        chip.addEventListener('click', () => fillQuery(`Tell me more about ${name}`));
+        chip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fillQuery(`Tell me more about ${name}`); });
+      });
+
+      return row;
+    }
+
     // ── REMOVED: YouTube fight analysis (use file upload or direct URL instead) ──
     async function _removed_submitVideoAnalysis(url, videoId) {
       if (abortCtrl) abortCtrl.abort();
@@ -1325,10 +1368,15 @@
     }
 
     // ── File upload analysis ────────────────────────────────
+    const MAX_UPLOAD_BYTES = 60 * 1024 * 1024;
     document.getElementById('video-file-input').addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
       e.target.value = '';
+      if (file.size > MAX_UPLOAD_BYTES) {
+        alert(`File too large (${(file.size / 1e6).toFixed(0)} MB). Maximum upload size is 60 MB.`);
+        return;
+      }
       submitFileAnalysis(file);
     });
 
@@ -1425,19 +1473,7 @@
             } else if (event.type === 'analysis-event') {
               if (statusEl.parentNode) statusEl.remove();
               if (!fightTimeline) continue;
-              const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', escape:'escape', takedown:'takedown' };
-              const thumb = nearestFrame(frameStore, event.timestamp);
-              const row = document.createElement('div');
-              row.className = 'timeline-row';
-              row.innerHTML = `
-                ${thumb ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="">` : '<div class="timeline-thumb"></div>'}
-                <div class="timeline-info">
-                  <div class="timeline-meta">
-                    <span class="timeline-ts">${escHtml(event.label)}</span>
-                    <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
-                  </div>
-                  <span class="timeline-desc">${escHtml(event.description)}</span>
-                </div>`;
+              const row = buildTimelineRow(event, frameStore);
               fightTimeline.appendChild(row);
               entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
@@ -1561,19 +1597,7 @@
             } else if (event.type === 'analysis-event') {
               if (statusEl.parentNode) statusEl.remove();
               if (!fightTimeline) continue;
-              const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', escape:'escape', takedown:'takedown' };
-              const thumb = nearestFrame(frameStore, event.timestamp);
-              const row = document.createElement('div');
-              row.className = 'timeline-row';
-              row.innerHTML = `
-                ${thumb ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="">` : '<div class="timeline-thumb"></div>'}
-                <div class="timeline-info">
-                  <div class="timeline-meta">
-                    <span class="timeline-ts">${escHtml(event.label)}</span>
-                    <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
-                  </div>
-                  <span class="timeline-desc">${escHtml(event.description)}</span>
-                </div>`;
+              const row = buildTimelineRow(event, frameStore);
               fightTimeline.appendChild(row);
               entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
