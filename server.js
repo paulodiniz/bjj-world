@@ -514,16 +514,19 @@ app.post('/api/analyze-fight', async (req, res) => {
       ? Math.max(20, Math.ceil(durationSecs / maxFrames))
       : 30;
 
-    // Choose lowest quality video-only format to minimise download
-    let format;
-    try {
-      format = ytdl.chooseFormat(videoInfo.formats, {
-        quality: 'lowestvideo',
-        filter: f => f.hasVideo && !f.hasAudio,
-      }) || ytdl.chooseFormat(videoInfo.formats, { quality: 'lowest' });
-    } catch (e) {
-      throw new Error(`No downloadable video format found. The video may be DRM-protected or unavailable. (${e.message})`);
+    // Choose lowest quality video format to minimise download
+    let format = null;
+    // 1. Prefer video-only (no audio) at lowest quality
+    try { format = ytdl.chooseFormat(videoInfo.formats, { filter: 'videoonly', quality: 'lowest' }); } catch {}
+    // 2. Any format with video at lowest quality
+    if (!format) try { format = ytdl.chooseFormat(videoInfo.formats, { quality: 'lowest' }); } catch {}
+    // 3. Manually pick smallest bitrate from any format that has video
+    if (!format) {
+      format = videoInfo.formats
+        .filter(f => f.hasVideo)
+        .sort((a, b) => (a.bitrate || 0) - (b.bitrate || 0))[0] || null;
     }
+    if (!format) throw new Error('No downloadable video format found — the video may be DRM-protected or unavailable.');
 
     // ── 3. Extract frames via ffmpeg ─────────────────────────
     const tmpDir = `/tmp/bjj-${videoId}-${Date.now()}`;
