@@ -2,6 +2,7 @@ const express = require('express');
 const neo4j = require('neo4j-driver');
 const Anthropic = require('@anthropic-ai/sdk');
 const { Pool } = require('pg');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
@@ -81,10 +82,27 @@ const ACTION_LABEL = {
   coached_by:    'Coached by',
 };
 
+const INCOMING_LABEL = {
+  attack_with:   'Attacked from',
+  sweep_with:    'Used as sweep from',
+  pass_with:     'Used as pass from',
+  transition_to: 'Transitioned to from',
+  follow_up:     'Natural follow-up to',
+  recover_to:    'Recovered to from',
+  escape_with:   'Escape used from',
+  counters:      'Countered by',
+  known_for:     'Practitioners known for this',
+  features:      'Featured in',
+  centers_on:    'Center of system',
+  developed:     'Developed by',
+};
+
 function buildChunks(graph) {
   const edgesByFrom = {};
+  const edgesByTo = {};
   for (const edge of graph.edges) {
     (edgesByFrom[edge.from] ??= []).push(edge);
+    (edgesByTo[edge.to] ??= []).push(edge);
   }
   const nodeMap = Object.fromEntries(graph.nodes.map(n => [n.id, n]));
 
@@ -92,20 +110,39 @@ function buildChunks(graph) {
     const lines = [`[${node.type}] ${node.name}`];
     if (node.description) lines.push(node.description);
 
+    // Outgoing edges — what this node leads to
     const byAction = {};
     for (const e of edgesByFrom[node.id] ?? []) {
       const target = nodeMap[e.to];
       if (!target) continue;
-      const label = `${target.name}${e.difficulty ? ` (${e.difficulty})` : ''}`;
-      (byAction[e.action] ??= []).push(label);
+      const detail = [
+        target.name,
+        e.difficulty,
+        e.conditions?.length ? `(${e.conditions.slice(0, 2).join(', ')})` : null,
+      ].filter(Boolean).join(' ');
+      (byAction[e.action] ??= []).push(detail);
     }
-
     for (const [action, targets] of Object.entries(byAction)) {
       lines.push(`${ACTION_LABEL[action] ?? action}: ${targets.join(', ')}`);
     }
 
+    // Incoming edges — what leads to this node
+    const byIncoming = {};
+    for (const e of edgesByTo[node.id] ?? []) {
+      const source = nodeMap[e.from];
+      if (!source || !INCOMING_LABEL[e.action]) continue;
+      (byIncoming[e.action] ??= []).push(source.name);
+    }
+    for (const [action, sources] of Object.entries(byIncoming)) {
+      lines.push(`${INCOMING_LABEL[action]}: ${sources.join(', ')}`);
+    }
+
     return { id: node.id, name: node.name, type: node.type, text: lines.join('\n') };
   });
+}
+
+function chunkHash(chunks) {
+  return crypto.createHash('md5').update(chunks.map(c => c.text).join('')).digest('hex');
 }
 
 async function ollamaEmbed(texts) {
@@ -173,10 +210,17 @@ async function initRAG() {
       embedding vector(768)
     )
   `);
+  await pgPool.query(`
+    CREATE TABLE IF NOT EXISTS bjj_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
 
-  const { rows } = await pgPool.query('SELECT COUNT(*) AS count FROM bjj_embeddings');
-  if (parseInt(rows[0].count) === ragChunks.length) {
-    console.log(`pgvector: ${rows[0].count} embeddings already stored, skipping`);
+  const currentHash = chunkHash(ragChunks);
+  const { rows: meta } = await pgPool.query("SELECT value FROM bjj_meta WHERE key = 'chunk_hash'");
+  if (meta[0]?.value === currentHash) {
+    console.log('pgvector: chunks unchanged, skipping re-embed');
     ragReady = true;
     return;
   }
@@ -192,6 +236,10 @@ async function initRAG() {
       [c.id, c.name, c.type, c.text, JSON.stringify(embeddings[i])]
     );
   }
+  await pgPool.query(
+    "INSERT INTO bjj_meta (key, value) VALUES ('chunk_hash', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+    [currentHash]
+  );
   console.log(`Stored ${ragChunks.length} embeddings in pgvector`);
   ragReady = true;
 }
