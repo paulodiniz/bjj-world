@@ -368,7 +368,7 @@ async function extractFramesFromVideo(rawUrl, targetFrames = 20, onFrame = null)
         seen.add(file);
         const index = parseInt(file) - 1; // 0001.jpg → index 0
         const data = fs.readFileSync(path.join(tmpDir, file)).toString('base64');
-        const frame = { timestamp: index * 10, label: formatTimestamp(index * 10), data };
+        const frame = { timestamp: index * 15, label: formatTimestamp(index * 15), data };
         allFrames.push(frame);
         if (onFrame) await onFrame(frame);
       }
