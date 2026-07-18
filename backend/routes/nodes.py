@@ -2,8 +2,8 @@ from collections import defaultdict
 
 from fastapi import APIRouter, HTTPException
 
+import services.rag as _rag
 from services.graph_db import driver
-from services.rag import rag_chunks
 
 router = APIRouter()
 
@@ -43,7 +43,7 @@ INCOMING_LABEL = {
 
 @router.get("/api/nodes")
 async def get_nodes():
-    return [{"id": c["id"], "name": c["name"], "type": c["type"]} for c in rag_chunks]
+    return [{"id": c["id"], "name": c["name"], "type": c["type"]} for c in _rag.rag_chunks]
 
 
 @router.get("/api/positions")

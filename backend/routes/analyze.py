@@ -9,7 +9,8 @@ from anthropic import AsyncAnthropic
 from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 
-from services.rag import rag_chunks, retrieve
+import services.rag as _rag
+from services.rag import retrieve
 from services.video import extract_frames, format_timestamp
 
 router = APIRouter()
@@ -35,7 +36,7 @@ def _is_analysis_limited(ip: str) -> bool:
 
 def _build_vision_content(frames: list[dict], title: str, duration_secs: int) -> list[dict]:
     known_techniques = ", ".join(
-        c["name"] for c in rag_chunks if c["type"] in TECHNIQUE_TYPES
+        c["name"] for c in _rag.rag_chunks if c["type"] in TECHNIQUE_TYPES
     )[:2000]
 
     content = []
