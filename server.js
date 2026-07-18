@@ -350,33 +350,53 @@ function normalizeVideoUrl(url) {
   return url;
 }
 
-async function extractFramesFromVideo(rawUrl, targetFrames = 35) {
+async function extractFramesFromVideo(rawUrl, targetFrames = 35, onFrame = null) {
   const url = normalizeVideoUrl(rawUrl);
   const tmpDir = `/tmp/bjj-direct-${Date.now()}`;
   fs.mkdirSync(tmpDir, { recursive: true });
 
   try {
     const isRemote = url.startsWith('http://') || url.startsWith('https://');
-    await new Promise((resolve, reject) => {
-      const cmd = ffmpeg(url);
-      if (isRemote) cmd.inputOptions(['-headers', 'User-Agent: Mozilla/5.0\r\n']);
-      cmd.outputOptions([
-          '-vf', `fps=1/10,scale=640:-2`,
-          '-vframes', String(targetFrames),
-          '-q:v', '3',
-        ])
-        .output(`${tmpDir}/%04d.jpg`)
-        .on('end', resolve)
-        .on('error', err => reject(new Error(`ffmpeg: ${err.message}`)))
-        .run();
-    });
+    const seen = new Set();
+    const allFrames = [];
 
-    const files = fs.readdirSync(tmpDir).filter(f => f.endsWith('.jpg')).sort();
-    return files.map((file, i) => ({
-      timestamp: i * 10,
-      label: formatTimestamp(i * 10),
-      data: fs.readFileSync(path.join(tmpDir, file)).toString('base64'),
-    }));
+    const processNewFiles = async () => {
+      const files = fs.readdirSync(tmpDir)
+        .filter(f => f.endsWith('.jpg') && !seen.has(f))
+        .sort();
+      for (const file of files) {
+        seen.add(file);
+        const index = parseInt(file) - 1; // 0001.jpg → index 0
+        const data = fs.readFileSync(path.join(tmpDir, file)).toString('base64');
+        const frame = { timestamp: index * 10, label: formatTimestamp(index * 10), data };
+        allFrames.push(frame);
+        if (onFrame) await onFrame(frame);
+      }
+    };
+
+    let pollTimer;
+    try {
+      await new Promise((resolve, reject) => {
+        const cmd = ffmpeg(url);
+        if (isRemote) cmd.inputOptions(['-headers', 'User-Agent: Mozilla/5.0\r\n']);
+        cmd.outputOptions([
+            '-vf', `fps=1/10,scale=640:-2`,
+            '-vframes', String(targetFrames),
+            '-q:v', '3',
+          ])
+          .output(`${tmpDir}/%04d.jpg`)
+          .on('end', resolve)
+          .on('error', err => reject(new Error(`ffmpeg: ${err.message}`)))
+          .run();
+
+        if (onFrame) pollTimer = setInterval(processNewFiles, 400);
+      });
+    } finally {
+      if (pollTimer) clearInterval(pollTimer);
+    }
+
+    await processNewFiles(); // catch any frames written after the last poll
+    return allFrames;
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
@@ -644,10 +664,11 @@ app.post('/api/analyze-video', async (req, res) => {
     send('video-info', { videoId: null, title, thumbnail: null });
     send('status', { text: 'Extracting frames from video…' });
 
-    const frames = await extractFramesFromVideo(url);
+    const frames = await extractFramesFromVideo(url, 35, f => {
+      send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
+    });
     if (frames.length === 0) throw new Error('Could not extract frames. Check the URL is a direct video link.');
 
-    for (const f of frames) send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
     send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
     await streamAnalysis(frames, title, frames.length * 10, [], send);
     send('done', {});
@@ -691,10 +712,11 @@ app.post('/api/analyze-upload', (req, res, next) => {
     send('video-info', { videoId: null, title, thumbnail: null });
     send('status', { text: 'Extracting frames…' });
 
-    const frames = await extractFramesFromVideo(filePath);
+    const frames = await extractFramesFromVideo(filePath, 35, f => {
+      send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
+    });
     if (frames.length === 0) throw new Error('Could not extract frames from this video file.');
 
-    for (const f of frames) send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
     send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
     await streamAnalysis(frames, title, frames.length * 10, [], send);
     send('done', {});
