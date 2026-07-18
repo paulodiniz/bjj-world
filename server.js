@@ -356,10 +356,11 @@ async function extractFramesFromVideo(rawUrl, targetFrames = 35) {
   fs.mkdirSync(tmpDir, { recursive: true });
 
   try {
+    const isRemote = url.startsWith('http://') || url.startsWith('https://');
     await new Promise((resolve, reject) => {
-      ffmpeg(url)
-        .inputOptions(['-user_agent', 'Mozilla/5.0'])
-        .outputOptions([
+      const cmd = ffmpeg(url);
+      if (isRemote) cmd.inputOptions(['-headers', 'User-Agent: Mozilla/5.0\r\n']);
+      cmd.outputOptions([
           '-vf', `fps=1/10,scale=640:-2`,
           '-vframes', String(targetFrames),
           '-q:v', '3',
