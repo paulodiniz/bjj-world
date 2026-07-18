@@ -478,6 +478,7 @@ app.post('/api/analyze-fight', async (req, res) => {
     let title = 'BJJ Match';
     let description = '';
     let thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    let durationSecs = 0;
 
     if (YOUTUBE_API_KEY) {
       try {
@@ -487,8 +488,12 @@ app.post('/api/analyze-fight', async (req, res) => {
         const item = metaData.items?.[0];
         if (item) {
           title = item.snippet.title;
-          description = item.snippet.description?.slice(0, 500) || '';
+          description = item.snippet.description || ''; // full description for chapter parsing
           thumbnail = item.snippet.thumbnails?.high?.url || thumbnail;
+          // Parse ISO 8601 duration e.g. PT5M30S
+          const dur = item.contentDetails?.duration || '';
+          const dm = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+          if (dm) durationSecs = (parseInt(dm[1]||0)*3600) + (parseInt(dm[2]||0)*60) + parseInt(dm[3]||0);
         }
       } catch (e) {
         console.warn('YouTube metadata fetch failed:', e.message);
