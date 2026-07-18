@@ -1175,6 +1175,7 @@
 
     function buildTimelineRow(event, frameStore) {
       const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', sweep:'sweep', guard_pass:'guard pass', escape:'escape', takedown:'takedown' };
+      const badge = event.badge || 'position';
       const thumb = nearestFrame(frameStore, event.timestamp);
       const row = document.createElement('div');
       row.className = 'timeline-row';
@@ -1194,7 +1195,7 @@
         <div class="timeline-info">
           <div class="timeline-meta">
             <span class="timeline-ts">${escHtml(event.label)}</span>
-            <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
+            <span class="timeline-badge ${escHtml(badge)}">${escHtml(BADGE_LABELS[badge] || badge)}</span>
           </div>
           <span class="timeline-desc">${escHtml(event.description)}</span>
           ${relatedHtml}

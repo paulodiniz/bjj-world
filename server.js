@@ -502,7 +502,7 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
     send('analysis-event', {
       timestamp: ev.timestamp || 0,
       label: ev.label || formatTimestamp(ev.timestamp || 0),
-      type: ev.type || 'position',
+      badge: ev.type || 'position',
       description: ev.description || '',
       related,
     });
