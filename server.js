@@ -376,26 +376,38 @@ async function fetchStoryboardSpec(videoId) {
   const cached = storyboardSpecCache.get(videoId);
   if (cached && Date.now() - cached.ts < SPEC_CACHE_TTL) return cached.spec;
 
+  // If a Cloudflare Worker proxy is configured, use it — Worker IPs are not
+  // rate-limited by YouTube the way Railway datacenter IPs are.
+  const proxyUrl = process.env.STORYBOARD_PROXY_URL;
+  if (proxyUrl) {
+    try {
+      const res = await fetch(`${proxyUrl}?v=${videoId}`);
+      console.log(`[storyboard] proxy → ${res.status}`);
+      if (res.ok) {
+        const { spec } = await res.json();
+        if (spec) {
+          storyboardSpecCache.set(videoId, { spec, ts: Date.now() });
+          return spec;
+        }
+      }
+    } catch (e) {
+      console.warn(`[storyboard] proxy error: ${e.message}`);
+    }
+  }
+
+  // Direct fallback — may be rate-limited on some server IPs
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
     'Accept-Language': 'en-US,en;q=0.9',
     'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
   };
 
-  // Try multiple YouTube URL variants — m.youtube.com tends to have looser
-  // rate limits for server IPs than www.youtube.com
-  const urls = [
-    `https://m.youtube.com/watch?v=${videoId}`,
-    `https://www.youtube.com/watch?v=${videoId}`,
-  ];
-
-  for (const url of urls) {
+  for (const url of [`https://m.youtube.com/watch?v=${videoId}`, `https://www.youtube.com/watch?v=${videoId}`]) {
     try {
       const res = await fetch(url, { headers });
       console.log(`[storyboard] ${url.slice(8, 30)}… → ${res.status}`);
       if (!res.ok) continue;
       const html = await res.text();
-      console.log(`[storyboard] size=${html.length} hasSB=${html.includes('playerStoryboardSpecRenderer')}`);
       const spec = extractSpec(html);
       if (spec) {
         storyboardSpecCache.set(videoId, { spec, ts: Date.now() });
@@ -406,7 +418,7 @@ async function fetchStoryboardSpec(videoId) {
     }
   }
 
-  throw new Error('playerStoryboardSpecRenderer not found in any YouTube URL variant');
+  throw new Error('storyboard spec not found');
 }
 
 // Spec format: "{urlTemplate}|{w}#{h}#{count}#{cols}#{rows}#{intervalMs}#{nameTpl}#{sigh}|..."
