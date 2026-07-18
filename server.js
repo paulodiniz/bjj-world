@@ -109,19 +109,35 @@ function buildChunks(graph) {
 }
 
 async function ollamaEmbed(texts) {
-  return Promise.all(texts.map(async text => {
+  const results = [];
+  for (const text of texts) {
     const res = await fetch(`${OLLAMA_URL}/api/embeddings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'nomic-embed-text', prompt: text }),
     });
     const data = await res.json();
-    return data.embedding;
-  }));
+    results.push(data.embedding);
+  }
+  return results;
 }
 
 
+let ragReady = false;
+
 async function retrieve(question, k = 7) {
+  if (!ragReady) {
+    // Embeddings still loading — fall back to keyword search
+    const words = question.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+    return ragChunks
+      .map(chunk => {
+        const t = chunk.text.toLowerCase();
+        const score = words.reduce((s, w) => s + (t.includes(w) ? 1 : 0), 0) / (words.length || 1);
+        return { ...chunk, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, k);
+  }
   const [qEmb] = await ollamaEmbed([question]);
   const { rows } = await pgPool.query(
     `SELECT id, name, type, chunk AS text, 1 - (embedding <=> $1::vector) AS score
@@ -161,6 +177,7 @@ async function initRAG() {
   const { rows } = await pgPool.query('SELECT COUNT(*) AS count FROM bjj_embeddings');
   if (parseInt(rows[0].count) === ragChunks.length) {
     console.log(`pgvector: ${rows[0].count} embeddings already stored, skipping`);
+    ragReady = true;
     return;
   }
 
@@ -176,6 +193,7 @@ async function initRAG() {
     );
   }
   console.log(`Stored ${ragChunks.length} embeddings in pgvector`);
+  ragReady = true;
 }
 
 // ── Answer streaming ──────────────────────────────────────────────────────────
@@ -359,10 +377,11 @@ async function start() {
     console.error('Seed failed (DB may not be ready yet):', err.message);
   }
 
-  await initRAG();
-
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`BJJ Chat running on port ${port}`));
+
+  // Run RAG init in background so the server is ready immediately
+  initRAG().catch(err => console.error('RAG init failed:', err.message));
 }
 
 start();
