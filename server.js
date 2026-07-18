@@ -483,7 +483,7 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
   const visionContent = buildVisionContent(frames, title, durationSecs, chapters);
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 8192,
     messages: [{ role: 'user', content: visionContent }],
   });
