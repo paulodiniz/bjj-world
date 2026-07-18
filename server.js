@@ -5,6 +5,10 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const ytdl = require('@distube/ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const app = express();
 app.use(express.json());
@@ -59,6 +63,33 @@ function isRateLimited(ip) {
   hits.push(now);
   rateLimiter.set(ip, hits);
   return false;
+}
+
+// Stricter limiter for video analysis: 3 per IP per hour
+const analysisLimiter = new Map();
+function isAnalysisLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  const limit = 3;
+  const hits = (analysisLimiter.get(ip) || []).filter(t => now - t < windowMs);
+  if (hits.length >= limit) return true;
+  hits.push(now);
+  analysisLimiter.set(ip, hits);
+  return false;
+}
+
+function extractYouTubeId(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
+    return u.searchParams.get('v') || null;
+  } catch { return null; }
+}
+
+function formatTimestamp(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 // ── RAG ──────────────────────────────────────────────────────────────────────
@@ -419,6 +450,203 @@ app.get('/api/path', async (req, res) => {
   } finally {
     await session.close();
   }
+});
+
+// ── Fight analysis ────────────────────────────────────────────────────────────
+
+app.post('/api/analyze-fight', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  if (isAnalysisLimited(ip)) {
+    return res.status(429).json({ error: 'Analysis limit reached. Try again in an hour.' });
+  }
+
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'url is required' });
+
+  const videoId = extractYouTubeId(url);
+  if (!videoId) return res.status(400).json({ error: 'Invalid YouTube URL' });
+
+  console.log(`[${new Date().toISOString()}] ip=${ip} analyze-fight videoId="${videoId}"`);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
+
+  try {
+    // ── 1. Fetch video metadata ──────────────────────────────
+    let title = 'BJJ Match';
+    let description = '';
+    let thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+    if (YOUTUBE_API_KEY) {
+      try {
+        const metaUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails&key=${YOUTUBE_API_KEY}`;
+        const metaRes = await fetch(metaUrl);
+        const metaData = await metaRes.json();
+        const item = metaData.items?.[0];
+        if (item) {
+          title = item.snippet.title;
+          description = item.snippet.description?.slice(0, 500) || '';
+          thumbnail = item.snippet.thumbnails?.high?.url || thumbnail;
+        }
+      } catch (e) {
+        console.warn('YouTube metadata fetch failed:', e.message);
+      }
+    }
+
+    send('video-info', { videoId, title, thumbnail });
+    send('status', { text: 'Extracting frames…' });
+
+    // ── 2. Get video info and pick format ────────────────────
+    const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
+    const durationSecs = parseInt(videoInfo.videoDetails.lengthSeconds, 10) || 0;
+
+    // Scale frame interval to never exceed 18 frames (API image limit headroom)
+    const maxFrames = 18;
+    const intervalSecs = durationSecs > 0
+      ? Math.max(20, Math.ceil(durationSecs / maxFrames))
+      : 30;
+
+    // Choose lowest quality video-only format to minimise download
+    const format = ytdl.chooseFormat(videoInfo.formats, {
+      quality: 'lowestvideo',
+      filter: f => f.hasVideo && !f.hasAudio,
+    }) || ytdl.chooseFormat(videoInfo.formats, { quality: 'lowest' });
+
+    // ── 3. Extract frames via ffmpeg ─────────────────────────
+    const tmpDir = `/tmp/bjj-${videoId}-${Date.now()}`;
+    fs.mkdirSync(tmpDir, { recursive: true });
+
+    await new Promise((resolve, reject) => {
+      const videoStream = ytdl.downloadFromInfo(videoInfo, { format });
+      ffmpeg(videoStream)
+        .outputOptions([
+          `-vf`, `fps=1/${intervalSecs},scale=640:-2`,
+          `-frames:v`, String(maxFrames),
+          `-q:v`, `5`,
+        ])
+        .output(path.join(tmpDir, 'frame_%04d.jpg'))
+        .on('end', resolve)
+        .on('error', reject)
+        .run();
+    });
+
+    const frameFiles = fs.readdirSync(tmpDir)
+      .filter(f => f.endsWith('.jpg'))
+      .sort();
+
+    if (frameFiles.length === 0) throw new Error('No frames extracted from video');
+
+    send('status', { text: `Analysing ${frameFiles.length} frames with vision…` });
+
+    // ── 4. Build vision message with all frames ───────────────
+    const knownTechniques = ragChunks
+      .filter(c => ['position','submission','sweep','guard_pass','takedown','escape','counter'].includes(c.type))
+      .map(c => c.name)
+      .slice(0, 80)
+      .join(', ');
+
+    const visionContent = [];
+    frameFiles.forEach((file, i) => {
+      const secs = i * intervalSecs;
+      const frameData = fs.readFileSync(path.join(tmpDir, file));
+      visionContent.push({ type: 'text', text: `Frame at ${formatTimestamp(secs)} (${secs}s):` });
+      visionContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/jpeg', data: frameData.toString('base64') },
+      });
+    });
+
+    visionContent.push({
+      type: 'text',
+      text: `Video title: "${title}"
+
+Known BJJ positions and techniques — use these exact names when you recognise them:
+${knownTechniques}
+
+Analyse this BJJ match frame by frame. Identify positions, transitions, submission attempts, sweeps, takedowns, and escapes. Only include events where something meaningful changes — skip frames where nothing significant happens.
+
+Return ONLY valid JSON with no markdown or code fences:
+{
+  "summary": "2-3 sentence match summary",
+  "fighter_a": "competitor name or Fighter A",
+  "fighter_b": "competitor name or Fighter B",
+  "events": [
+    {
+      "timestamp": 45,
+      "label": "0:45",
+      "type": "position|transition|submission_attempt|submission|escape|takedown",
+      "position": "exact name from known list or null",
+      "from_position": "starting position for transitions or null",
+      "to_position": "ending position for transitions or null",
+      "description": "one concise sentence"
+    }
+  ]
+}
+
+Aim for 8-20 events. Timestamps must be integers (seconds from start). If this is not a BJJ match, still return valid JSON explaining that in the summary.`,
+    });
+
+    // ── 5. Claude Vision call ────────────────────────────────
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: visionContent }],
+    });
+
+    // Cleanup frames immediately
+    frameFiles.forEach(f => { try { fs.unlinkSync(path.join(tmpDir, f)); } catch {} });
+    try { fs.rmdirSync(tmpDir); } catch {}
+
+    // ── 6. Parse and stream events ───────────────────────────
+    const rawText = response.content[0]?.text || '';
+    let analysis;
+    try {
+      const cleaned = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+      analysis = JSON.parse(cleaned);
+    } catch (e) {
+      console.warn('JSON parse failed:', e.message, rawText.slice(0, 200));
+      send('analysis-text', { text: rawText });
+      send('done', {});
+      res.end();
+      return;
+    }
+
+    send('analysis-summary', {
+      summary: analysis.summary || '',
+      fighter_a: analysis.fighter_a || 'Fighter A',
+      fighter_b: analysis.fighter_b || 'Fighter B',
+    });
+
+    for (const ev of (analysis.events || [])) {
+      send('analysis-event', {
+        timestamp: ev.timestamp || 0,
+        label: ev.label || formatTimestamp(ev.timestamp || 0),
+        type: ev.type || 'position',
+        position: ev.position || null,
+        from_position: ev.from_position || null,
+        to_position: ev.to_position || null,
+        description: ev.description || '',
+      });
+      await new Promise(r => setTimeout(r, 40));
+    }
+
+    send('done', {});
+  } catch (err) {
+    console.error('analyze-fight error:', err);
+    // Best-effort cleanup of any temp frames
+    try {
+      const tmpBase = `/tmp`;
+      fs.readdirSync(tmpBase)
+        .filter(f => f.startsWith(`bjj-${videoId}-`))
+        .forEach(d => fs.rmSync(path.join(tmpBase, d), { recursive: true, force: true }));
+    } catch {}
+    send('error', { text: err.message });
+  }
+
+  res.end();
 });
 
 // ── Startup ───────────────────────────────────────────────────────────────────

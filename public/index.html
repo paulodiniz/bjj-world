@@ -636,6 +636,101 @@
       * { transition-duration: 0ms !important; }
     }
 
+    /* ── Fight analysis ─────────────────────────────────── */
+    .fight-header {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 600px) {
+      .fight-header { grid-template-columns: 220px 1fr; }
+    }
+    .fight-embed iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+      border-radius: 6px;
+      display: block;
+    }
+    .fight-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--ink);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .fight-summary {
+      font-size: 0.85rem;
+      color: var(--ink-2);
+      line-height: 1.65;
+      text-wrap: pretty;
+    }
+    .fight-fighters {
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-3);
+      margin-top: 8px;
+      letter-spacing: 0.03em;
+    }
+    .fight-no-transcript {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-3);
+      padding: 8px 0 12px;
+      border-bottom: 1px solid var(--border-sub);
+      margin-bottom: 12px;
+    }
+    .fight-timeline {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--border-sub);
+      padding-top: 14px;
+    }
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 46px auto 1fr;
+      gap: 10px;
+      align-items: baseline;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border-sub);
+      animation: entry-in 150ms ease-out both;
+    }
+    .timeline-row:last-child { border-bottom: none; }
+    .timeline-ts {
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--accent-text);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .timeline-ts:hover { text-decoration: underline; }
+    .timeline-badge {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+    .timeline-badge.position         { background: color-mix(in oklch, var(--c-position) 14%, transparent); color: var(--c-position); }
+    .timeline-badge.transition        { background: color-mix(in oklch, var(--c-sweep) 14%, transparent); color: var(--c-sweep); }
+    .timeline-badge.submission_attempt{ background: color-mix(in oklch, var(--c-submission) 14%, transparent); color: var(--c-submission); }
+    .timeline-badge.submission        { background: var(--c-submission); color: oklch(0.10 0 0); font-weight: 600; }
+    .timeline-badge.escape            { background: color-mix(in oklch, var(--c-escape) 14%, transparent); color: var(--c-escape); }
+    .timeline-badge.takedown          { background: color-mix(in oklch, var(--c-takedown) 14%, transparent); color: var(--c-takedown); }
+    .timeline-desc {
+      font-size: 0.84rem;
+      color: var(--ink-2);
+      line-height: 1.5;
+    }
+    .analysis-raw {
+      font-size: 0.88rem;
+      color: var(--ink-2);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
     /* ── Responsive ─────────────────────────────────────── */
     @media (max-width: 600px) {
       .landing { padding: 0 16px 60px; }
@@ -696,6 +791,8 @@
         onclick="useHint(this)">How does Gordon Ryan approach back control?</button>
       <button class="hint-pill" role="listitem" type="button"
         onclick="useHint(this)">What are my options from half guard?</button>
+      <button class="hint-pill" role="listitem" type="button"
+        onclick="useHint(this)">Paste a YouTube BJJ match link to analyse it</button>
     </div>
 
     <p class="landing-path-link">
@@ -844,16 +941,31 @@
     let abortCtrl = null;
     let lastQuestion  = '';
 
+    function extractYouTubeId(url) {
+      try {
+        const u = new URL(url.trim());
+        if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
+        if (u.hostname.includes('youtube.com')) return u.searchParams.get('v') || null;
+        return null;
+      } catch { return null; }
+    }
+
     document.getElementById('landing-form').addEventListener('submit', e => {
       e.preventDefault();
       const q = document.getElementById('landing-input').value.trim();
-      if (q) { document.getElementById('landing-input').value = ''; submitQuestion(q); }
+      if (!q) return;
+      document.getElementById('landing-input').value = '';
+      const ytId = extractYouTubeId(q);
+      if (ytId) { submitVideoAnalysis(q, ytId); } else { submitQuestion(q); }
     });
 
     document.getElementById('header-form').addEventListener('submit', e => {
       e.preventDefault();
       const q = document.getElementById('header-input').value.trim();
-      if (q) { document.getElementById('header-input').value = ''; submitQuestion(q); }
+      if (!q) return;
+      document.getElementById('header-input').value = '';
+      const ytId = extractYouTubeId(q);
+      if (ytId) { submitVideoAnalysis(q, ytId); } else { submitQuestion(q); }
     });
 
     document.getElementById('header-stop-btn').addEventListener('click', () => {
@@ -1012,6 +1124,163 @@
 
     function escHtml(str) {
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Video fight analysis ────────────────────────────────
+    async function submitVideoAnalysis(url, videoId) {
+      if (abortCtrl) abortCtrl.abort();
+      abortCtrl = new AbortController();
+
+      if (!hasResults) { hasResults = true; setMode('results'); }
+
+      // Entry shell
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+
+      const entryQ = document.createElement('div');
+      entryQ.className = 'entry-q';
+      entryQ.innerHTML = `<span class="entry-q-glyph" aria-hidden="true">▸</span>
+        <span class="entry-q-text">Analysing fight: <a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:var(--accent-text)">${escHtml(url.length > 60 ? url.slice(0, 60) + '…' : url)}</a></span>`;
+
+      const entryA = document.createElement('div');
+      entryA.className = 'entry-a';
+      entryA.setAttribute('data-streaming', '');
+
+      const statusEl = document.createElement('div');
+      statusEl.className = 'entry-status';
+      statusEl.innerHTML = '<span class="status-dot" aria-hidden="true"></span><span class="status-label">Starting…</span>';
+      entryA.appendChild(statusEl);
+
+      entry.appendChild(entryQ);
+      entry.appendChild(entryA);
+      entries.appendChild(entry);
+      entry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setStreaming(true);
+
+      // Placeholders filled in by events
+      let fightHeader = null;
+      let fightTimeline = null;
+      let fightSummaryEl = null;
+
+      try {
+        const res = await fetch('/api/analyze-fight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+          signal: abortCtrl.signal,
+        });
+
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let sseBuffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const parts = sseBuffer.split('\n\n');
+          sseBuffer = parts.pop();
+
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+            let event;
+            try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+            if (event.type === 'status') {
+              const lbl = statusEl.querySelector('.status-label');
+              if (lbl) lbl.textContent = event.text;
+
+            } else if (event.type === 'video-info') {
+              if (statusEl.parentNode) statusEl.remove();
+
+              // Build fight header with embed + meta
+              fightHeader = document.createElement('div');
+              fightHeader.className = 'fight-header';
+              fightHeader.innerHTML = `
+                <div class="fight-embed">
+                  <iframe src="https://www.youtube.com/embed/${escHtml(event.videoId)}"
+                    title="${escHtml(event.title)} — BJJ match"
+                    allowfullscreen loading="lazy"></iframe>
+                </div>
+                <div class="fight-meta">
+                  <div class="fight-title">${escHtml(event.title)}</div>
+                  <div class="fight-summary" id="fight-summary-${escHtml(event.videoId)}"></div>
+                  <div class="fight-fighters" id="fight-fighters-${escHtml(event.videoId)}"></div>
+                </div>`;
+              entryA.appendChild(fightHeader);
+              fightSummaryEl = fightHeader.querySelector(`#fight-summary-${event.videoId}`);
+
+              fightTimeline = document.createElement('div');
+              fightTimeline.className = 'fight-timeline';
+              entryA.appendChild(fightTimeline);
+
+              // Re-show status inside entry-a for the long analysis step
+              entryA.appendChild(statusEl);
+
+            } else if (event.type === 'analysis-summary') {
+              if (fightSummaryEl) fightSummaryEl.textContent = event.summary;
+              const fightersEl = fightHeader?.querySelector(`[id^="fight-fighters-"]`);
+              if (fightersEl && (event.fighter_a !== 'Fighter A' || event.fighter_b !== 'Fighter B')) {
+                fightersEl.textContent = `${event.fighter_a} vs ${event.fighter_b}`;
+              }
+
+            } else if (event.type === 'analysis-event') {
+              if (statusEl.parentNode) statusEl.remove();
+              if (!fightTimeline) break;
+
+              const BADGE_LABELS = {
+                position: 'position',
+                transition: 'transition',
+                submission_attempt: 'sub attempt',
+                submission: 'submission ✓',
+                escape: 'escape',
+                takedown: 'takedown',
+              };
+
+              const row = document.createElement('div');
+              row.className = 'timeline-row';
+              row.dataset.type = event.type;
+
+              const tsHref = `https://www.youtube.com/watch?v=${escHtml(videoId)}&t=${event.timestamp}s`;
+              row.innerHTML = `
+                <a class="timeline-ts" href="${tsHref}" target="_blank" rel="noopener">${escHtml(event.label)}</a>
+                <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
+                <span class="timeline-desc">${escHtml(event.description)}</span>`;
+              fightTimeline.appendChild(row);
+              entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+            } else if (event.type === 'analysis-text') {
+              // Fallback: Claude returned plain text instead of JSON
+              if (statusEl.parentNode) statusEl.remove();
+              const pre = document.createElement('p');
+              pre.className = 'analysis-raw';
+              pre.textContent = event.text;
+              entryA.appendChild(pre);
+
+            } else if (event.type === 'done') {
+              entryA.removeAttribute('data-streaming');
+              if (statusEl.parentNode) statusEl.remove();
+              // Apply graph chips to all timeline descriptions
+              if (fightTimeline) {
+                fightTimeline.querySelectorAll('.timeline-desc').forEach(el => applyChips(el));
+              }
+              if (fightSummaryEl) applyChips(fightSummaryEl);
+
+            } else if (event.type === 'error') {
+              entryA.removeAttribute('data-streaming');
+              showError(entryA, event.text, url);
+            }
+          }
+        }
+      } catch (err) {
+        entryA.removeAttribute('data-streaming');
+        if (err.name !== 'AbortError') showError(entryA, err.message, url);
+        else if (statusEl.parentNode) statusEl.remove();
+      } finally {
+        setStreaming(false);
+        abortCtrl = null;
+      }
     }
 
     // ── Path Finder ─────────────────────────────────────────
