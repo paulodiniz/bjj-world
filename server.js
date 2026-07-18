@@ -362,7 +362,7 @@ app.post('/api/chat', async (req, res) => {
 
     // YouTube search — re-embed the answer to find the most relevant techniques
     if (YOUTUBE_API_KEY && answerText) {
-      const answerChunks = await retrieve(answerText, 3);
+      const answerChunks = await retrieve(answerText, 2);
       const videos = (await Promise.all(
         answerChunks.map(async c => {
           const url = await searchYouTube(c.name, null);
