@@ -19,7 +19,7 @@ const driver = neo4j.driver(
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://ollama.railway.internal:11434';
 
 const pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -108,41 +108,29 @@ function buildChunks(graph) {
   });
 }
 
-async function voyageEmbed(texts, inputType = 'document') {
-  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${VOYAGE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ model: 'voyage-3-lite', input: texts, input_type: inputType }),
-  });
-  const data = await res.json();
-  return data.data.map(d => d.embedding);
+async function ollamaEmbed(texts) {
+  return Promise.all(texts.map(async text => {
+    const res = await fetch(`${OLLAMA_URL}/api/embeddings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'nomic-embed-text', prompt: text }),
+    });
+    const data = await res.json();
+    return data.embedding;
+  }));
 }
 
-function keywordScore(query, text) {
-  const words = query.toLowerCase().split(/\W+/).filter(w => w.length > 2);
-  const t = text.toLowerCase();
-  return words.reduce((s, w) => s + (t.includes(w) ? 1 : 0), 0) / (words.length || 1);
-}
 
 async function retrieve(question, k = 7) {
-  if (VOYAGE_API_KEY) {
-    const [qEmb] = await voyageEmbed([question], 'query');
-    const { rows } = await pgPool.query(
-      `SELECT id, name, type, chunk AS text, 1 - (embedding <=> $1::vector) AS score
-       FROM bjj_embeddings
-       ORDER BY embedding <=> $1::vector
-       LIMIT $2`,
-      [JSON.stringify(qEmb), k]
-    );
-    return rows;
-  }
-  return ragChunks
-    .map(chunk => ({ ...chunk, score: keywordScore(question, chunk.text) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, k);
+  const [qEmb] = await ollamaEmbed([question]);
+  const { rows } = await pgPool.query(
+    `SELECT id, name, type, chunk AS text, 1 - (embedding <=> $1::vector) AS score
+     FROM bjj_embeddings
+     ORDER BY embedding <=> $1::vector
+     LIMIT $2`,
+    [JSON.stringify(qEmb), k]
+  );
+  return rows;
 }
 
 async function initRAG() {
@@ -150,10 +138,14 @@ async function initRAG() {
   ragChunks = buildChunks(graph);
   console.log(`Built ${ragChunks.length} RAG chunks`);
 
-  if (!VOYAGE_API_KEY) {
-    console.log('VOYAGE_API_KEY not set — using keyword search fallback');
-    return;
-  }
+  // Ensure the embedding model is available
+  console.log('Pulling nomic-embed-text...');
+  await fetch(`${OLLAMA_URL}/api/pull`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'nomic-embed-text', stream: false }),
+  });
+  console.log('nomic-embed-text ready');
 
   await pgPool.query('CREATE EXTENSION IF NOT EXISTS vector');
   await pgPool.query(`
@@ -162,7 +154,7 @@ async function initRAG() {
       name TEXT NOT NULL,
       type TEXT NOT NULL,
       chunk TEXT NOT NULL,
-      embedding vector(512)
+      embedding vector(768)
     )
   `);
 
@@ -175,17 +167,13 @@ async function initRAG() {
   console.log('Computing and storing embeddings...');
   await pgPool.query('TRUNCATE bjj_embeddings');
 
-  const batchSize = 128;
-  for (let i = 0; i < ragChunks.length; i += batchSize) {
-    const batch = ragChunks.slice(i, i + batchSize);
-    const embeddings = await voyageEmbed(batch.map(c => c.text));
-    for (let j = 0; j < batch.length; j++) {
-      const c = batch[j];
-      await pgPool.query(
-        'INSERT INTO bjj_embeddings (id, name, type, chunk, embedding) VALUES ($1, $2, $3, $4, $5)',
-        [c.id, c.name, c.type, c.text, JSON.stringify(embeddings[j])]
-      );
-    }
+  const embeddings = await ollamaEmbed(ragChunks.map(c => c.text));
+  for (let i = 0; i < ragChunks.length; i++) {
+    const c = ragChunks[i];
+    await pgPool.query(
+      'INSERT INTO bjj_embeddings (id, name, type, chunk, embedding) VALUES ($1, $2, $3, $4, $5)',
+      [c.id, c.name, c.type, c.text, JSON.stringify(embeddings[i])]
+    );
   }
   console.log(`Stored ${ragChunks.length} embeddings in pgvector`);
 }
