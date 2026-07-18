@@ -735,6 +735,167 @@
       color: var(--ink-3);
     }
 
+    /* ── Auth ───────────────────────────────────────────── */
+    .auth-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+    }
+    .auth-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+
+    .user-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+      max-width: 160px;
+    }
+    .user-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
+    .user-btn-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c-position);
+      flex-shrink: 0;
+    }
+    .user-btn-email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #auth-dialog {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--ink);
+      padding: 0;
+      width: min(420px, calc(100vw - 32px));
+      box-shadow: 0 24px 64px oklch(0 0 0 / 0.6);
+    }
+    #auth-dialog::backdrop {
+      background: oklch(0 0 0 / 0.6);
+      backdrop-filter: blur(4px);
+    }
+    .auth-dialog-inner { padding: 32px; }
+    .auth-dialog-title {
+      font-family: var(--sans);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin: 0 0 6px;
+    }
+    .auth-dialog-sub {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      margin: 0 0 28px;
+    }
+    .auth-email-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 150ms;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    .auth-email-input:focus { border-color: var(--accent); }
+    .auth-email-input::placeholder { color: var(--ink-3); }
+    .auth-submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: oklch(0.98 0 0);
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms;
+    }
+    .auth-submit-btn:hover:not(:disabled) { background: var(--accent-hi); }
+    .auth-submit-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
+    .auth-error {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent-text);
+      margin-top: 10px;
+      min-height: 1em;
+    }
+    .auth-success {
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    .auth-success-title {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--ink);
+      margin: 0 0 10px;
+    }
+    .auth-success-msg {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-2);
+      line-height: 1.7;
+      letter-spacing: 0.01em;
+    }
+    .auth-success-email {
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .auth-close-btn {
+      margin-top: 24px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 20px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms;
+    }
+    .auth-close-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+
+    .auth-notice {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-sub);
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      color: var(--ink-3);
+      text-align: center;
+      line-height: 1.6;
+    }
+
     /* ── Graph ──────────────────────────────────────────── */
     .graph-area {
       display: none;
@@ -1159,8 +1320,39 @@
         onclick="togglePath()">Path →</button>
       <button type="button" class="graph-toggle-btn" id="graph-toggle-btn"
         onclick="toggleGraph()">Graph</button>
+      <button type="button" class="auth-btn" id="signin-btn"
+        onclick="openAuthDialog()" style="display:none">Sign in</button>
+      <button type="button" class="user-btn" id="user-btn"
+        onclick="handleUserClick()" style="display:none" aria-label="Account options">
+        <span class="user-btn-dot"></span>
+        <span class="user-btn-email" id="user-btn-email"></span>
+      </button>
     </div>
   </header>
+
+  <dialog id="auth-dialog" aria-label="Sign in to BJJ World">
+    <div class="auth-dialog-inner">
+      <div id="auth-form-state">
+        <h2 class="auth-dialog-title">Sign in to BJJ World</h2>
+        <p class="auth-dialog-sub">We'll send a magic link to your email</p>
+        <input type="email" class="auth-email-input" id="auth-email"
+          placeholder="your@email.com" autocomplete="email" />
+        <button class="auth-submit-btn" id="auth-submit-btn"
+          onclick="submitMagicLink()">Send magic link</button>
+        <p class="auth-error" id="auth-error"></p>
+        <p class="auth-notice">No password. No tracking. Just a link.</p>
+      </div>
+      <div id="auth-success-state" style="display:none" class="auth-success">
+        <p class="auth-success-title">Check your email</p>
+        <p class="auth-success-msg">
+          We sent a sign-in link to<br>
+          <span class="auth-success-email" id="auth-sent-email"></span><br><br>
+          Click it to continue. The link expires in 15 minutes.
+        </p>
+        <button class="auth-close-btn" onclick="closeAuthDialog()">Close</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- ── Landing ── -->
   <div class="landing" role="main" aria-label="BJJ World — knowledge graph">
@@ -2487,6 +2679,113 @@
       }
     }
 
+    // ── Auth ─────────────────────────────────────────────────
+    let currentUser = null;
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        currentUser = data.user || null;
+      } catch {
+        currentUser = null;
+      }
+      renderAuthState();
+    }
+
+    function renderAuthState() {
+      const signinBtn = document.getElementById('signin-btn');
+      const userBtn   = document.getElementById('user-btn');
+      const emailEl   = document.getElementById('user-btn-email');
+      if (currentUser) {
+        signinBtn.style.display = 'none';
+        userBtn.style.display   = 'flex';
+        emailEl.textContent     = currentUser.email;
+      } else {
+        signinBtn.style.display = 'block';
+        userBtn.style.display   = 'none';
+      }
+    }
+
+    function openAuthDialog() {
+      const dialog = document.getElementById('auth-dialog');
+      document.getElementById('auth-form-state').style.display   = 'block';
+      document.getElementById('auth-success-state').style.display = 'none';
+      document.getElementById('auth-email').value = '';
+      document.getElementById('auth-error').textContent = '';
+      dialog.showModal();
+      setTimeout(() => document.getElementById('auth-email').focus(), 50);
+    }
+
+    function closeAuthDialog() {
+      document.getElementById('auth-dialog').close();
+    }
+
+    document.getElementById('auth-dialog').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeAuthDialog();
+    });
+
+    document.getElementById('auth-email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitMagicLink();
+    });
+
+    async function submitMagicLink() {
+      const email   = document.getElementById('auth-email').value.trim();
+      const btn     = document.getElementById('auth-submit-btn');
+      const errorEl = document.getElementById('auth-error');
+
+      if (!email) { errorEl.textContent = 'Enter your email.'; return; }
+
+      btn.disabled    = true;
+      btn.textContent = 'Sending…';
+      errorEl.textContent = '';
+
+      try {
+        const res  = await fetch('/api/auth/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = data.error || 'Something went wrong.';
+          return;
+        }
+        document.getElementById('auth-sent-email').textContent = email;
+        document.getElementById('auth-form-state').style.display    = 'none';
+        document.getElementById('auth-success-state').style.display = 'block';
+      } catch {
+        errorEl.textContent = 'Network error. Try again.';
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Send magic link';
+      }
+    }
+
+    async function handleUserClick() {
+      if (!currentUser) return;
+      if (!confirm(`Sign out of ${currentUser.email}?`)) return;
+      await fetch('/api/auth/logout', { method: 'POST' });
+      currentUser = null;
+      renderAuthState();
+    }
+
+    // Handle redirect after magic link click
+    (function handleAuthRedirect() {
+      const params = new URLSearchParams(location.search);
+      if (params.has('signed_in')) {
+        history.replaceState({}, '', location.pathname);
+        checkAuth();
+      } else if (params.has('auth_error')) {
+        history.replaceState({}, '', location.pathname);
+        openAuthDialog();
+        document.getElementById('auth-error').textContent =
+          params.get('auth_error') === 'invalid_token'
+            ? 'This link has expired or already been used. Request a new one.'
+            : 'Invalid sign-in link.';
+      }
+    })();
+
     // ── URL routing ──────────────────────────────────────────
     (function initRouting() {
       const match = location.pathname.match(/^\/technique\/(.+)$/);
@@ -2504,6 +2803,7 @@
     })();
 
     // ── Init ────────────────────────────────────────────────
+    checkAuth();
     loadNodes();
   </script>
 </body>
