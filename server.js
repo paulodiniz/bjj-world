@@ -360,14 +360,11 @@ app.post('/api/chat', async (req, res) => {
     send('status', { text: 'Answering...' });
     const answerText = await streamAnswer(question, chunks, history, token => send('token', { text: token }));
 
-    // YouTube search — only for techniques actually mentioned in the answer
+    // YouTube search — re-embed the answer to find the most relevant techniques
     if (YOUTUBE_API_KEY && answerText) {
-      const mentioned = ragChunks
-        .filter(c => answerText.toLowerCase().includes(c.name.toLowerCase()))
-        .slice(0, 3);
-      const pool = mentioned.length > 0 ? mentioned : chunks.slice(0, 3);
+      const answerChunks = await retrieve(answerText, 3);
       const videos = (await Promise.all(
-        pool.map(async c => {
+        answerChunks.map(async c => {
           const url = await searchYouTube(c.name, null);
           return url ? { name: c.name, url } : null;
         })
