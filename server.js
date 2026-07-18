@@ -282,22 +282,20 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     // Video-only requests — match names from last answer
-    const isVideoRequest = /\b(video|videos|show me|watch|youtube)\b/i.test(question);
-    if (isVideoRequest && YOUTUBE_API_KEY && history.length > 0) {
+    const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
+    const isVideoRequest = /\b(video|videos|watch|youtube)\b/i.test(question);
+    if (isVideoRequest && YOUTUBE_API_KEY && lastAssistant) {
       send('status', { text: 'Finding videos...' });
-      const lastAssistant = [...history].reverse().find(m => m.role === 'assistant');
-      if (lastAssistant) {
-        const mentioned = ragChunks
-          .filter(c => lastAssistant.content.includes(c.name))
-          .slice(0, 3);
-        const videos = (await Promise.all(
-          mentioned.map(async c => {
-            const url = await searchYouTube(c.name, null);
-            return url ? { name: c.name, url } : null;
-          })
-        )).filter(Boolean);
-        if (videos.length) send('videos', { videos });
-      }
+      const mentioned = ragChunks
+        .filter(c => lastAssistant.content.includes(c.name))
+        .slice(0, 3);
+      const videos = (await Promise.all(
+        mentioned.map(async c => {
+          const url = await searchYouTube(c.name, null);
+          return url ? { name: c.name, url } : null;
+        })
+      )).filter(Boolean);
+      if (videos.length) send('videos', { videos });
       send('token', { text: 'Here are the videos for the techniques we just discussed.' });
       send('done', {});
       return;
