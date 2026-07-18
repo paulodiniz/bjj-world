@@ -1048,6 +1048,118 @@
       "description": "A dominant position after stuffing a shot, controlling the opponent's head and one arm. Gateway to guillotines, D'Arces, and back takes.",
       "gi_requirement": "both",
       "video_url": null
+    },
+    {
+      "id": "osoto_gari",
+      "name": "Osoto Gari",
+      "type": "takedown",
+      "description": "Major outer reap where you sweep the opponent's supporting leg from the outside while breaking their balance backward.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "ouchi_gari",
+      "name": "Ouchi Gari",
+      "type": "takedown",
+      "description": "Major inner reap that hooks the opponent's near leg from the inside to drive them backward.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "kouchi_gari",
+      "name": "Kouchi Gari",
+      "type": "takedown",
+      "description": "Minor inner reap targeting the opponent's front foot with a small inside hook to break their base.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "seoi_nage",
+      "name": "Seoi Nage",
+      "type": "takedown",
+      "description": "Shoulder throw where you turn in, load the opponent onto your back, and throw them over your shoulder.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "ippon_seoi_nage",
+      "name": "Ippon Seoi Nage",
+      "type": "takedown",
+      "description": "One-arm shoulder throw using a deep armpit connection to load and throw the opponent.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "uchi_mata",
+      "name": "Uchi Mata",
+      "type": "takedown",
+      "description": "Inner thigh throw where you lift the opponent's inner thigh with your leg while rotating them over.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "harai_goshi",
+      "name": "Harai Goshi",
+      "type": "takedown",
+      "description": "Sweeping hip throw combining a hip loading motion with a leg sweep across the opponent's thigh.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "ogoshi",
+      "name": "O Goshi",
+      "type": "takedown",
+      "description": "Fundamental full hip throw where you rotate under the opponent and throw them across your hips.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "tai_otoshi",
+      "name": "Tai Otoshi",
+      "type": "takedown",
+      "description": "Body drop throw using a blocking leg to trip the opponent forward over your extended leg.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "tomoe_nage",
+      "name": "Tomoe Nage",
+      "type": "takedown",
+      "description": "Sacrifice throw where you fall backward planting a foot in the opponent's hip and flip them overhead.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "sumi_gaeshi",
+      "name": "Sumi Gaeshi",
+      "type": "takedown",
+      "description": "Corner reversal sacrifice throw commonly used from over-under grips to roll the opponent over you.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "sode_tsurikomi_goshi",
+      "name": "Sode Tsurikomi Goshi",
+      "type": "takedown",
+      "description": "Sleeve lifting-pulling hip throw controlling both sleeves to load the opponent over your hip.",
+      "gi_requirement": "gi",
+      "video_url": null
+    },
+    {
+      "id": "kosoto_gari",
+      "name": "Kosoto Gari",
+      "type": "takedown",
+      "description": "Minor outer reap sweeping the opponent's rear foot while pushing them backward.",
+      "gi_requirement": "both",
+      "video_url": null
+    },
+    {
+      "id": "sleeve_lapel_grip",
+      "name": "Sleeve and Lapel Grip",
+      "type": "concept",
+      "description": "Standard judo grip configuration controlling one sleeve and the collar/lapel to enable throws.",
+      "gi_requirement": "gi",
+      "video_url": null
     }
   ],
   "edges": [
@@ -5044,6 +5156,265 @@
       "conditions": [],
       "confidence": "high",
       "difficulty": "advanced"
+    },
+    {
+      "from": "standing",
+      "to": "osoto_gari",
+      "action": "attack_with",
+      "conditions": [
+        "opponent weight back",
+        "collar and sleeve grip"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "ouchi_gari",
+      "action": "attack_with",
+      "conditions": [
+        "opponent stepping in"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "kouchi_gari",
+      "action": "attack_with",
+      "conditions": [
+        "opponent square stance"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "seoi_nage",
+      "action": "attack_with",
+      "conditions": [
+        "opponent posture forward"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "uchi_mata",
+      "action": "attack_with",
+      "conditions": [
+        "forward pressure",
+        "high grip"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "standing",
+      "to": "harai_goshi",
+      "action": "attack_with",
+      "conditions": [
+        "opponent leaning forward"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "standing",
+      "to": "ogoshi",
+      "action": "attack_with",
+      "conditions": [
+        "close range",
+        "belt or back grip"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "standing",
+      "to": "tai_otoshi",
+      "action": "attack_with",
+      "conditions": [
+        "opponent stepping forward"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "tomoe_nage",
+      "action": "attack_with",
+      "conditions": [
+        "opponent pushing forward"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "sumi_gaeshi",
+      "action": "attack_with",
+      "conditions": [
+        "over-under grip"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "ippon_seoi_nage",
+      "action": "attack_with",
+      "conditions": [
+        "sleeve grip broken"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "standing",
+      "to": "sode_tsurikomi_goshi",
+      "action": "attack_with",
+      "conditions": [
+        "double sleeve control"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "standing",
+      "to": "kosoto_gari",
+      "action": "attack_with",
+      "conditions": [
+        "opponent weight on rear leg"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "judo_throw",
+      "to": "uchi_mata",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "judo_throw",
+      "to": "seoi_nage",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "judo_throw",
+      "to": "osoto_gari",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "hip_throw",
+      "to": "ogoshi",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "hip_throw",
+      "to": "harai_goshi",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "foot_sweep",
+      "to": "kouchi_gari",
+      "action": "features",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "osoto_gari",
+      "to": "kuzushi",
+      "action": "requires",
+      "conditions": [
+        "break balance backward"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "uchi_mata",
+      "to": "kuzushi",
+      "action": "requires",
+      "conditions": [
+        "forward-corner off-balance"
+      ],
+      "confidence": "high",
+      "difficulty": "advanced"
+    },
+    {
+      "from": "seoi_nage",
+      "to": "grips",
+      "action": "requires",
+      "conditions": [
+        "sleeve and lapel"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "sleeve_lapel_grip",
+      "to": "grips",
+      "action": "requires",
+      "conditions": [],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "osoto_gari",
+      "to": "side_control",
+      "action": "transition_to",
+      "conditions": [
+        "opponent lands flat"
+      ],
+      "confidence": "high",
+      "difficulty": "beginner"
+    },
+    {
+      "from": "uchi_mata",
+      "to": "side_control",
+      "action": "transition_to",
+      "conditions": [
+        "landing control"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "tomoe_nage",
+      "to": "mount",
+      "action": "transition_to",
+      "conditions": [
+        "follow rotation"
+      ],
+      "confidence": "medium",
+      "difficulty": "intermediate"
+    },
+    {
+      "from": "kouchi_gari",
+      "to": "ouchi_gari",
+      "action": "follow_up",
+      "conditions": [
+        "opponent steps back"
+      ],
+      "confidence": "high",
+      "difficulty": "intermediate"
     }
   ]
 }
