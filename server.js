@@ -424,23 +424,26 @@ ${knownTechniques}
 
 ${frameInstructions}
 
-You have ${frameCount} frames above. For EVERY frame, emit one event describing exactly what you see:
-- Which named BJJ position is shown (closed guard, half guard, side control, mount, back control, turtle, standing, etc.)
-- Who has the position — use the fighter names from the title
-- If a submission, sweep, pass, or takedown is being attempted, name it
+You have ${frameCount} frames above. Analyse them and emit an event ONLY when something meaningful happens:
+- A position CHANGES (e.g. guard to side control, standing to guard pull)
+- A submission attempt starts or ends
+- A sweep, pass, takedown, or escape occurs
+- A scramble resolves into a new position
+
+Do NOT emit an event if the position from the previous frame is unchanged.
 
 Rules:
-- Do NOT skip frames. Emit one event per frame.
-- Do NOT write vague phrases like "grappling continues" or "ground work". Always name the specific position.
-- If consecutive frames show the same position, still emit events for each — just say "[position] continues" if nothing changed.
+- Use fighter names from the video title.
+- Never write vague phrases like "grappling continues", "ground work", or "technical exchange". Always name the specific position and who holds it.
 - Use the EXACT timestamp from the frame label (e.g. if label is [1:20], timestamp is 80).
 
 Good event descriptions:
-  "Marcelo in closed guard bottom, Kron posturing up"
-  "Kron passes to side control on Marcelo's left, Marcelo on bottom"
-  "Marcelo takes the back, both hooks in, hunting rear naked choke"
-  "Marcelo attacks guillotine from guard, Kron defends"
-  "Both standing after scramble"
+  "Marcelo pulls guard, establishes closed guard — Kron on top"
+  "Kron passes to side control on Marcelo's left"
+  "Marcelo takes the back, both hooks in"
+  "Marcelo attacks guillotine from guard — Kron defends, postures up"
+  "Scramble — both return to standing"
+  "Kron attempts arm lock from top half guard — Marcelo defends"
 
 Return ONLY valid JSON, no markdown fences:
 {
@@ -451,16 +454,13 @@ Return ONLY valid JSON, no markdown fences:
     {
       "timestamp": 80,
       "label": "1:20",
-      "type": "position|transition|submission_attempt|submission|escape|takedown",
-      "position": "exact name from known list or null",
-      "from_position": "for transitions only — starting position",
-      "to_position": "for transitions only — ending position",
-      "description": "specific one sentence: who is in what position, what is happening"
+      "type": "position|transition|submission_attempt|submission|sweep|guard_pass|takedown|escape",
+      "description": "specific one sentence: who does what, who ends up where"
     }
   ]
 }
 
-Timestamps must be integers (seconds). You should have roughly one event per frame.`,
+Timestamps must be integers (seconds). Aim for 15–40 events covering the meaningful moments of the match.`,
   });
 
   return content;
@@ -471,7 +471,7 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
+    max_tokens: 8192,
     messages: [{ role: 'user', content: visionContent }],
   });
 
@@ -496,9 +496,6 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
       timestamp: ev.timestamp || 0,
       label: ev.label || formatTimestamp(ev.timestamp || 0),
       type: ev.type || 'position',
-      position: ev.position || null,
-      from_position: ev.from_position || null,
-      to_position: ev.to_position || null,
       description: ev.description || '',
     });
     await new Promise(r => setTimeout(r, 40));
