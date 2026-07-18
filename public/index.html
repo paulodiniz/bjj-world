@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-mode="landing">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,28 +9,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    /* ── Tokens ───────────────────────────────────────────────── */
+    /* ── Tokens ─────────────────────────────────────────── */
     :root {
-      --bg:           oklch(0.10 0 0);
-      --surface:      oklch(0.14 0 0);
-      --surface-2:    oklch(0.17 0 0);
-      --border:       oklch(0.22 0 0);
-      --border-sub:   oklch(0.18 0 0);
-      --ink:          oklch(0.93 0 0);
-      --ink-2:        oklch(0.65 0 0);
-      --ink-3:        oklch(0.55 0 0);
-      --accent:       oklch(0.55 0.22 25);
-      --accent-hi:    oklch(0.62 0.20 25);
-      --accent-text:  oklch(0.68 0.18 25);
-      --accent-dim:   oklch(0.55 0.22 25 / 0.10);
-      --mono-bg:      oklch(0.16 0.006 240);
-      --mono-ink:     oklch(0.78 0.07 240);
+      --bg:          oklch(0.10 0 0);
+      --surface:     oklch(0.14 0 0);
+      --surface-2:   oklch(0.17 0 0);
+      --border:      oklch(0.22 0 0);
+      --border-sub:  oklch(0.18 0 0);
+      --ink:         oklch(0.93 0 0);
+      --ink-2:       oklch(0.65 0 0);
+      --ink-3:       oklch(0.55 0 0);
+      --accent:      oklch(0.55 0.22 25);
+      --accent-hi:   oklch(0.62 0.20 25);
+      --accent-text: oklch(0.68 0.18 25);
+      --mono-bg:     oklch(0.16 0.006 240);
+      --mono-ink:    oklch(0.78 0.07 240);
 
       --serif: 'Instrument Serif', Georgia, serif;
       --sans:  Inter, system-ui, sans-serif;
       --mono:  'JetBrains Mono', 'Fira Code', monospace;
 
-      /* Node type colors — all AA-contrast on --surface */
       --c-position:   oklch(0.68 0.16 145);
       --c-submission: oklch(0.68 0.18 25);
       --c-sweep:      oklch(0.68 0.16 240);
@@ -44,7 +42,7 @@
       --c-technique:  oklch(0.70 0.12 180);
     }
 
-    /* ── Reset ────────────────────────────────────────────────── */
+    /* ── Reset ──────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { color-scheme: dark; }
 
@@ -61,297 +59,180 @@
       overflow: hidden;
     }
 
-    /* ── Header ───────────────────────────────────────────────── */
-    header {
+    /* ── Compact header (results + path modes) ──────────── */
+    .app-header {
+      display: none;
       flex-shrink: 0;
-      display: flex;
       align-items: center;
-      gap: 20px;
-      padding: 0 24px;
+      gap: 16px;
       height: 52px;
+      padding: 0 20px;
       border-bottom: 1px solid var(--border-sub);
     }
+    [data-mode="results"] .app-header,
+    [data-mode="path"]    .app-header { display: flex; }
 
-    .brand {
+    .header-brand {
       display: flex;
       align-items: baseline;
-      gap: 10px;
-      text-decoration: none;
+      gap: 8px;
+      flex-shrink: 0;
     }
-    .brand-name {
+    .header-brand-name {
       font-family: var(--serif);
       font-style: italic;
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: var(--ink);
       letter-spacing: -0.01em;
-      line-height: 1;
     }
-    .brand-sub {
+    .header-brand-sub {
       font-family: var(--mono);
-      font-size: 0.67rem;
+      font-size: 0.62rem;
       color: var(--ink-3);
       letter-spacing: 0.06em;
     }
+    @media (max-width: 480px) { .header-brand-sub { display: none; } }
 
-    /* ── Nav ──────────────────────────────────────────────────── */
-    nav {
-      display: flex;
-      height: 100%;
-      align-items: stretch;
-      margin-left: auto;
-    }
-    .nav-btn {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      padding: 0 16px;
-      color: var(--ink-2);
-      font-family: var(--sans);
-      font-size: 0.82rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: color 120ms ease-out, border-color 120ms ease-out;
-      position: relative;
-      top: 1px;
-    }
-    .nav-btn.active {
-      color: var(--ink);
-      border-bottom-color: var(--accent);
-    }
-    .nav-btn:hover:not(.active) { color: oklch(0.80 0 0); }
-    .nav-btn:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: -2px;
-      border-radius: 2px;
-    }
-
-    /* ── Tab container ────────────────────────────────────────── */
-    .tabs-container {
+    .header-cmd {
       flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-    .tab {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 120ms ease-out;
-    }
-    .tab.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* ── Messages ─────────────────────────────────────────────── */
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-      scroll-behavior: smooth;
-    }
-    #messages::-webkit-scrollbar { width: 3px; }
-    #messages::-webkit-scrollbar-track { background: transparent; }
-    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    @keyframes msg-in {
-      from { opacity: 0; transform: translateY(7px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .msg {
-      max-width: 700px;
-      animation: msg-in 180ms ease-out both;
-    }
-
-    /* User */
-    .msg.user {
-      align-self: flex-end;
-      background: var(--surface);
-      padding: 10px 16px;
-      border-radius: 12px 12px 2px 12px;
-      font-size: 0.92rem;
-      line-height: 1.5;
-      color: var(--ink);
-      max-width: 520px;
-    }
-
-    /* Assistant */
-    .msg.assistant {
-      align-self: flex-start;
-      width: 100%;
-    }
-
-    /* Welcome */
-    .msg.welcome {
-      max-width: 500px;
-    }
-    .msg.welcome p {
-      font-family: var(--serif);
-      font-size: 1.05rem;
-      line-height: 1.7;
-      color: var(--ink-2);
-      margin-bottom: 5px;
-      text-wrap: pretty;
-    }
-    .msg.welcome p:last-child { margin-bottom: 0; }
-
-    /* Answer prose */
-    .answer-text {
-      font-family: var(--serif);
-      font-size: 1.02rem;
-      line-height: 1.75;
-      color: var(--ink);
-      text-wrap: pretty;
-      max-width: 68ch;
-    }
-    .answer-text h1, .answer-text h2, .answer-text h3 {
-      font-family: var(--serif);
-      font-style: italic;
-      font-weight: normal;
-      color: var(--ink);
-      margin: 1.1em 0 0.3em;
-      text-wrap: balance;
-    }
-    .answer-text h1 { font-size: 1.2rem; }
-    .answer-text h2 { font-size: 1.1rem; }
-    .answer-text h3 { font-size: 1rem; }
-    .answer-text h1:first-child,
-    .answer-text h2:first-child,
-    .answer-text h3:first-child { margin-top: 0; }
-    .answer-text p { margin: 0.55em 0; }
-    .answer-text p:first-child { margin-top: 0; }
-    .answer-text ul, .answer-text ol { padding-left: 1.5em; margin: 0.5em 0; }
-    .answer-text li { margin: 0.25em 0; }
-    .answer-text strong {
-      font-family: var(--sans);
-      font-weight: 600;
-      font-size: 0.94em;
-      color: var(--ink);
-    }
-    .answer-text em { font-style: italic; }
-    .answer-text code {
-      font-family: var(--mono);
-      font-size: 0.80em;
-      background: var(--mono-bg);
-      color: var(--mono-ink);
-      padding: 0.12em 0.42em;
-      border-radius: 3px;
-    }
-    .answer-text pre {
-      background: var(--surface);
-      border: 1px solid var(--border-sub);
-      border-radius: 6px;
-      padding: 14px 16px;
-      overflow-x: auto;
-      margin: 0.9em 0;
-    }
-    .answer-text pre code { background: none; padding: 0; color: var(--ink-2); }
-    .answer-text a {
-      color: var(--accent-text);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    /* Streaming cursor via ::after on [data-streaming] */
-    .msg.assistant[data-streaming] .answer-text::after {
-      content: '▋';
-      font-family: var(--mono);
-      font-size: 0.78em;
-      color: var(--accent);
-      animation: blink 0.72s ease-in-out infinite;
-      margin-left: 1px;
-      vertical-align: baseline;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0; }
-    }
-
-    /* Status indicator */
-    .msg.status {
-      align-self: flex-start;
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: none;
-      animation: msg-in 180ms ease-out both;
-    }
-    .status-dot {
-      width: 5px;
-      height: 5px;
-      background: var(--accent);
-      border-radius: 50%;
-      flex-shrink: 0;
-      animation: pulse-dot 1.4s ease-in-out infinite;
-    }
-    .status-text {
-      font-family: var(--mono);
-      font-size: 0.73rem;
-      color: var(--ink-3);
-      letter-spacing: 0.02em;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 0.35; transform: scale(0.8); }
-      50%       { opacity: 1;    transform: scale(1.1); }
-    }
-
-    /* ── Videos ───────────────────────────────────────────────── */
-    .videos {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .video-card {
-      background: var(--surface);
-      border: 1px solid var(--border-sub);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .video-label {
-      padding: 8px 12px;
-      font-family: var(--mono);
-      font-size: 0.70rem;
-      color: var(--ink-2);
-      letter-spacing: 0.03em;
-      border-bottom: 1px solid var(--border-sub);
-    }
-    .video-card iframe {
-      width: 100%;
-      aspect-ratio: 16/9;
-      border: none;
-      display: block;
-    }
-
-    /* ── Input form ───────────────────────────────────────────── */
-    #chat-form {
-      flex-shrink: 0;
-      display: flex;
-      gap: 10px;
-      padding: 14px 24px 18px;
-      border-top: 1px solid var(--border-sub);
-    }
-    #chat-input {
-      flex: 1;
+      gap: 0;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 14px;
-      color: var(--ink);
-      font-family: var(--sans);
-      font-size: 0.92rem;
-      outline: none;
+      padding: 3px 3px 3px 12px;
       transition: border-color 150ms ease-out;
     }
-    #chat-input::placeholder { color: var(--ink-3); opacity: 1; }
-    #chat-input:focus { border-color: var(--accent); }
-    .send-btn {
+    .header-cmd:focus-within { border-color: var(--accent); }
+    .header-cmd-glyph {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--ink-3);
+      flex-shrink: 0;
+      margin-right: 8px;
+      line-height: 1;
+    }
+    #header-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      padding: 5px 0;
+      min-width: 0;
+    }
+    #header-input::placeholder { color: var(--ink-3); opacity: 1; }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .header-btn {
+      background: var(--accent);
+      color: oklch(0.98 0 0);
+      border: none;
+      border-radius: 5px;
+      padding: 6px 14px;
+      font-family: var(--sans);
+      font-size: 0.80rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms ease-out;
+      white-space: nowrap;
+    }
+    .header-btn:hover:not(:disabled) { background: var(--accent-hi); }
+    .header-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
+    .header-btn.stop-btn { background: var(--surface-2); color: var(--ink-2); }
+    .header-btn.stop-btn:hover { background: var(--border); }
+    .header-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .path-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+    }
+    .path-toggle-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+    .path-toggle-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── Landing ────────────────────────────────────────── */
+    .landing {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px 80px;
+    }
+    [data-mode="landing"] .landing { display: flex; }
+
+    .landing-brand {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .landing-title {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: normal;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1;
+      margin-bottom: 10px;
+      text-wrap: balance;
+    }
+    .landing-sub {
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-3);
+      letter-spacing: 0.10em;
+    }
+
+    .landing-cmd {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 580px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 6px 6px 20px;
+      transition: border-color 150ms ease-out;
+    }
+    .landing-cmd:focus-within { border-color: var(--accent); }
+    .landing-cmd-glyph {
+      font-family: var(--mono);
+      font-size: 1rem;
+      color: var(--ink-3);
+      flex-shrink: 0;
+      margin-right: 14px;
+      line-height: 1;
+    }
+    #landing-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 1rem;
+      padding: 8px 0;
+      min-width: 0;
+    }
+    #landing-input::placeholder { color: var(--ink-3); opacity: 1; }
+    .landing-ask-btn {
       background: var(--accent);
       color: oklch(0.98 0 0);
       border: none;
@@ -362,25 +243,263 @@
       font-weight: 500;
       cursor: pointer;
       transition: background 150ms ease-out;
-      white-space: nowrap;
       flex-shrink: 0;
     }
-    .send-btn:hover:not(:disabled) { background: var(--accent-hi); }
-    .send-btn:disabled {
-      background: var(--surface-2);
-      color: var(--ink-3);
-      cursor: not-allowed;
-    }
-    .send-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .landing-ask-btn:hover { background: var(--accent-hi); }
+    .landing-ask-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    /* ── Path Finder ──────────────────────────────────────────── */
-    #path-tab {
+    .hint-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+      max-width: 580px;
+    }
+    .hint-pill {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: border-color 150ms, color 150ms;
+      line-height: 1.4;
+    }
+    .hint-pill:hover { border-color: var(--ink-2); color: var(--ink); }
+    .hint-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 20px; }
+
+    .landing-path-link {
+      margin-top: 32px;
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-3);
+    }
+    .landing-path-link button {
+      background: none;
+      border: none;
+      color: var(--accent-text);
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding: 0;
+    }
+    .landing-path-link button:hover { color: var(--ink); }
+
+    /* ── Results ────────────────────────────────────────── */
+    .results-area {
+      display: none;
+      flex: 1;
       overflow-y: auto;
-      padding: 32px 24px 40px;
+      padding: 32px 24px 48px;
+    }
+    [data-mode="results"] .results-area { display: block; }
+    .results-area::-webkit-scrollbar { width: 3px; }
+    .results-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .entries {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Entry = one Q&A pair */
+    @keyframes entry-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .entry { animation: entry-in 200ms ease-out both; }
+
+    .entry-q {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .entry-q-glyph {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+    .entry-q-text {
+      font-family: var(--mono);
+      font-size: 0.80rem;
+      color: var(--ink-2);
+      line-height: 1.55;
+    }
+
+    .entry-a {
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 10px;
+      padding: 22px 24px;
+    }
+
+    /* Answer prose */
+    .answer-text {
+      font-family: var(--serif);
+      font-size: 1.02rem;
+      line-height: 1.75;
+      color: var(--ink);
+      text-wrap: pretty;
+      max-width: 64ch;
+    }
+    .answer-text h1, .answer-text h2, .answer-text h3 {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: normal;
+      color: var(--ink);
+      margin: 1em 0 0.3em;
+      text-wrap: balance;
+    }
+    .answer-text h1 { font-size: 1.15rem; }
+    .answer-text h2 { font-size: 1.05rem; }
+    .answer-text h3 { font-size: 1rem; }
+    .answer-text h1:first-child, .answer-text h2:first-child, .answer-text h3:first-child { margin-top: 0; }
+    .answer-text p { margin: 0.5em 0; }
+    .answer-text p:first-child { margin-top: 0; }
+    .answer-text ul, .answer-text ol { padding-left: 1.5em; margin: 0.5em 0; }
+    .answer-text li { margin: 0.2em 0; }
+    .answer-text strong { font-family: var(--sans); font-weight: 600; font-size: 0.94em; color: var(--ink); }
+    .answer-text code {
+      font-family: var(--mono);
+      font-size: 0.80em;
+      background: var(--mono-bg);
+      color: var(--mono-ink);
+      padding: 0.1em 0.4em;
+      border-radius: 3px;
+    }
+    .answer-text a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Streaming cursor */
+    .entry-a[data-streaming] .answer-text::after {
+      content: '▋';
+      font-family: var(--mono);
+      font-size: 0.80em;
+      color: var(--accent);
+      animation: blink 0.72s ease-in-out infinite;
+      margin-left: 1px;
+    }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Status row inside entry-a */
+    .entry-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .status-dot {
+      width: 5px; height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity: 0.35; transform: scale(0.8); }
+      50%      { opacity: 1;   transform: scale(1.1); }
+    }
+    .status-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-3);
+      letter-spacing: 0.02em;
+    }
+
+    /* Error card */
+    .entry-error {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .entry-error-msg {
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      color: var(--ink-2);
+    }
+    .retry-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+    }
+    .retry-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+
+    /* Videos */
+    .videos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-sub);
+    }
+    .video-card { background: var(--surface-2); border: 1px solid var(--border-sub); border-radius: 8px; overflow: hidden; }
+    .video-label { padding: 7px 12px; font-family: var(--mono); font-size: 0.70rem; color: var(--ink-2); border-bottom: 1px solid var(--border-sub); letter-spacing: 0.03em; }
+    .video-card iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; }
+
+    /* ── Node chips ─────────────────────────────────────── */
+    .nc {
+      font-family: var(--mono);
+      font-size: 0.80em;
+      padding: 0.1em 0.38em;
+      border-radius: 3px;
+      background: color-mix(in oklch, var(--nc-color) 10%, transparent);
+      color: var(--nc-color);
+      white-space: nowrap;
+      vertical-align: baseline;
+      cursor: pointer;
+      transition: background 120ms;
+    }
+    .nc:hover { background: color-mix(in oklch, var(--nc-color) 20%, transparent); }
+    .nc-position   { --nc-color: var(--c-position); }
+    .nc-submission { --nc-color: var(--c-submission); }
+    .nc-sweep      { --nc-color: var(--c-sweep); }
+    .nc-guard_pass { --nc-color: var(--c-guard_pass); }
+    .nc-takedown   { --nc-color: var(--c-takedown); }
+    .nc-escape     { --nc-color: var(--c-escape); }
+    .nc-counter    { --nc-color: var(--c-counter); }
+    .nc-concept    { --nc-color: var(--c-concept); }
+    .nc-competitor { --nc-color: var(--c-competitor); }
+    .nc-system     { --nc-color: var(--c-system); }
+    .nc-technique  { --nc-color: var(--c-technique); }
+
+    /* ── Path Finder ────────────────────────────────────── */
+    .path-area {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px 48px;
+    }
+    [data-mode="path"] .path-area { display: block; }
+
+    .path-inner {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
       gap: 28px;
     }
 
-    .path-header h2 {
+    .path-head h2 {
       font-family: var(--serif);
       font-style: italic;
       font-size: 1.3rem;
@@ -390,30 +509,17 @@
       margin-bottom: 6px;
       text-wrap: balance;
     }
-    .path-header p {
-      font-size: 0.85rem;
-      color: var(--ink-2);
-      line-height: 1.55;
-    }
+    .path-head p { font-size: 0.85rem; color: var(--ink-2); line-height: 1.55; }
 
-    .path-controls {
-      display: flex;
-      gap: 12px;
-      align-items: flex-end;
-      flex-wrap: wrap;
-    }
-    .path-controls label {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .path-label-text {
+    .path-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .path-field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
+    .path-field-label {
       font-family: var(--mono);
       font-size: 0.68rem;
       color: var(--ink-3);
       letter-spacing: 0.07em;
     }
-    .path-controls select {
+    .path-combobox {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -422,11 +528,11 @@
       font-family: var(--sans);
       font-size: 0.88rem;
       outline: none;
-      min-width: 220px;
-      cursor: pointer;
-      transition: border-color 150ms ease-out;
+      width: 100%;
+      transition: border-color 150ms;
     }
-    .path-controls select:focus { border-color: var(--accent); }
+    .path-combobox:focus { border-color: var(--accent); }
+    .path-combobox::placeholder { color: var(--ink-3); }
     #path-btn {
       background: var(--accent);
       color: oklch(0.98 0 0);
@@ -437,7 +543,7 @@
       font-size: 0.88rem;
       font-weight: 500;
       cursor: pointer;
-      transition: background 150ms ease-out;
+      transition: background 150ms;
       white-space: nowrap;
       align-self: flex-end;
     }
@@ -445,23 +551,19 @@
     #path-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
     #path-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    /* Path result */
     #path-result { display: none; }
 
-    .path-result-meta {
+    .path-meta {
       font-family: var(--mono);
       font-size: 0.75rem;
       color: var(--ink-2);
       letter-spacing: 0.02em;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
-    .path-result-meta strong { color: var(--ink); font-weight: 500; }
+    .path-meta strong { color: var(--ink); font-weight: 500; }
 
-    /* Step sequence */
     .step-sequence { display: flex; flex-direction: column; }
-
     .step-item { display: flex; flex-direction: column; }
-
     .step-node {
       display: flex;
       align-items: center;
@@ -477,7 +579,6 @@
       font-weight: 500;
       letter-spacing: 0.05em;
       white-space: nowrap;
-      opacity: 0.95;
     }
     .step-badge.position   { color: var(--c-position); }
     .step-badge.submission { color: var(--c-submission); }
@@ -490,33 +591,11 @@
     .step-badge.competitor { color: var(--c-competitor); }
     .step-badge.system     { color: var(--c-system); }
     .step-badge.technique  { color: var(--c-technique); }
+    .step-name { font-family: var(--sans); font-size: 0.92rem; font-weight: 500; color: var(--ink); }
+    .step-connector { display: flex; align-items: center; gap: 10px; padding: 5px 16px; }
+    .step-line { width: 1px; height: 18px; background: var(--border); }
+    .step-rel { font-family: var(--mono); font-size: 0.67rem; color: var(--accent-text); letter-spacing: 0.02em; }
 
-    .step-name {
-      font-family: var(--sans);
-      font-size: 0.92rem;
-      font-weight: 500;
-      color: var(--ink);
-    }
-
-    .step-connector {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 5px 16px;
-    }
-    .step-line {
-      width: 1px;
-      height: 18px;
-      background: var(--border);
-    }
-    .step-rel {
-      font-family: var(--mono);
-      font-size: 0.67rem;
-      color: var(--accent-text);
-      letter-spacing: 0.02em;
-    }
-
-    /* Path explanation */
     #path-explanation {
       margin-top: 28px;
       padding-top: 22px;
@@ -526,7 +605,7 @@
       line-height: 1.75;
       color: var(--ink-2);
       text-wrap: pretty;
-      max-width: 68ch;
+      max-width: 64ch;
     }
     #path-explanation h1, #path-explanation h2, #path-explanation h3 {
       font-family: var(--serif);
@@ -537,144 +616,159 @@
       margin: 0.9em 0 0.3em;
     }
     #path-explanation ul, #path-explanation ol { padding-left: 1.4em; margin: 0.4em 0; }
-    #path-explanation li { margin: 0.2em 0; }
-    #path-explanation strong {
-      font-family: var(--sans);
-      font-weight: 600;
-      font-size: 0.93em;
-      color: var(--ink);
-    }
+    #path-explanation strong { font-family: var(--sans); font-weight: 600; font-size: 0.93em; color: var(--ink); }
 
-    .no-path {
+    .path-no-result {
       font-family: var(--mono);
       font-size: 0.80rem;
       color: var(--ink-3);
-      padding: 4px 0;
     }
 
-    /* ── Node chips ───────────────────────────────────────────── */
-    .nc {
-      font-family: var(--mono);
-      font-size: 0.80em;
-      padding: 0.1em 0.38em;
-      border-radius: 3px;
-      background: color-mix(in oklch, var(--nc-color) 10%, transparent);
-      color: var(--nc-color);
-      white-space: nowrap;
-      vertical-align: baseline;
-    }
-    .nc-position   { --nc-color: var(--c-position); }
-    .nc-submission { --nc-color: var(--c-submission); }
-    .nc-sweep      { --nc-color: var(--c-sweep); }
-    .nc-guard_pass { --nc-color: var(--c-guard_pass); }
-    .nc-takedown   { --nc-color: var(--c-takedown); }
-    .nc-escape     { --nc-color: var(--c-escape); }
-    .nc-counter    { --nc-color: var(--c-counter); }
-    .nc-concept    { --nc-color: var(--c-concept); }
-    .nc-competitor { --nc-color: var(--c-competitor); }
-    .nc-system     { --nc-color: var(--c-system); }
-    .nc-technique  { --nc-color: var(--c-technique); }
-
-    /* ── Reduced motion ───────────────────────────────────────── */
+    /* ── Reduced motion ─────────────────────────────────── */
     @media (prefers-reduced-motion: reduce) {
-      .msg { animation: none; }
-      .tab { transition: none; }
+      .entry { animation: none; }
       .status-dot { animation: none; opacity: 0.7; }
-      .msg.assistant[data-streaming] .answer-text::after {
-        animation: none;
-        opacity: 1;
-      }
+      .entry-a[data-streaming] .answer-text::after { animation: none; opacity: 1; }
       * { transition-duration: 0ms !important; }
     }
 
-    /* ── Responsive ───────────────────────────────────────────── */
-    @media (max-width: 640px) {
-      header { padding: 0 16px; gap: 12px; }
-      .brand-sub { display: none; }
-      #messages { padding: 20px 16px; gap: 18px; }
-      #chat-form { padding: 12px 16px 16px; }
-      .msg.user { max-width: 88%; }
-      #path-tab { padding: 24px 16px 32px; gap: 24px; }
-      .path-controls { flex-direction: column; align-items: stretch; }
-      .path-controls select { min-width: 0; }
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .landing { padding: 0 16px 60px; }
+      .results-area, .path-area { padding: 24px 16px 40px; }
+      .entry-a { padding: 16px 16px; }
+      .path-controls { flex-direction: column; }
       #path-btn { width: 100%; }
       .videos { grid-template-columns: 1fr; }
+      .hint-pills { gap: 6px; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <span class="brand-name">BJJ World</span>
-      <span class="brand-sub">knowledge graph</span>
+
+  <!-- ── Compact header (results + path modes) ── -->
+  <header class="app-header" aria-label="BJJ World">
+    <div class="header-brand">
+      <span class="header-brand-name">BJJ World</span>
+      <span class="header-brand-sub">knowledge graph</span>
     </div>
-    <nav role="tablist" aria-label="App sections">
-      <button class="nav-btn active"
-        role="tab" aria-selected="true" aria-controls="chat-tab"
-        onclick="switchTab('chat')">Chat</button>
-      <button class="nav-btn"
-        role="tab" aria-selected="false" aria-controls="path-tab"
-        onclick="switchTab('path')">Path Finder</button>
-    </nav>
+
+    <form class="header-cmd" id="header-form" aria-label="Ask a question">
+      <span class="header-cmd-glyph" aria-hidden="true">◎</span>
+      <input id="header-input" type="text" autocomplete="off"
+        placeholder="Ask about any technique or position…"
+        aria-label="Your question" />
+    </form>
+
+    <div class="header-actions">
+      <button type="submit" form="header-form" class="header-btn" id="header-ask-btn">Ask</button>
+      <button type="button" class="header-btn stop-btn" id="header-stop-btn"
+        style="display:none" aria-label="Stop generating">Stop</button>
+      <button type="button" class="path-toggle-btn" id="path-toggle-btn"
+        onclick="togglePath()">Path →</button>
+    </div>
   </header>
 
-  <div class="tabs-container">
-
-    <!-- ── CHAT ── -->
-    <div id="chat-tab" class="tab active" role="tabpanel" aria-label="BJJ chat">
-      <div id="messages" role="log" aria-live="polite" aria-label="Chat messages">
-        <div class="msg welcome">
-          <p>Ask anything about Brazilian jiu-jitsu — positions, submissions, transitions, sweeps, guard passes, competitor game plans.</p>
-          <p>Or use Path Finder to trace the shortest route between any two techniques.</p>
-        </div>
-      </div>
-      <form id="chat-form" autocomplete="off" aria-label="Ask a BJJ question">
-        <input id="chat-input" type="text"
-          placeholder="e.g. What can I attack from closed guard?"
-          autocomplete="off"
-          aria-label="Your question" />
-        <button type="submit" class="send-btn" id="chat-btn">Ask</button>
-      </form>
+  <!-- ── Landing ── -->
+  <div class="landing" role="main" aria-label="BJJ World — knowledge graph">
+    <div class="landing-brand">
+      <h1 class="landing-title">BJJ World</h1>
+      <p class="landing-sub">knowledge graph</p>
     </div>
 
-    <!-- ── PATH FINDER ── -->
-    <div id="path-tab" class="tab" role="tabpanel" aria-label="Path finder" inert aria-hidden="true">
-      <div class="path-header">
+    <form class="landing-cmd" id="landing-form" aria-label="Ask a BJJ question">
+      <span class="landing-cmd-glyph" aria-hidden="true">◎</span>
+      <input id="landing-input" type="text" autocomplete="off"
+        placeholder="Ask about any technique, position, or path…"
+        aria-label="Your question"
+        autofocus />
+      <button type="submit" class="landing-ask-btn">Ask</button>
+    </form>
+
+    <div class="hint-pills" role="list" aria-label="Example questions">
+      <button class="hint-pill" role="listitem" type="button"
+        onclick="useHint(this)">What can I attack from closed guard?</button>
+      <button class="hint-pill" role="listitem" type="button"
+        onclick="useHint(this)">How does Gordon Ryan approach back control?</button>
+      <button class="hint-pill" role="listitem" type="button"
+        onclick="useHint(this)">What are my options from half guard?</button>
+    </div>
+
+    <p class="landing-path-link">
+      Looking for a specific route?
+      <button type="button" onclick="togglePath()">Use Path Finder →</button>
+    </p>
+  </div>
+
+  <!-- ── Results ── -->
+  <div class="results-area" role="main" aria-label="Answers">
+    <div class="entries" id="entries" role="log" aria-live="polite"></div>
+  </div>
+
+  <!-- ── Path Finder ── -->
+  <div class="path-area" role="main" aria-label="Path Finder">
+    <div class="path-inner">
+      <div class="path-head">
         <h2>Path Finder</h2>
-        <p>Shortest route between any two positions or techniques in the graph.</p>
+        <p>Shortest route between any two positions or techniques — different from Chat, this traces the actual graph edges.</p>
       </div>
+
       <div class="path-controls">
-        <label>
-          <span class="path-label-text">FROM</span>
-          <select id="path-from" aria-label="Starting position"><option value="">Loading…</option></select>
-        </label>
-        <label>
-          <span class="path-label-text">TO</span>
-          <select id="path-to" aria-label="Destination position"><option value="">Loading…</option></select>
-        </label>
-        <button id="path-btn" onclick="findPath()">Find Path</button>
+        <div class="path-field">
+          <label class="path-field-label" for="path-from-input">FROM</label>
+          <input class="path-combobox" id="path-from-input" type="text"
+            list="path-nodes-list" placeholder="Search techniques…"
+            autocomplete="off" aria-label="Starting technique" />
+        </div>
+        <div class="path-field">
+          <label class="path-field-label" for="path-to-input">TO</label>
+          <input class="path-combobox" id="path-to-input" type="text"
+            list="path-nodes-list" placeholder="Search techniques…"
+            autocomplete="off" aria-label="Destination technique" />
+        </div>
+        <datalist id="path-nodes-list"></datalist>
+        <button id="path-btn" type="button" onclick="findPath()">Find Path</button>
       </div>
+
       <div id="path-result" aria-live="polite"></div>
     </div>
-
   </div>
 
   <script>
-    // ── Node chips ────────────────────────────────────────────
+    // ── Mode ───────────────────────────────────────────────
+    function setMode(mode) {
+      document.documentElement.dataset.mode = mode;
+      const pathToggle = document.getElementById('path-toggle-btn');
+      if (pathToggle) {
+        pathToggle.textContent = mode === 'path' ? '← Chat' : 'Path →';
+        pathToggle.setAttribute('aria-label', mode === 'path' ? 'Back to chat' : 'Open Path Finder');
+      }
+    }
+
+    function togglePath() {
+      const current = document.documentElement.dataset.mode;
+      if (current === 'path') {
+        setMode(hasResults ? 'results' : 'landing');
+      } else {
+        setMode('path');
+        if (!pathLoaded) loadPathNodes();
+      }
+    }
+
+    let hasResults = false;
+
+    // ── Node chips ─────────────────────────────────────────
     let nodeList = [];
-    let chipRe   = null;
+    let chipRe = null;
 
     async function loadNodes() {
       try {
         const data = await fetch('/api/nodes').then(r => r.json());
-        // Sort longest first to prevent partial matches (e.g. "Guard" inside "Closed Guard")
         nodeList = data.sort((a, b) => b.name.length - a.name.length);
-        const escaped = nodeList.map(n =>
-          n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        );
+        const escaped = nodeList.map(n => n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
         chipRe = new RegExp('\\b(?:' + escaped.join('|') + ')\\b', 'gi');
       } catch (e) {
-        console.warn('Failed to load node list for chips', e);
+        console.warn('Node chip load failed', e);
       }
     }
 
@@ -684,14 +778,13 @@
     }
 
     function walkForChips(el) {
-      if (!el) return;
-      const skip = new Set(['CODE','PRE','SCRIPT','STYLE']);
+      const skip = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE']);
       for (const child of [...el.childNodes]) {
         if (child.nodeType === Node.TEXT_NODE) {
           chipifyTextNode(child);
         } else if (child.nodeType === Node.ELEMENT_NODE
-                   && !skip.has(child.tagName)
-                   && !child.classList.contains('nc')) {
+          && !skip.has(child.tagName)
+          && !child.classList.contains('nc')) {
           walkForChips(child);
         }
       }
@@ -702,83 +795,100 @@
       chipRe.lastIndex = 0;
       if (!chipRe.test(text)) return;
       chipRe.lastIndex = 0;
-
       const frag = document.createDocumentFragment();
       let last = 0, match;
-
       while ((match = chipRe.exec(text)) !== null) {
-        if (match.index > last) {
-          frag.appendChild(document.createTextNode(text.slice(last, match.index)));
-        }
+        if (match.index > last) frag.appendChild(document.createTextNode(text.slice(last, match.index)));
         const node = nodeList.find(n => n.name.toLowerCase() === match[0].toLowerCase());
         if (node) {
           const span = document.createElement('span');
           span.className = `nc nc-${node.type}`;
           span.textContent = match[0];
+          span.title = node.type.replace('_', ' ');
+          span.setAttribute('role', 'button');
+          span.setAttribute('tabindex', '0');
+          span.addEventListener('click', () => fillQuery(`Tell me more about ${node.name}`));
+          span.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fillQuery(`Tell me more about ${node.name}`); });
           frag.appendChild(span);
         } else {
           frag.appendChild(document.createTextNode(match[0]));
         }
         last = match.index + match[0].length;
       }
-
       if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
       textNode.replaceWith(frag);
     }
 
-    loadNodes();
+    // ── Query helpers ───────────────────────────────────────
+    function useHint(btn) { fillQuery(btn.textContent.trim()); }
 
-    // ── Tab switching ──────────────────────────────────────────
-    const TABS = ['chat', 'path'];
-
-    function switchTab(name) {
-      document.querySelectorAll('.tab').forEach((t, i) => {
-        const active = TABS[i] === name;
-        t.classList.toggle('active', active);
-        t.setAttribute('aria-hidden', String(!active));
-        active ? t.removeAttribute('inert') : t.setAttribute('inert', '');
-      });
-      document.querySelectorAll('.nav-btn').forEach((b, i) => {
-        const active = TABS[i] === name;
-        b.classList.toggle('active', active);
-        b.setAttribute('aria-selected', String(active));
-      });
-      if (name === 'path' && !pathLoaded) loadPathPositions();
+    function fillQuery(text) {
+      const mode = document.documentElement.dataset.mode;
+      if (mode === 'landing') {
+        document.getElementById('landing-input').value = text;
+        document.getElementById('landing-input').focus();
+      } else {
+        document.getElementById('header-input').value = text;
+        document.getElementById('header-input').focus();
+      }
+      if (mode === 'path') setMode(hasResults ? 'results' : 'landing');
     }
 
-    // ── Chat ──────────────────────────────────────────────────
-    const chatForm  = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const chatBtn   = document.getElementById('chat-btn');
-    const messages  = document.getElementById('messages');
+    // ── Chat ────────────────────────────────────────────────
+    const entries      = document.getElementById('entries');
     const conversationHistory = [];
+    let abortCtrl = null;
+    let lastQuestion  = '';
 
-    chatForm.addEventListener('submit', async (e) => {
+    document.getElementById('landing-form').addEventListener('submit', e => {
       e.preventDefault();
-      const question = chatInput.value.trim();
-      if (!question) return;
-      chatInput.value = '';
-      chatBtn.disabled = true;
+      const q = document.getElementById('landing-input').value.trim();
+      if (q) { document.getElementById('landing-input').value = ''; submitQuestion(q); }
+    });
 
-      // User bubble
-      const userDiv = document.createElement('div');
-      userDiv.className = 'msg user';
-      userDiv.textContent = question;
-      messages.appendChild(userDiv);
+    document.getElementById('header-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const q = document.getElementById('header-input').value.trim();
+      if (q) { document.getElementById('header-input').value = ''; submitQuestion(q); }
+    });
+
+    document.getElementById('header-stop-btn').addEventListener('click', () => {
+      if (abortCtrl) abortCtrl.abort();
+    });
+
+    async function submitQuestion(question) {
+      // Cancel any active stream
+      if (abortCtrl) abortCtrl.abort();
+      abortCtrl = new AbortController();
+
+      lastQuestion = question;
       conversationHistory.push({ role: 'user', content: question });
 
-      // Status indicator
-      const statusDiv = document.createElement('div');
-      statusDiv.className = 'msg status';
-      statusDiv.innerHTML = '<span class="status-dot" aria-hidden="true"></span><span class="status-text">Searching…</span>';
-      messages.appendChild(statusDiv);
-      messages.scrollTop = messages.scrollHeight;
+      if (!hasResults) { hasResults = true; setMode('results'); }
 
-      // Answer container
-      const answerDiv = document.createElement('div');
-      answerDiv.className = 'msg assistant';
-      answerDiv.setAttribute('data-streaming', '');
-      messages.appendChild(answerDiv);
+      // Build entry
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+
+      const entryQ = document.createElement('div');
+      entryQ.className = 'entry-q';
+      entryQ.innerHTML = `<span class="entry-q-glyph" aria-hidden="true">▸</span><span class="entry-q-text">${escHtml(question)}</span>`;
+
+      const entryA = document.createElement('div');
+      entryA.className = 'entry-a';
+      entryA.setAttribute('data-streaming', '');
+
+      const statusEl = document.createElement('div');
+      statusEl.className = 'entry-status';
+      statusEl.innerHTML = '<span class="status-dot" aria-hidden="true"></span><span class="status-label">Searching…</span>';
+      entryA.appendChild(statusEl);
+
+      entry.appendChild(entryQ);
+      entry.appendChild(entryA);
+      entries.appendChild(entry);
+      entry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      setStreaming(true);
 
       let buffer = '';
       let textEl = null;
@@ -787,7 +897,8 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, history: conversationHistory.slice(-6) })
+          body: JSON.stringify({ question, history: conversationHistory.slice(-6) }),
+          signal: abortCtrl.signal
         });
 
         const reader  = res.body.getReader();
@@ -808,17 +919,19 @@
             try { event = JSON.parse(line.slice(6)); } catch { continue; }
 
             if (event.type === 'status') {
-              statusDiv.querySelector('.status-text').textContent = event.text;
+              const lbl = statusEl.querySelector('.status-label');
+              if (lbl) lbl.textContent = event.text;
 
             } else if (event.type === 'token') {
-              buffer += event.text;
+              if (statusEl.parentNode) statusEl.remove();
               if (!textEl) {
                 textEl = document.createElement('div');
                 textEl.className = 'answer-text';
-                answerDiv.appendChild(textEl);
+                entryA.appendChild(textEl);
               }
+              buffer += event.text;
               textEl.innerHTML = marked.parse(buffer);
-              messages.scrollTop = messages.scrollHeight;
+              entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
             } else if (event.type === 'videos') {
               const videosDiv = document.createElement('div');
@@ -827,95 +940,140 @@
                 const id = new URL(v.url).searchParams.get('v');
                 if (!id) return '';
                 return `<div class="video-card">
-                  <div class="video-label">${v.name}</div>
-                  <iframe
-                    src="https://www.youtube.com/embed/${id}"
-                    title="${v.name} — BJJ tutorial"
-                    allowfullscreen
-                    loading="lazy"></iframe>
+                  <div class="video-label">${escHtml(v.name)}</div>
+                  <iframe src="https://www.youtube.com/embed/${id}"
+                    title="${escHtml(v.name)} — BJJ tutorial"
+                    allowfullscreen loading="lazy"></iframe>
                 </div>`;
               }).join('');
-              answerDiv.appendChild(videosDiv);
+              entryA.appendChild(videosDiv);
 
             } else if (event.type === 'done') {
-              statusDiv.remove();
-              answerDiv.removeAttribute('data-streaming');
+              entryA.removeAttribute('data-streaming');
+              if (statusEl.parentNode) statusEl.remove();
               if (textEl) applyChips(textEl);
               if (buffer) conversationHistory.push({ role: 'assistant', content: buffer });
 
             } else if (event.type === 'error') {
-              statusDiv.remove();
-              answerDiv.removeAttribute('data-streaming');
-              answerDiv.textContent = `Error: ${event.text}`;
+              entryA.removeAttribute('data-streaming');
+              showError(entryA, event.text, question);
             }
           }
         }
       } catch (err) {
-        statusDiv.remove();
-        answerDiv.removeAttribute('data-streaming');
-        answerDiv.textContent = `Connection error: ${err.message}`;
+        entryA.removeAttribute('data-streaming');
+        if (err.name === 'AbortError') {
+          if (statusEl.parentNode) statusEl.remove();
+          if (!textEl && buffer === '') {
+            entryA.innerHTML = '';
+            const cancelled = document.createElement('p');
+            cancelled.style.cssText = 'font-family:var(--mono);font-size:0.75rem;color:var(--ink-3)';
+            cancelled.textContent = 'Stopped.';
+            entryA.appendChild(cancelled);
+          }
+        } else {
+          showError(entryA, err.message, question);
+        }
       } finally {
-        chatBtn.disabled = false;
-        chatInput.focus();
+        setStreaming(false);
+        abortCtrl = null;
       }
-    });
+    }
 
-    // ── Path Finder ────────────────────────────────────────────
+    function showError(container, msg, question) {
+      if (container.querySelector('.entry-status')) {
+        container.querySelector('.entry-status').remove();
+      }
+      const err = document.createElement('div');
+      err.className = 'entry-error';
+      err.innerHTML = `
+        <span class="entry-error-msg">Something went wrong — try asking again.</span>
+        <button class="retry-btn" type="button">Retry</button>`;
+      err.querySelector('.retry-btn').addEventListener('click', () => {
+        container.innerHTML = '';
+        const statusEl = document.createElement('div');
+        statusEl.className = 'entry-status';
+        statusEl.innerHTML = '<span class="status-dot"></span><span class="status-label">Retrying…</span>';
+        container.appendChild(statusEl);
+        submitQuestion(question);
+      });
+      container.appendChild(err);
+      console.warn('Chat error:', msg);
+    }
+
+    function setStreaming(on) {
+      document.getElementById('header-ask-btn').style.display  = on ? 'none' : '';
+      document.getElementById('header-stop-btn').style.display = on ? '' : 'none';
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Path Finder ─────────────────────────────────────────
     let pathLoaded = false;
+    let pathNodeMap = {}; // name.toLowerCase() → id
 
-    async function loadPathPositions() {
+    async function loadPathNodes() {
       try {
-        const data = await fetch('/api/positions').then(r => r.json());
-        const positions = data.filter(n =>
+        const data = await fetch('/api/nodes').then(r => r.json());
+        const relevant = data.filter(n =>
           ['position','submission','sweep','guard_pass','takedown','escape'].includes(n.type)
         );
-        ['path-from','path-to'].forEach((id, i) => {
-          const sel = document.getElementById(id);
-          sel.innerHTML = positions.map(p =>
-            `<option value="${p.id}">${p.name} (${p.type.replace('_',' ')})</option>`
-          ).join('');
-          if (i === 1) sel.selectedIndex = Math.min(5, positions.length - 1);
-        });
+        const dl = document.getElementById('path-nodes-list');
+        dl.innerHTML = relevant.map(n => `<option value="${escHtml(n.name)}">`).join('');
+        relevant.forEach(n => { pathNodeMap[n.name.toLowerCase()] = n.id; });
         pathLoaded = true;
       } catch (err) {
-        console.error('Failed to load positions', err);
+        console.error('Failed to load path nodes', err);
       }
     }
 
     async function findPath() {
-      const from   = document.getElementById('path-from').value;
-      const to     = document.getElementById('path-to').value;
+      const fromName = document.getElementById('path-from-input').value.trim();
+      const toName   = document.getElementById('path-to-input').value.trim();
       const btn    = document.getElementById('path-btn');
       const result = document.getElementById('path-result');
-      if (!from || !to) return;
 
-      btn.disabled  = true;
+      const fromId = pathNodeMap[fromName.toLowerCase()];
+      const toId   = pathNodeMap[toName.toLowerCase()];
+
+      if (!fromId || !toId) {
+        result.style.display = 'block';
+        result.innerHTML = '<p class="path-no-result">Type an exact technique name from the suggestions.</p>';
+        return;
+      }
+      if (fromId === toId) {
+        result.style.display = 'block';
+        result.innerHTML = '<p class="path-no-result">Pick two different techniques.</p>';
+        return;
+      }
+
+      btn.disabled = true;
       btn.textContent = 'Finding…';
       result.style.display = 'none';
 
       try {
-        const data = await fetch(`/api/path?from=${from}&to=${to}`).then(r => r.json());
+        const data = await fetch(`/api/path?from=${fromId}&to=${toId}`).then(r => r.json());
         result.style.display = 'block';
 
         if (!data.found) {
-          result.innerHTML = '<p class="no-path">No path found between these two techniques.</p>';
+          result.innerHTML = '<p class="path-no-result">No path found between these two techniques.</p>';
           return;
         }
 
         const stepsHtml = data.steps.map((step, i) => {
           const badge = step.type.replace('_', ' ');
-          const node  = `<div class="step-node">
+          const node = `<div class="step-node">
             <span class="step-badge ${step.type}">${badge}</span>
-            <span class="step-name">${step.name}</span>
+            <span class="step-name">${escHtml(step.name)}</span>
           </div>`;
           if (i < data.transitions.length) {
-            return `<div class="step-item">
-              ${node}
+            return `<div class="step-item">${node}
               <div class="step-connector">
                 <div class="step-line"></div>
-                <span class="step-rel">${data.transitions[i]}</span>
-              </div>
-            </div>`;
+                <span class="step-rel">${escHtml(data.transitions[i])}</span>
+              </div></div>`;
           }
           return `<div class="step-item">${node}</div>`;
         }).join('');
@@ -924,14 +1082,10 @@
         const last  = data.steps[data.steps.length - 1].name;
 
         result.innerHTML = `
-          <div class="path-result-meta">
-            ${data.steps.length} steps &mdash; <strong>${first}</strong> to <strong>${last}</strong>
-          </div>
+          <div class="path-meta">${data.steps.length} steps — <strong>${escHtml(first)}</strong> to <strong>${escHtml(last)}</strong></div>
           <div class="step-sequence">${stepsHtml}</div>
-          <div id="path-explanation"></div>
-        `;
+          <div id="path-explanation"></div>`;
 
-        // Stream the coach explanation
         const pathStr = data.steps.map((s, i) =>
           i < data.transitions.length ? `${s.name} --[${data.transitions[i]}]-->` : s.name
         ).join(' ');
@@ -940,9 +1094,7 @@
         const resp  = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            question: `Explain this BJJ path step by step as a coach: ${pathStr}. Be concise and practical.`
-          })
+          body: JSON.stringify({ question: `Explain this BJJ path step by step as a coach: ${pathStr}. Be concise and practical.` })
         });
 
         const reader  = resp.body.getReader();
@@ -959,20 +1111,21 @@
             const line = part.trim();
             if (!line.startsWith('data: ')) continue;
             let ev; try { ev = JSON.parse(line.slice(6)); } catch { continue; }
-            if (ev.type === 'token') {
-              text += ev.text;
-              expEl.innerHTML = marked.parse(text);
-            }
+            if (ev.type === 'token') { text += ev.text; expEl.innerHTML = marked.parse(text); }
           }
         }
       } catch (err) {
-        result.innerHTML = `<p class="no-path">Error: ${err.message}</p>`;
+        result.innerHTML = `<p class="path-no-result">Something went wrong — try again.</p>`;
         result.style.display = 'block';
+        console.error(err);
       } finally {
-        btn.disabled  = false;
+        btn.disabled = false;
         btn.textContent = 'Find Path';
       }
     }
+
+    // ── Init ────────────────────────────────────────────────
+    loadNodes();
   </script>
 </body>
 </html>
