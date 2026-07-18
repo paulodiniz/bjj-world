@@ -439,53 +439,98 @@ async function fetchStoryboardFrames(videoId, durationSecs) {
 }
 
 async function fetchStoryboardLevel(urlTemplate, levelIdx, level) {
-  const { frameW, frameH, totalFrames, cols, rows, intervalMs, nameTpl, sigh } = level;
+  const { totalFrames, cols, rows, intervalMs, nameTpl, sigh } = level;
   const framesPerSprite = cols * rows;
   const numSprites = Math.ceil(totalFrames / framesPerSprite);
+  const secPerFrame = intervalMs / 1000;
 
-  const sprites = [];
+  const sheets = [];
   for (let n = 0; n < numSprites; n++) {
     const spriteName = nameTpl.replace('$M', String(n));
-    let url = urlTemplate
-      .replace('$L', String(levelIdx))
-      .replace('$N', spriteName);
+    let url = urlTemplate.replace('$L', String(levelIdx)).replace('$N', spriteName);
     if (sigh) url += '&sigh=' + sigh;
     try {
       const res = await fetch(url);
-      if (!res.ok) break;
-      const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length < 2000) break;
-      sprites.push(buf);
-    } catch { break; }
-  }
-  if (sprites.length === 0) return [];
-
-  // Subsample to max 50 frames
-  const step = Math.max(1, Math.ceil(totalFrames / 50));
-  const secPerFrame = intervalMs / 1000;
-
-  const frames = [];
-  for (let s = 0; s < sprites.length; s++) {
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const idx = s * framesPerSprite + r * cols + c;
-        if (idx >= totalFrames) continue;
-        if (idx % step !== 0) continue;
-        const ts = Math.round(idx * secPerFrame);
-
-        const buf = await sharp(sprites[s])
-          .extract({ left: c * frameW, top: r * frameH, width: frameW, height: frameH })
-          .jpeg({ quality: 90 })
-          .toBuffer();
-
-        frames.push({ timestamp: ts, label: formatTimestamp(ts), data: buf.toString('base64') });
+      if (!res.ok) {
+        console.warn(`[storyboard] L${levelIdx} M${n}: HTTP ${res.status}`);
+        break;
       }
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length < 2000) {
+        console.warn(`[storyboard] L${levelIdx} M${n}: too small (${buf.length} bytes)`);
+        break;
+      }
+      const startIdx = n * framesPerSprite;
+      const endIdx   = Math.min(startIdx + framesPerSprite - 1, totalFrames - 1);
+      const startTs  = Math.round(startIdx * secPerFrame);
+      const endTs    = Math.round(endIdx   * secPerFrame);
+      sheets.push({
+        timestamp: startTs,
+        label: `${formatTimestamp(startTs)}–${formatTimestamp(endTs)}`,
+        data: buf.toString('base64'),
+        cols, rows, secPerFrame, startIdx,
+      });
+      console.log(`[storyboard] L${levelIdx} M${n}: OK ${buf.length}b (${formatTimestamp(startTs)}–${formatTimestamp(endTs)})`);
+    } catch (e) {
+      console.warn(`[storyboard] L${levelIdx} M${n}: error: ${e.message}`);
+      break;
     }
   }
-  return frames;
+  return sheets;
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────
+
+app.get('/api/debug-storyboard', async (req, res) => {
+  const { videoId } = req.query;
+  if (!videoId) return res.status(400).json({ error: 'videoId required' });
+  const result = { videoId, steps: {} };
+  try {
+    const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
+      }
+    });
+    result.steps.page = { status: pageRes.status, ok: pageRes.ok };
+    if (pageRes.ok) {
+      const html = await pageRes.text();
+      result.steps.page.size = html.length;
+      result.steps.page.hasIPR = html.includes('ytInitialPlayerResponse');
+      result.steps.page.hasSBSpec = html.includes('playerStoryboardSpecRenderer');
+    }
+  } catch (e) {
+    result.steps.page = { error: e.message };
+  }
+
+  if (result.steps.page?.hasSBSpec) {
+    try {
+      const spec = await fetchStoryboardSpec(videoId);
+      const { urlTemplate, levels } = parseStoryboardSpec(spec);
+      result.steps.spec = { ok: true, levelCount: levels.length, levels: levels.map((l, i) => ({ i, frameW: l.frameW, frameH: l.frameH, totalFrames: l.totalFrames, cols: l.cols, rows: l.rows, intervalMs: l.intervalMs })) };
+
+      // Try downloading the first sprite of level 2
+      const L2 = levels[2];
+      if (L2) {
+        const spriteName = L2.nameTpl.replace('$M', '0');
+        let url = urlTemplate.replace('$L', '2').replace('$N', spriteName);
+        if (L2.sigh) url += '&sigh=' + L2.sigh;
+        try {
+          const spriteRes = await fetch(url);
+          const buf = spriteRes.ok ? Buffer.from(await spriteRes.arrayBuffer()) : null;
+          result.steps.sprite = { status: spriteRes.status, ok: spriteRes.ok, bytes: buf?.length };
+        } catch (e) {
+          result.steps.sprite = { error: e.message };
+        }
+      }
+    } catch (e) {
+      result.steps.spec = { error: e.message };
+    }
+  }
+
+  res.json(result);
+});
 
 app.get('/api/nodes', (req, res) => {
   res.json(ragChunks.map(c => ({ id: c.id, name: c.name, type: c.type })));
@@ -679,11 +724,15 @@ app.post('/api/analyze-fight', async (req, res) => {
 
     if (frames.length === 0) throw new Error('Could not fetch any frames from this video. It may be private or unavailable.');
 
-    const approxInterval = durationSecs && frames.length > 1
-      ? Math.round(durationSecs / frames.length)
-      : null;
+    const isStoryboard = frames.length > 0 && frames[0].cols != null;
+    const frameCount = isStoryboard
+      ? frames.reduce((n, s) => n + s.cols * s.rows, 0)
+      : frames.length;
+    const approxInterval = isStoryboard && frames[0]
+      ? frames[0].secPerFrame
+      : (durationSecs && frames.length > 1 ? Math.round(durationSecs / frames.length) : null);
 
-    send('status', { text: `Analysing ${frames.length} frames${approxInterval ? ` (~1 per ${approxInterval}s)` : ''}…` });
+    send('status', { text: `Analysing ${frameCount} frames (~1 per ${approxInterval ?? '?'}s)…` });
 
     // ── 4. Build vision message ───────────────────────────────
     const knownTechniques = ragChunks
@@ -696,40 +745,54 @@ app.post('/api/analyze-fight', async (req, res) => {
       ? `\nChapter markers:\n${chapters.map(c => `  ${c.label} — ${c.name}`).join('\n')}`
       : '';
 
+    const isSprites = frames.length > 0 && frames[0].cols != null;
+    const firstSheet = frames[0];
+
     const visionContent = [];
     for (const frame of frames) {
-      visionContent.push({ type: 'text', text: `[${frame.label}]` });
+      if (isSprites) {
+        visionContent.push({
+          type: 'text',
+          text: `Sprite sheet [${frame.label}] — ${frame.cols}×${frame.rows} grid, read left→right top→bottom, ${frame.secPerFrame}s per cell`
+        });
+      } else {
+        visionContent.push({ type: 'text', text: `[${frame.label}]` });
+      }
       visionContent.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: frame.data } });
     }
+
+    const gridInstructions = isSprites ? `
+Each image is a sprite sheet: a ${firstSheet.cols}×${firstSheet.rows} grid of video frames. Read left to right, top to bottom. The caption gives the time range; the first cell is the start time, each subsequent cell is ${firstSheet.secPerFrame}s later.
+
+Example: a sheet labeled [0:00–2:00] with a 5×5 grid has cells at 0:00, 0:05, 0:10 ... 2:00.
+
+For each sprite sheet, scan every cell. For cells where something meaningful happens (position change, takedown, guard pass, sweep, submission attempt, escape), emit one event with the correct timestamp.` : `
+Each image is a single video frame labeled [M:SS] — use that timestamp exactly.`;
 
     visionContent.push({
       type: 'text',
       text: `Video: "${title}" (~${Math.round(durationSecs / 60)} min)
 ${chapterText}
 
-Known BJJ positions and techniques (use these exact names when applicable):
-${knownTechniques}
+Known BJJ positions and techniques (use exact names): ${knownTechniques}
+${gridInstructions}
 
-You have ${frames.length} frames, each labeled [M:SS] — that timestamp IS the event time.
+YOUR TASK: Generate a granular event timeline. For every meaningful moment:
+- Name the specific position (not "grappling" — say "closed guard", "back control", "side control", etc.)
+- Say WHO is on top / who has the position
+- Note any technique being attempted
 
-YOUR TASK: For each frame, identify exactly what is happening on the mat. Be specific:
-- Who has positional advantage (top/bottom, which fighter)?
-- What named position or technique is shown?
-- Is anyone attacking, defending, transitioning?
+Use the fighter names from the title. Never write "technical exchange" or "grappling continues".
 
-Generate one event per frame. If the position is identical to the previous frame, still emit it but mark type "position". Only skip a frame if it shows literally nothing (camera cut, celebration, etc.).
-
-Use the fighter names from the video title. Never use vague language like "grappling continues" or "technical exchange" — always name the specific position.
-
-Examples of good descriptions:
-  "Marcelo pulls guard, establishes closed guard"
-  "Kron passes to side control on Marcelo's left"
+Good event descriptions:
+  "Marcelo pulls guard, establishes closed guard bottom"
+  "Kron passes to side control, Marcelo on bottom"
   "Marcelo takes the back, both hooks in"
   "Marcelo attacks rear naked choke, Kron defends chin"
 
-Return ONLY valid JSON, no markdown fences:
+Return ONLY valid JSON, no markdown:
 {
-  "summary": "2-3 sentence factual summary with result",
+  "summary": "2-3 sentence factual summary including the result",
   "fighter_a": "first fighter name",
   "fighter_b": "second fighter name",
   "events": [
@@ -738,14 +801,14 @@ Return ONLY valid JSON, no markdown fences:
       "label": "0:45",
       "type": "position|transition|submission_attempt|submission|escape|takedown",
       "position": "exact name from known list or null",
-      "from_position": "only for transitions — starting position",
-      "to_position": "only for transitions — ending position",
-      "description": "SPECIFIC one sentence: who does what to whom"
+      "from_position": "for transitions only",
+      "to_position": "for transitions only",
+      "description": "specific one sentence: who does what to whom"
     }
   ]
 }
 
-Timestamps must be integers (seconds). Aim for one event per frame.`,
+Timestamps must be integers (seconds). Aim for 20–50 events covering the whole match.`,
     });
 
     // ── 5. Claude Vision call ────────────────────────────────
