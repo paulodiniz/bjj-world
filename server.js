@@ -360,28 +360,53 @@ function extractJsonFromHtml(html, token) {
   try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
 }
 
-async function fetchStoryboardSpec(videoId) {
-  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9',
-      // Bypass GDPR consent gate that strips storyboard data on some server IPs
-      'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
-    }
-  });
-  if (!res.ok) throw new Error(`YouTube page ${res.status}`);
-  const html = await res.text();
-
-  console.log(`[storyboard] page size=${html.length} hasIPR=${html.includes('ytInitialPlayerResponse')} hasSBSpec=${html.includes('playerStoryboardSpecRenderer')}`);
-
-  // Try the two token variants YouTube uses
+function extractSpec(html) {
   for (const token of ['ytInitialPlayerResponse = ', 'ytInitialPlayerResponse=']) {
     const obj = extractJsonFromHtml(html, token);
     const spec = obj?.storyboards?.playerStoryboardSpecRenderer?.spec;
     if (spec) return spec;
   }
+  return null;
+}
 
-  throw new Error('playerStoryboardSpecRenderer not found in page');
+const storyboardSpecCache = new Map(); // videoId → { spec, ts }
+const SPEC_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function fetchStoryboardSpec(videoId) {
+  const cached = storyboardSpecCache.get(videoId);
+  if (cached && Date.now() - cached.ts < SPEC_CACHE_TTL) return cached.spec;
+
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
+  };
+
+  // Try multiple YouTube URL variants — m.youtube.com tends to have looser
+  // rate limits for server IPs than www.youtube.com
+  const urls = [
+    `https://m.youtube.com/watch?v=${videoId}`,
+    `https://www.youtube.com/watch?v=${videoId}`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { headers });
+      console.log(`[storyboard] ${url.slice(8, 30)}… → ${res.status}`);
+      if (!res.ok) continue;
+      const html = await res.text();
+      console.log(`[storyboard] size=${html.length} hasSB=${html.includes('playerStoryboardSpecRenderer')}`);
+      const spec = extractSpec(html);
+      if (spec) {
+        storyboardSpecCache.set(videoId, { spec, ts: Date.now() });
+        return spec;
+      }
+    } catch (e) {
+      console.warn(`[storyboard] ${url.slice(8, 30)}… error: ${e.message}`);
+    }
+  }
+
+  throw new Error('playerStoryboardSpecRenderer not found in any YouTube URL variant');
 }
 
 // Spec format: "{urlTemplate}|{w}#{h}#{count}#{cols}#{rows}#{intervalMs}#{nameTpl}#{sigh}|..."
