@@ -735,6 +735,43 @@
       color: var(--ink-3);
     }
 
+    /* ── Landing topbar ─────────────────────────────────── */
+    .landing-topbar {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+    }
+    .landing-signin-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms;
+    }
+    .landing-signin-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+    .landing-user-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .landing-user-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
+
     /* ── Auth ───────────────────────────────────────────── */
     .auth-btn {
       background: none;
@@ -1356,6 +1393,12 @@
 
   <!-- ── Landing ── -->
   <div class="landing" role="main" aria-label="BJJ World — knowledge graph">
+    <div class="landing-topbar">
+      <button type="button" class="landing-signin-btn" id="landing-signin-btn"
+        onclick="openAuthDialog()" style="display:none">Sign in</button>
+      <button type="button" class="landing-user-btn" id="landing-user-btn"
+        onclick="handleUserClick()" style="display:none"></button>
+    </div>
     <div class="landing-brand">
       <h1 class="landing-title">BJJ World</h1>
       <p class="landing-sub">knowledge graph</p>
@@ -2694,16 +2737,23 @@
     }
 
     function renderAuthState() {
-      const signinBtn = document.getElementById('signin-btn');
-      const userBtn   = document.getElementById('user-btn');
-      const emailEl   = document.getElementById('user-btn-email');
+      const signinBtn        = document.getElementById('signin-btn');
+      const userBtn          = document.getElementById('user-btn');
+      const emailEl          = document.getElementById('user-btn-email');
+      const landingSigninBtn = document.getElementById('landing-signin-btn');
+      const landingUserBtn   = document.getElementById('landing-user-btn');
       if (currentUser) {
-        signinBtn.style.display = 'none';
-        userBtn.style.display   = 'flex';
-        emailEl.textContent     = currentUser.email;
+        signinBtn.style.display        = 'none';
+        userBtn.style.display          = 'flex';
+        emailEl.textContent            = currentUser.email;
+        landingSigninBtn.style.display = 'none';
+        landingUserBtn.style.display   = 'block';
+        landingUserBtn.textContent     = currentUser.email;
       } else {
-        signinBtn.style.display = 'block';
-        userBtn.style.display   = 'none';
+        signinBtn.style.display        = 'block';
+        userBtn.style.display          = 'none';
+        landingSigninBtn.style.display = 'block';
+        landingUserBtn.style.display   = 'none';
       }
     }
 
