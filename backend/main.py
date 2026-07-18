@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
 
 from routes.chat import router as chat_router
 from routes.nodes import router as nodes_router
@@ -19,6 +19,7 @@ from services.rag import init_rag
 
 GRAPH_PATH = str(Path(__file__).parent.parent / "graph.json")
 FRONTEND_DIR = str(Path(__file__).parent.parent / "frontend")
+INDEX_HTML = str(Path(FRONTEND_DIR) / "index.html")
 
 
 @asynccontextmanager
@@ -39,4 +40,7 @@ app.include_router(nodes_router)
 app.include_router(path_router)
 app.include_router(analyze_router)
 
-app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    return FileResponse(INDEX_HTML)
