@@ -61,7 +61,6 @@ async def _stream_answer(question: str, chunks: list[dict], history: list[dict])
         *history,
         {"role": "user", "content": f"Question: {question}\n\nRelevant BJJ knowledge:\n{context}"},
     ]
-    full_text = ""
     async with anthropic.messages.stream(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
@@ -74,9 +73,7 @@ async def _stream_answer(question: str, chunks: list[dict], history: list[dict])
     ) as stream:
         async for event in stream:
             if event.type == "content_block_delta" and event.delta.type == "text_delta":
-                full_text += event.delta.text
                 yield event.delta.text
-    return full_text
 
 
 def _sse(type_: str, payload: dict) -> str:
