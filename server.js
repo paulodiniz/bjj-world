@@ -7,7 +7,10 @@ const fs = require('fs');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
+const multer = require('multer');
 ffmpeg.setFfmpegPath(ffmpegPath);
+
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 500 * 1024 * 1024 } });
 
 const app = express();
 app.use(express.json());
@@ -341,164 +344,25 @@ async function seedDatabase() {
   }
 }
 
-// ── Storyboard frame extraction ───────────────────────────────────────────────
+// ── YouTube thumbnail frames ──────────────────────────────────────────────────
 
-function extractJsonFromHtml(html, token) {
-  const start = html.indexOf(token);
-  if (start === -1) return null;
-  const jsonStart = html.indexOf('{', start + token.length);
-  if (jsonStart === -1) return null;
-  let depth = 0, inStr = false, esc = false, i = jsonStart;
-  for (; i < html.length; i++) {
-    const ch = html[i];
-    if (esc) { esc = false; continue; }
-    if (ch === '\\' && inStr) { esc = true; continue; }
-    if (ch === '"') { inStr = !inStr; continue; }
-    if (!inStr) {
-      if (ch === '{') depth++;
-      else if (ch === '}' && --depth === 0) break;
-    }
-  }
-  try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
-}
-
-function extractSpec(html) {
-  for (const token of ['ytInitialPlayerResponse = ', 'ytInitialPlayerResponse=']) {
-    const obj = extractJsonFromHtml(html, token);
-    const spec = obj?.storyboards?.playerStoryboardSpecRenderer?.spec;
-    if (spec) return spec;
-  }
-  return null;
-}
-
-const storyboardSpecCache = new Map(); // videoId → { spec, ts }
-const SPEC_CACHE_TTL = 60 * 60 * 1000; // 1 hour
-
-async function fetchStoryboardSpec(videoId) {
-  const cached = storyboardSpecCache.get(videoId);
-  if (cached && Date.now() - cached.ts < SPEC_CACHE_TTL) return cached.spec;
-
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
-  };
-
-  for (const url of [`https://m.youtube.com/watch?v=${videoId}`, `https://www.youtube.com/watch?v=${videoId}`]) {
+async function fetchYouTubeThumbnailFrames(videoId) {
+  const thumbUrls = [
+    { url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, label: 'thumbnail' },
+    { url: `https://img.youtube.com/vi/${videoId}/1.jpg`, label: '~25% mark' },
+    { url: `https://img.youtube.com/vi/${videoId}/2.jpg`, label: '~50% mark' },
+    { url: `https://img.youtube.com/vi/${videoId}/3.jpg`, label: '~75% mark' },
+  ];
+  const frames = await Promise.all(thumbUrls.map(async ({ url, label }) => {
     try {
-      const res = await fetch(url, { headers });
-      console.log(`[storyboard] ${url.slice(8, 30)}… → ${res.status}`);
-      if (!res.ok) continue;
-      const html = await res.text();
-      const spec = extractSpec(html);
-      if (spec) {
-        storyboardSpecCache.set(videoId, { spec, ts: Date.now() });
-        return spec;
-      }
-    } catch (e) {
-      console.warn(`[storyboard] ${url.slice(8, 30)}… error: ${e.message}`);
-    }
-  }
-
-  throw new Error('storyboard spec not found');
-}
-
-// Spec format: "{urlTemplate}|{w}#{h}#{count}#{cols}#{rows}#{intervalMs}#{nameTpl}#{sigh}|..."
-// urlTemplate uses $L (level index) and $N (replaced by nameTpl with $M = sprite index)
-function parseStoryboardSpec(spec) {
-  const parts = spec.split('|');
-  const urlTemplate = parts[0];
-  const levels = [];
-  for (let i = 1; i < parts.length; i++) {
-    const f = parts[i].split('#');
-    if (f.length < 6) continue;
-    levels.push({
-      frameW:     parseInt(f[0]),
-      frameH:     parseInt(f[1]),
-      totalFrames: parseInt(f[2]),
-      cols:       parseInt(f[3]),
-      rows:       parseInt(f[4]),
-      intervalMs: parseInt(f[5]),
-      nameTpl:    f[6] || 'M$M',
-      sigh:       f[7] || '',
-    });
-  }
-  return { urlTemplate, levels };
-}
-
-async function fetchStoryboardFrames(videoId, durationSecs) {
-  let specStr;
-  try {
-    specStr = await fetchStoryboardSpec(videoId);
-  } catch (e) {
-    console.warn('Storyboard spec fetch failed:', e.message);
-    return [];
-  }
-
-  const { urlTemplate, levels } = parseStoryboardSpec(specStr);
-
-  // Try best levels first (highest resolution with M$M name template)
-  const orderedLevels = [...levels.keys()]
-    .filter(i => levels[i].nameTpl.includes('$M'))
-    .sort((a, b) => b - a); // descending: try highest level first
-
-  for (const levelIdx of orderedLevels) {
-    try {
-      const level = levels[levelIdx];
-      const frames = await fetchStoryboardLevel(urlTemplate, levelIdx, level);
-      if (frames.length >= 5) {
-        console.log(`Storyboard L${levelIdx} (${level.frameW}×${level.frameH}): ${frames.length} frames`);
-        return frames;
-      }
-    } catch (e) {
-      console.warn(`Storyboard L${levelIdx} failed:`, e.message);
-    }
-  }
-  return [];
-}
-
-async function fetchStoryboardLevel(urlTemplate, levelIdx, level) {
-  const { totalFrames, cols, rows, intervalMs, nameTpl, sigh } = level;
-  const framesPerSprite = cols * rows;
-  const numSprites = Math.ceil(totalFrames / framesPerSprite);
-  const secPerFrame = intervalMs / 1000;
-
-  const sheets = [];
-  for (let n = 0; n < numSprites; n++) {
-    const spriteName = nameTpl.replace('$M', String(n));
-    let url = urlTemplate.replace('$L', String(levelIdx)).replace('$N', spriteName);
-    if (sigh) url += '&sigh=' + sigh;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        console.warn(`[storyboard] L${levelIdx} M${n}: HTTP ${res.status}`);
-        break;
-      }
-      const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length < 2000) {
-        console.warn(`[storyboard] L${levelIdx} M${n}: too small (${buf.length} bytes)`);
-        break;
-      }
-      const startIdx = n * framesPerSprite;
-      const endIdx   = Math.min(startIdx + framesPerSprite - 1, totalFrames - 1);
-      const startTs  = Math.round(startIdx * secPerFrame);
-      const endTs    = Math.round(endIdx   * secPerFrame);
-      sheets.push({
-        timestamp: startTs,
-        label: `${formatTimestamp(startTs)}–${formatTimestamp(endTs)}`,
-        data: buf.toString('base64'),
-        cols, rows, secPerFrame, startIdx,
-      });
-      console.log(`[storyboard] L${levelIdx} M${n}: OK ${buf.length}b (${formatTimestamp(startTs)}–${formatTimestamp(endTs)})`);
-    } catch (e) {
-      console.warn(`[storyboard] L${levelIdx} M${n}: error: ${e.message}`);
-      break;
-    }
-  }
-  return sheets;
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length < 2000) return null;
+      return { timestamp: null, label, data: buf.toString('base64') };
+    } catch { return null; }
+  }));
+  return frames.filter(Boolean);
 }
 
 // ── Direct video frame extraction ────────────────────────────────────────────
@@ -662,56 +526,6 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
-app.get('/api/debug-storyboard', async (req, res) => {
-  const { videoId } = req.query;
-  if (!videoId) return res.status(400).json({ error: 'videoId required' });
-  const result = { videoId, steps: {} };
-  try {
-    const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
-      }
-    });
-    result.steps.page = { status: pageRes.status, ok: pageRes.ok };
-    if (pageRes.ok) {
-      const html = await pageRes.text();
-      result.steps.page.size = html.length;
-      result.steps.page.hasIPR = html.includes('ytInitialPlayerResponse');
-      result.steps.page.hasSBSpec = html.includes('playerStoryboardSpecRenderer');
-    }
-  } catch (e) {
-    result.steps.page = { error: e.message };
-  }
-
-  if (result.steps.page?.hasSBSpec) {
-    try {
-      const spec = await fetchStoryboardSpec(videoId);
-      const { urlTemplate, levels } = parseStoryboardSpec(spec);
-      result.steps.spec = { ok: true, levelCount: levels.length, levels: levels.map((l, i) => ({ i, frameW: l.frameW, frameH: l.frameH, totalFrames: l.totalFrames, cols: l.cols, rows: l.rows, intervalMs: l.intervalMs })) };
-
-      // Try downloading the first sprite of level 2
-      const L2 = levels[2];
-      if (L2) {
-        const spriteName = L2.nameTpl.replace('$M', '0');
-        let url = urlTemplate.replace('$L', '2').replace('$N', spriteName);
-        if (L2.sigh) url += '&sigh=' + L2.sigh;
-        try {
-          const spriteRes = await fetch(url);
-          const buf = spriteRes.ok ? Buffer.from(await spriteRes.arrayBuffer()) : null;
-          result.steps.sprite = { status: spriteRes.status, ok: spriteRes.ok, bytes: buf?.length };
-        } catch (e) {
-          result.steps.sprite = { error: e.message };
-        }
-      }
-    } catch (e) {
-      result.steps.spec = { error: e.message };
-    }
-  }
-
-  res.json(result);
-});
 
 app.get('/api/nodes', (req, res) => {
   res.json(ragChunks.map(c => ({ id: c.id, name: c.name, type: c.type })));
@@ -869,9 +683,7 @@ app.post('/api/analyze-fight', async (req, res) => {
       }
     }
 
-    send('video-info', { videoId, title, thumbnail });
-
-    // ── 2. Parse description for chapter timestamps ───────────
+    // Parse description for chapter timestamps
     const chapterRe = /(?:^|\n)(?:(\d+):)?(\d+):(\d+)\s+(.+)/gm;
     const chapters = [];
     let cm;
@@ -880,37 +692,13 @@ app.post('/api/analyze-fight', async (req, res) => {
       chapters.push({ timestamp: secs, label: formatTimestamp(secs), name: cm[4].trim() });
     }
 
-    // ── 3. Fetch storyboard frames ────────────────────────────
+    send('video-info', { videoId, title, thumbnail });
     send('status', { text: 'Fetching video frames…' });
-    let frames = await fetchStoryboardFrames(videoId, durationSecs);
 
-    if (frames.length === 0) {
-      // Fallback: YouTube thumbnail frames at 25/50/75%
-      const thumbUrls = [
-        { url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, label: 'thumbnail' },
-        { url: `https://img.youtube.com/vi/${videoId}/1.jpg`, label: '~25% mark' },
-        { url: `https://img.youtube.com/vi/${videoId}/2.jpg`, label: '~50% mark' },
-        { url: `https://img.youtube.com/vi/${videoId}/3.jpg`, label: '~75% mark' },
-      ];
-      frames = (await Promise.all(thumbUrls.map(async ({ url, label }) => {
-        try {
-          const r = await fetch(url);
-          if (!r.ok) return null;
-          const buf = Buffer.from(await r.arrayBuffer());
-          if (buf.length < 2000) return null;
-          return { timestamp: null, label, data: buf.toString('base64') };
-        } catch { return null; }
-      }))).filter(Boolean);
-    }
+    const frames = await fetchYouTubeThumbnailFrames(videoId);
+    if (frames.length === 0) throw new Error('Could not fetch frames. Video may be private or unavailable.');
 
-    if (frames.length === 0) throw new Error('Could not fetch any frames from this video. It may be private or unavailable.');
-
-    const isStoryboard = frames.length > 0 && frames[0].cols != null;
-    const frameCount = isStoryboard
-      ? frames.reduce((n, s) => n + s.cols * s.rows, 0)
-      : frames.length;
-    send('status', { text: `Analysing ${frameCount} frames…` });
-
+    send('status', { text: `Analysing ${frames.length} frames…` });
     await streamAnalysis(frames, title, durationSecs, chapters, send);
     send('done', {});
   } catch (err) {
@@ -954,6 +742,46 @@ app.post('/api/analyze-video', async (req, res) => {
   } catch (err) {
     console.error('analyze-video error:', err.message);
     send('error', { text: err.message });
+  }
+
+  res.end();
+});
+
+// ── File upload analysis ──────────────────────────────────────────────────────
+
+app.post('/api/analyze-upload', upload.single('video'), async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  if (isAnalysisLimited(ip)) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    return res.status(429).json({ error: 'Analysis limit reached. Try again in an hour.' });
+  }
+  if (!req.file) return res.status(400).json({ error: 'No video file provided' });
+
+  const filePath = req.file.path;
+  const title = req.file.originalname.replace(/\.[^.]+$/, '') || 'BJJ Match';
+  console.log(`[${new Date().toISOString()}] ip=${ip} analyze-upload "${req.file.originalname}" ${(req.file.size / 1e6).toFixed(1)}MB`);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
+
+  try {
+    send('video-info', { videoId: null, title, thumbnail: null });
+    send('status', { text: 'Extracting frames…' });
+
+    const frames = await extractFramesFromVideo(filePath);
+    if (frames.length === 0) throw new Error('Could not extract frames from this video file.');
+
+    send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
+    await streamAnalysis(frames, title, frames.length * 10, [], send);
+    send('done', {});
+  } catch (err) {
+    console.error('analyze-upload error:', err.message);
+    send('error', { text: err.message });
+  } finally {
+    try { fs.unlinkSync(filePath); } catch {}
   }
 
   res.end();
