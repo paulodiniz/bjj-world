@@ -496,70 +496,53 @@ app.post('/api/analyze-fight', async (req, res) => {
     }
 
     send('video-info', { videoId, title, thumbnail });
-    send('status', { text: 'Extracting frames…' });
+    send('status', { text: 'Fetching video frames…' });
 
-    // ── 2. Get video info and pick format ────────────────────
-    let videoInfo;
-    try {
-      videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${videoId}`);
-    } catch (e) {
-      throw new Error(`Could not access this video — it may be private, age-restricted, or region-locked. (${e.message})`);
+    // ── 2. Parse description for chapter timestamps ───────────
+    // Many BJJ uploads have chapters like "0:45 Guard Pull\n2:30 Back Take"
+    const chapterRe = /(?:^|\n)(?:(\d+):)?(\d+):(\d+)\s+(.+)/gm;
+    const chapters = [];
+    let cm;
+    while ((cm = chapterRe.exec(description)) !== null) {
+      const secs = (parseInt(cm[1] || 0) * 3600) + (parseInt(cm[2]) * 60) + parseInt(cm[3]);
+      chapters.push({ timestamp: secs, label: formatTimestamp(secs), name: cm[4].trim() });
     }
 
-    const durationSecs = parseInt(videoInfo.videoDetails.lengthSeconds, 10) || 0;
+    // ── 3. Fetch thumbnail frames from img.youtube.com ────────
+    // These are served freely without auth or rate-limits.
+    // 1.jpg / 2.jpg / 3.jpg are frames at ~25%, ~50%, ~75% of the video.
+    const thumbUrls = [
+      { url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, label: 'thumbnail' },
+      { url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,     label: 'thumbnail (hq)' },
+      { url: `https://img.youtube.com/vi/${videoId}/1.jpg`, label: '~25% mark' },
+      { url: `https://img.youtube.com/vi/${videoId}/2.jpg`, label: '~50% mark' },
+      { url: `https://img.youtube.com/vi/${videoId}/3.jpg`, label: '~75% mark' },
+    ];
 
-    // Scale frame interval to never exceed 18 frames (API image limit headroom)
-    const maxFrames = 18;
-    const intervalSecs = durationSecs > 0
-      ? Math.max(20, Math.ceil(durationSecs / maxFrames))
-      : 30;
+    const frames = (await Promise.all(thumbUrls.map(async ({ url, label }) => {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const buf = Buffer.from(await r.arrayBuffer());
+        // Skip the grey "no thumbnail" placeholder YouTube returns (< 2 KB)
+        if (buf.length < 2000) return null;
+        return { label, data: buf.toString('base64') };
+      } catch { return null; }
+    }))).filter(Boolean);
 
-    // Choose lowest quality video format to minimise download
-    let format = null;
-    // 1. Prefer video-only (no audio) at lowest quality
-    try { format = ytdl.chooseFormat(videoInfo.formats, { filter: 'videoonly', quality: 'lowest' }); } catch {}
-    // 2. Any format with video at lowest quality
-    if (!format) try { format = ytdl.chooseFormat(videoInfo.formats, { quality: 'lowest' }); } catch {}
-    // 3. Manually pick smallest bitrate from any format that has video
-    if (!format) {
-      format = videoInfo.formats
-        .filter(f => f.hasVideo)
-        .sort((a, b) => (a.bitrate || 0) - (b.bitrate || 0))[0] || null;
-    }
-    if (!format) throw new Error('No downloadable video format found — the video may be DRM-protected or unavailable.');
+    // Deduplicate: maxresdefault and hqdefault are the same image at different sizes
+    // Keep only the larger one if both loaded
+    const dedupedFrames = frames.reduce((acc, f) => {
+      if (f.label === 'thumbnail (hq)' && acc.some(x => x.label === 'thumbnail')) return acc;
+      acc.push(f);
+      return acc;
+    }, []);
 
-    // ── 3. Extract frames via ffmpeg ─────────────────────────
-    const tmpDir = `/tmp/bjj-${videoId}-${Date.now()}`;
-    fs.mkdirSync(tmpDir, { recursive: true });
+    if (dedupedFrames.length === 0) throw new Error('Could not fetch any frames from this video. It may be private or unavailable.');
 
-    try {
-      await new Promise((resolve, reject) => {
-        const videoStream = ytdl.downloadFromInfo(videoInfo, { format });
-        videoStream.on('error', reject);
-        ffmpeg(videoStream)
-          .outputOptions([
-            `-vf`, `fps=1/${intervalSecs},scale=640:-2`,
-            `-frames:v`, String(maxFrames),
-            `-q:v`, `5`,
-          ])
-          .output(path.join(tmpDir, 'frame_%04d.jpg'))
-          .on('end', resolve)
-          .on('error', reject)
-          .run();
-      });
-    } catch (e) {
-      throw new Error(`Frame extraction failed — video stream could not be processed. (${e.message})`);
-    }
+    send('status', { text: `Analysing ${dedupedFrames.length} frame${dedupedFrames.length > 1 ? 's' : ''}${chapters.length ? ` + ${chapters.length} chapter markers` : ''}…` });
 
-    const frameFiles = fs.readdirSync(tmpDir)
-      .filter(f => f.endsWith('.jpg'))
-      .sort();
-
-    if (frameFiles.length === 0) throw new Error('No frames were extracted — the video may be too short or in an unsupported format.');
-
-    send('status', { text: `Analysing ${frameFiles.length} frames with vision…` });
-
-    // ── 4. Build vision message with all frames ───────────────
+    // ── 4. Build vision message ───────────────────────────────
     const knownTechniques = ragChunks
       .filter(c => ['position','submission','sweep','guard_pass','takedown','escape','counter'].includes(c.type))
       .map(c => c.name)
@@ -567,24 +550,25 @@ app.post('/api/analyze-fight', async (req, res) => {
       .join(', ');
 
     const visionContent = [];
-    frameFiles.forEach((file, i) => {
-      const secs = i * intervalSecs;
-      const frameData = fs.readFileSync(path.join(tmpDir, file));
-      visionContent.push({ type: 'text', text: `Frame at ${formatTimestamp(secs)} (${secs}s):` });
-      visionContent.push({
-        type: 'image',
-        source: { type: 'base64', media_type: 'image/jpeg', data: frameData.toString('base64') },
-      });
-    });
+    for (const frame of dedupedFrames) {
+      visionContent.push({ type: 'text', text: `Video frame (${frame.label}):` });
+      visionContent.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: frame.data } });
+    }
+
+    const chapterText = chapters.length > 0
+      ? `\nChapter markers from video description:\n${chapters.map(c => `  ${c.label} — ${c.name}`).join('\n')}`
+      : '';
 
     visionContent.push({
       type: 'text',
       text: `Video title: "${title}"
+Duration: ~${Math.round(durationSecs / 60)} minutes
+${chapterText}
 
-Known BJJ positions and techniques — use these exact names when you recognise them:
+Known BJJ positions and techniques — use these exact names when applicable:
 ${knownTechniques}
 
-Analyse this BJJ match frame by frame. Identify positions, transitions, submission attempts, sweeps, takedowns, and escapes. Only include events where something meaningful changes — skip frames where nothing significant happens.
+Analyse this BJJ match using the visual frames and any chapter markers. Identify the key positions, transitions, submission attempts, sweeps, takedowns, and notable moments. When chapter markers are present, use them as the primary timestamp reference and expand on what likely happened at each stage. Use the visual frames to confirm positions.
 
 Return ONLY valid JSON with no markdown or code fences:
 {
@@ -597,14 +581,14 @@ Return ONLY valid JSON with no markdown or code fences:
       "label": "0:45",
       "type": "position|transition|submission_attempt|submission|escape|takedown",
       "position": "exact name from known list or null",
-      "from_position": "starting position for transitions or null",
-      "to_position": "ending position for transitions or null",
+      "from_position": "for transitions — starting position",
+      "to_position": "for transitions — ending position",
       "description": "one concise sentence"
     }
   ]
 }
 
-Aim for 8-20 events. Timestamps must be integers (seconds from start). If this is not a BJJ match, still return valid JSON explaining that in the summary.`,
+Aim for 8-20 events. Timestamps must be integers (seconds). If this is not a BJJ match, return valid JSON with the summary explaining that.`,
     });
 
     // ── 5. Claude Vision call ────────────────────────────────
@@ -613,10 +597,6 @@ Aim for 8-20 events. Timestamps must be integers (seconds from start). If this i
       max_tokens: 2048,
       messages: [{ role: 'user', content: visionContent }],
     });
-
-    // Cleanup frames immediately
-    frameFiles.forEach(f => { try { fs.unlinkSync(path.join(tmpDir, f)); } catch {} });
-    try { fs.rmdirSync(tmpDir); } catch {}
 
     // ── 6. Parse and stream events ───────────────────────────
     const rawText = response.content[0]?.text || '';
