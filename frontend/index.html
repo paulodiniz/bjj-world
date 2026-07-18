@@ -1833,6 +1833,7 @@
 
             if (event.type === 'conversation_id') {
               currentConversationId = event.id;
+              history.pushState({ conversation_id: event.id }, '', `/c/${event.id}`);
 
             } else if (event.type === 'status') {
               const lbl = statusEl.querySelector('.status-label');
@@ -2557,6 +2558,8 @@
       conversationHistory.length = 0;
       entries.innerHTML = '';
       hasResults = false;
+      history.pushState({}, '', '/');
+      document.title = 'Tapcodex';
       setMode('landing');
     }
 
@@ -2628,7 +2631,7 @@
       }
     }
 
-    async function resumeConversation(id) {
+    async function resumeConversation(id, push = true) {
       try {
         const res  = await fetch(`/api/conversations/${id}`);
         const data = await res.json();
@@ -2639,6 +2642,7 @@
         conversationHistory.length = 0;
         entries.innerHTML = '';
         hasResults = true;
+        if (push) history.pushState({ conversation_id: id }, '', `/c/${id}`);
         setMode('results');
 
         for (let i = 0; i < data.messages.length; i += 2) {
@@ -3109,15 +3113,24 @@
 
     // ── URL routing ──────────────────────────────────────────
     (function initRouting() {
-      const match = location.pathname.match(/^\/technique\/(.+)$/);
-      if (match) loadTechnique(decodeURIComponent(match[1]), false);
+      const path = location.pathname;
+
+      if (path.match(/^\/technique\/(.+)$/)) {
+        loadTechnique(decodeURIComponent(path.slice('/technique/'.length)), false);
+      } else if (path.match(/^\/c\/([a-f0-9-]+)$/)) {
+        const id = path.slice('/c/'.length);
+        resumeConversation(id, false);
+      }
 
       window.addEventListener('popstate', () => {
-        const m = location.pathname.match(/^\/technique\/(.+)$/);
-        if (m) {
-          loadTechnique(decodeURIComponent(m[1]), false);
+        const p = location.pathname;
+        if (p.match(/^\/technique\/(.+)$/)) {
+          loadTechnique(decodeURIComponent(p.slice('/technique/'.length)), false);
+        } else if (p.match(/^\/c\/([a-f0-9-]+)$/)) {
+          resumeConversation(p.slice('/c/'.length), false);
         } else {
-          document.title = 'BJJ World';
+          document.title = 'Tapcodex';
+          currentConversationId = null;
           setMode(hasResults ? 'results' : 'landing');
         }
       });
