@@ -350,7 +350,7 @@ function normalizeVideoUrl(url) {
   return url;
 }
 
-async function extractFramesFromVideo(rawUrl, targetFrames = 35, onFrame = null) {
+async function extractFramesFromVideo(rawUrl, targetFrames = 20, onFrame = null) {
   const url = normalizeVideoUrl(rawUrl);
   const tmpDir = `/tmp/bjj-direct-${Date.now()}`;
   fs.mkdirSync(tmpDir, { recursive: true });
@@ -380,7 +380,7 @@ async function extractFramesFromVideo(rawUrl, targetFrames = 35, onFrame = null)
         const cmd = ffmpeg(url);
         if (isRemote) cmd.inputOptions(['-headers', 'User-Agent: Mozilla/5.0\r\n']);
         cmd.outputOptions([
-            '-vf', `fps=1/10,scale=640:-2`,
+            '-vf', `fps=1/15,scale=480:-2`,
             '-vframes', String(targetFrames),
             '-q:v', '3',
           ])
@@ -473,7 +473,7 @@ Return ONLY valid JSON, no markdown fences:
   ]
 }
 
-You must produce one event per frame — you have ${frameCount} frames so the events array must have ${frameCount} entries.`,
+You must produce one event per frame — you have ${frameCount} frames so the events array must have exactly ${frameCount} entries.`,
   });
 
   return content;
@@ -483,7 +483,7 @@ async function streamAnalysis(frames, title, durationSecs, chapters, send) {
   const visionContent = buildVisionContent(frames, title, durationSecs, chapters);
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 8192,
     messages: [{ role: 'user', content: visionContent }],
   });
@@ -664,7 +664,7 @@ app.post('/api/analyze-video', async (req, res) => {
     send('video-info', { videoId: null, title, thumbnail: null });
     send('status', { text: 'Extracting frames from video…' });
 
-    const frames = await extractFramesFromVideo(url, 35, f => {
+    const frames = await extractFramesFromVideo(url, 20, f => {
       send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
     });
     if (frames.length === 0) throw new Error('Could not extract frames. Check the URL is a direct video link.');
@@ -712,7 +712,7 @@ app.post('/api/analyze-upload', (req, res, next) => {
     send('video-info', { videoId: null, title, thumbnail: null });
     send('status', { text: 'Extracting frames…' });
 
-    const frames = await extractFramesFromVideo(filePath, 35, f => {
+    const frames = await extractFramesFromVideo(filePath, 20, f => {
       send('frame', { timestamp: f.timestamp, label: f.label, data: f.data });
     });
     if (frames.length === 0) throw new Error('Could not extract frames from this video file.');
