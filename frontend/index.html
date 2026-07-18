@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <style>
     /* ── Tokens ─────────────────────────────────────────── */
     :root {
@@ -70,7 +71,8 @@
     }
     [data-mode="results"]   .app-header,
     [data-mode="path"]      .app-header,
-    [data-mode="technique"] .app-header { display: flex; }
+    [data-mode="technique"] .app-header,
+    [data-mode="graph"]     .app-header { display: flex; }
 
     .header-brand {
       display: flex;
@@ -678,6 +680,91 @@
       color: var(--ink-3);
     }
 
+    /* ── Graph ──────────────────────────────────────────── */
+    .graph-area {
+      display: none;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    [data-mode="graph"] .graph-area { display: flex; }
+
+    #graph-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: var(--bg);
+      cursor: grab;
+    }
+    #graph-svg:active { cursor: grabbing; }
+
+    .graph-edge {
+      stroke: oklch(0.28 0 0);
+      stroke-opacity: 0.5;
+      stroke-width: 1;
+      fill: none;
+    }
+    .graph-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      fill: oklch(0.55 0 0);
+      pointer-events: none;
+      text-anchor: middle;
+    }
+    .graph-legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: oklch(0.14 0 0 / 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      pointer-events: none;
+    }
+    .graph-legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 0.63rem;
+      color: var(--ink-3);
+    }
+    .graph-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .graph-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.80rem;
+      color: var(--ink-3);
+      pointer-events: none;
+    }
+    .graph-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+    }
+    .graph-toggle-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+    [data-mode="graph"] .graph-toggle-btn { border-color: var(--accent); color: var(--accent-text); }
+
     /* ── Technique page ─────────────────────────────────── */
     .technique-area {
       display: none;
@@ -984,6 +1071,8 @@
         style="display:none" aria-label="Stop generating">Stop</button>
       <button type="button" class="path-toggle-btn" id="path-toggle-btn"
         onclick="togglePath()">Path →</button>
+      <button type="button" class="graph-toggle-btn" id="graph-toggle-btn"
+        onclick="toggleGraph()">Graph</button>
     </div>
   </header>
 
@@ -1059,6 +1148,13 @@
 
       <div id="path-result" aria-live="polite"></div>
     </div>
+  </div>
+
+  <!-- ── Graph ── -->
+  <div class="graph-area" aria-label="BJJ knowledge graph">
+    <div class="graph-loading" id="graph-loading">Loading graph…</div>
+    <svg id="graph-svg" aria-hidden="true"></svg>
+    <div class="graph-legend" id="graph-legend"></div>
   </div>
 
   <!-- ── Technique Page ── -->
@@ -1965,6 +2061,140 @@
         btn.disabled = false;
         btn.textContent = 'Find Path';
       }
+    }
+
+    // ── Graph visualizer ────────────────────────────────────
+    let graphInitialized = false;
+
+    const TYPE_COLORS = {};
+    function typeColor(type) {
+      if (!TYPE_COLORS[type]) {
+        TYPE_COLORS[type] = getComputedStyle(document.documentElement)
+          .getPropertyValue(`--c-${type}`).trim() || 'oklch(0.55 0 0)';
+      }
+      return TYPE_COLORS[type];
+    }
+
+    function toggleGraph() {
+      if (document.documentElement.dataset.mode === 'graph') {
+        setMode(hasResults ? 'results' : 'landing');
+      } else {
+        setMode('graph');
+        if (!graphInitialized) initGraph();
+      }
+    }
+
+    async function initGraph() {
+      graphInitialized = true;
+      const loadingEl = document.getElementById('graph-loading');
+      const svgEl = document.getElementById('graph-svg');
+
+      let data;
+      try {
+        data = await fetch('/api/graph').then(r => r.json());
+      } catch {
+        loadingEl.textContent = 'Failed to load graph.';
+        return;
+      }
+      loadingEl.remove();
+
+      const nodes = data.nodes;
+      const edges = data.edges;
+      const W = svgEl.clientWidth || window.innerWidth;
+      const H = svgEl.clientHeight || window.innerHeight - 52;
+
+      // Adjacency set for hover highlight
+      const adjacency = new Set();
+      edges.forEach(e => {
+        adjacency.add(`${e.source}§${e.target}`);
+        adjacency.add(`${e.target}§${e.source}`);
+      });
+      const areLinked = (a, b) => adjacency.has(`${a.id}§${b.id}`);
+
+      const svg = d3.select('#graph-svg');
+      const g = svg.append('g');
+
+      const zoom = d3.zoom().scaleExtent([0.05, 8])
+        .on('zoom', e => g.attr('transform', e.transform));
+      svg.call(zoom).on('dblclick.zoom', null);
+
+      const sim = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id(d => d.id).distance(70).strength(0.35))
+        .force('charge', d3.forceManyBody().strength(-260))
+        .force('center', d3.forceCenter(W / 2, H / 2))
+        .force('collide', d3.forceCollide(18));
+
+      const link = g.append('g')
+        .selectAll('line').data(edges).join('line')
+        .attr('class', 'graph-edge');
+
+      const node = g.append('g')
+        .selectAll('g').data(nodes).join('g')
+        .attr('cursor', 'pointer')
+        .call(d3.drag()
+          .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+          .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+          .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+        )
+        .on('click', (e, d) => { e.stopPropagation(); loadTechnique(d.id); })
+        .on('mouseenter', (e, d) => {
+          node.select('circle')
+            .attr('r', n => n === d ? 11 : 8)
+            .attr('fill-opacity', n => n === d || areLinked(n, d) ? 0.95 : 0.15);
+          node.select('text')
+            .attr('opacity', n => n === d || areLinked(n, d) ? 1 : 0.1);
+          link
+            .attr('stroke-opacity', l => l.source === d || l.target === d ? 0.9 : 0.04)
+            .attr('stroke', l => l.source === d || l.target === d
+              ? getComputedStyle(document.documentElement).getPropertyValue('--accent-text').trim()
+              : 'oklch(0.28 0 0)');
+        })
+        .on('mouseleave', () => {
+          node.select('circle').attr('r', 8).attr('fill-opacity', 0.85);
+          node.select('text').attr('opacity', 1);
+          link.attr('stroke-opacity', 0.5).attr('stroke', 'oklch(0.28 0 0)');
+        });
+
+      node.append('circle')
+        .attr('r', 8)
+        .attr('fill', d => typeColor(d.type))
+        .attr('fill-opacity', 0.85)
+        .attr('stroke', d => typeColor(d.type))
+        .attr('stroke-width', 1.5)
+        .attr('stroke-opacity', 0.4);
+
+      node.append('text')
+        .text(d => d.name)
+        .attr('dy', -12)
+        .attr('class', 'graph-label');
+
+      sim.on('tick', () => {
+        link
+          .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        node.attr('transform', d => `translate(${d.x ?? 0},${d.y ?? 0})`);
+      });
+
+      // Auto-fit once layout settles
+      sim.on('end', () => {
+        try {
+          const b = g.node().getBBox();
+          const scale = 0.88 * Math.min(W / b.width, H / b.height);
+          const tx = W / 2 - scale * (b.x + b.width / 2);
+          const ty = H / 2 - scale * (b.y + b.height / 2);
+          svg.transition().duration(800)
+            .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        } catch {}
+      });
+
+      // Legend
+      const legend = document.getElementById('graph-legend');
+      const seenTypes = [...new Set(nodes.map(n => n.type))].sort();
+      legend.innerHTML = seenTypes.map(t => `
+        <div class="graph-legend-row">
+          <div class="graph-legend-dot" style="background:${typeColor(t)}"></div>
+          <span>${t.replace(/_/g, ' ')}</span>
+        </div>`).join('');
     }
 
     // ── Technique page ──────────────────────────────────────

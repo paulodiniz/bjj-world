@@ -1,4 +1,6 @@
+import json
 from collections import defaultdict
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
@@ -6,6 +8,20 @@ import services.rag as _rag
 from services.graph_db import driver
 
 router = APIRouter()
+
+_GRAPH_PATH = Path(__file__).parent.parent.parent / "graph.json"
+_graph_cache: dict | None = None
+
+def _graph_data() -> dict:
+    global _graph_cache
+    if _graph_cache is None:
+        with open(_GRAPH_PATH) as f:
+            raw = json.load(f)
+        _graph_cache = {
+            "nodes": [{"id": n["id"], "name": n["name"], "type": n["type"]} for n in raw["nodes"]],
+            "edges": [{"source": e["from"], "target": e["to"], "action": e["action"]} for e in raw["edges"]],
+        }
+    return _graph_cache
 
 ACTION_LABEL = {
     "attack_with":   "Attacks",
@@ -104,3 +120,8 @@ async def get_technique(node_id: str):
         "outgoing": group_by_action(list(record["out_raw"]), ACTION_LABEL),
         "incoming": group_by_action(list(record["in_raw"]), INCOMING_LABEL),
     }
+
+
+@router.get("/api/graph")
+async def get_graph():
+    return _graph_data()
