@@ -5,6 +5,12 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+const multer = require('multer');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 500 * 1024 * 1024 } });
 
 const app = express();
 app.use(express.json());
@@ -60,6 +66,20 @@ function isRateLimited(ip) {
   rateLimiter.set(ip, hits);
   return false;
 }
+
+// Stricter limiter for video analysis: 3 per IP per hour
+const analysisLimiter = new Map();
+function isAnalysisLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000;
+  const limit = 3;
+  const hits = (analysisLimiter.get(ip) || []).filter(t => now - t < windowMs);
+  if (hits.length >= limit) return true;
+  hits.push(now);
+  analysisLimiter.set(ip, hits);
+  return false;
+}
+
 
 function formatTimestamp(seconds) {
   const m = Math.floor(seconds / 60);
@@ -318,7 +338,168 @@ async function seedDatabase() {
   }
 }
 
+
+// ── Direct video frame extraction ────────────────────────────────────────────
+
+function normalizeVideoUrl(url) {
+  // Dropbox: force direct download
+  url = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/[?&]dl=0/, '');
+  // Google Drive: convert share link to direct download
+  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveMatch) url = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+  return url;
+}
+
+async function extractFramesFromVideo(rawUrl, targetFrames = 35) {
+  const url = normalizeVideoUrl(rawUrl);
+  const tmpDir = `/tmp/bjj-direct-${Date.now()}`;
+  fs.mkdirSync(tmpDir, { recursive: true });
+
+  try {
+    await new Promise((resolve, reject) => {
+      ffmpeg(url)
+        .inputOptions(['-user_agent', 'Mozilla/5.0'])
+        .outputOptions([
+          '-vf', `fps=1/10,scale=640:-2`,
+          '-vframes', String(targetFrames),
+          '-q:v', '3',
+        ])
+        .output(`${tmpDir}/%04d.jpg`)
+        .on('end', resolve)
+        .on('error', err => reject(new Error(`ffmpeg: ${err.message}`)))
+        .run();
+    });
+
+    const files = fs.readdirSync(tmpDir).filter(f => f.endsWith('.jpg')).sort();
+    return files.map((file, i) => ({
+      timestamp: i * 10,
+      label: formatTimestamp(i * 10),
+      data: fs.readFileSync(path.join(tmpDir, file)).toString('base64'),
+    }));
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+// ── Shared fight analysis (Claude vision call + event streaming) ──────────────
+
+function buildVisionContent(frames, title, durationSecs, chapters) {
+  const knownTechniques = ragChunks
+    .filter(c => ['position','submission','sweep','guard_pass','takedown','escape','counter'].includes(c.type))
+    .map(c => c.name).slice(0, 80).join(', ');
+
+  const chapterText = chapters.length > 0
+    ? `\nChapter markers:\n${chapters.map(c => `  ${c.label} — ${c.name}`).join('\n')}`
+    : '';
+
+  const isSprites = frames[0]?.cols != null;
+  const firstSheet = frames[0];
+
+  const content = [];
+  for (const frame of frames) {
+    if (isSprites) {
+      content.push({ type: 'text', text: `Sprite sheet [${frame.label}] — ${frame.cols}×${frame.rows} grid, left→right top→bottom, ${frame.secPerFrame}s/cell` });
+    } else {
+      content.push({ type: 'text', text: `[${frame.label}]` });
+    }
+    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: frame.data } });
+  }
+
+  const frameInstructions = isSprites
+    ? `Each image is a sprite sheet: a ${firstSheet.cols}×${firstSheet.rows} grid of frames, read left→right top→bottom. The caption gives the time range; first cell = start time, each subsequent cell = ${firstSheet.secPerFrame}s later. Scan every cell and emit events where positions change.`
+    : `Each image is a single frame labeled [M:SS] — use that timestamp exactly.`;
+
+  const frameCount = isSprites
+    ? frames.reduce((n, s) => n + s.cols * s.rows, 0)
+    : frames.length;
+
+  content.push({
+    type: 'text',
+    text: `Video: "${title}" (~${Math.round(durationSecs / 60)} min)
+${chapterText}
+
+Known BJJ techniques (use exact names): ${knownTechniques}
+
+${frameInstructions}
+
+You have ${frameCount} frames. Generate a granular event timeline. For every meaningful moment:
+- Name the specific position (closed guard, back control, side control, mount, half guard, etc.)
+- Say who has the position / who is on top
+- Note any submission attempt or technique
+
+Use fighter names from the video title. Never write "technical exchange" or "grappling continues".
+
+Good descriptions:
+  "Marcelo pulls guard, establishes closed guard"
+  "Kron passes to side control, Marcelo on bottom"
+  "Marcelo takes the back, both hooks in"
+  "Marcelo attacks rear naked choke, Kron defends chin"
+
+Return ONLY valid JSON, no markdown:
+{
+  "summary": "2-3 sentence factual summary including the result",
+  "fighter_a": "first fighter name",
+  "fighter_b": "second fighter name",
+  "events": [
+    {
+      "timestamp": 45,
+      "label": "0:45",
+      "type": "position|transition|submission_attempt|submission|escape|takedown",
+      "position": "exact name or null",
+      "from_position": "for transitions only",
+      "to_position": "for transitions only",
+      "description": "specific: who does what to whom"
+    }
+  ]
+}
+
+Timestamps must be integers (seconds). Aim for 20–50 events.`,
+  });
+
+  return content;
+}
+
+async function streamAnalysis(frames, title, durationSecs, chapters, send) {
+  const visionContent = buildVisionContent(frames, title, durationSecs, chapters);
+
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4096,
+    messages: [{ role: 'user', content: visionContent }],
+  });
+
+  const rawText = response.content[0]?.text || '';
+  let analysis;
+  try {
+    const cleaned = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+    analysis = JSON.parse(cleaned);
+  } catch {
+    send('analysis-text', { text: rawText });
+    return;
+  }
+
+  send('analysis-summary', {
+    summary: analysis.summary || '',
+    fighter_a: analysis.fighter_a || 'Fighter A',
+    fighter_b: analysis.fighter_b || 'Fighter B',
+  });
+
+  for (const ev of (analysis.events || [])) {
+    send('analysis-event', {
+      timestamp: ev.timestamp || 0,
+      label: ev.label || formatTimestamp(ev.timestamp || 0),
+      type: ev.type || 'position',
+      position: ev.position || null,
+      from_position: ev.from_position || null,
+      to_position: ev.to_position || null,
+      description: ev.description || '',
+    });
+    await new Promise(r => setTimeout(r, 40));
+  }
+}
+
 // ── Routes ────────────────────────────────────────────────────────────────────
+
 
 app.get('/api/nodes', (req, res) => {
   res.json(ragChunks.map(c => ({ id: c.id, name: c.name, type: c.type })));
@@ -425,6 +606,84 @@ app.get('/api/path', async (req, res) => {
   } finally {
     await session.close();
   }
+});
+
+// ── Direct video analysis ─────────────────────────────────────────────────────
+
+app.post('/api/analyze-video', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  if (isAnalysisLimited(ip)) {
+    return res.status(429).json({ error: 'Analysis limit reached. Try again in an hour.' });
+  }
+
+  const { url, title: userTitle } = req.body;
+  if (!url) return res.status(400).json({ error: 'url is required' });
+
+  console.log(`[${new Date().toISOString()}] ip=${ip} analyze-video url="${url.slice(0, 80)}"`);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
+
+  try {
+    const title = userTitle || url.split('/').pop().replace(/\.[^.]+$/, '') || 'BJJ Match';
+    send('video-info', { videoId: null, title, thumbnail: null });
+    send('status', { text: 'Extracting frames from video…' });
+
+    const frames = await extractFramesFromVideo(url);
+    if (frames.length === 0) throw new Error('Could not extract frames. Check the URL is a direct video link.');
+
+    send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
+    await streamAnalysis(frames, title, frames.length * 10, [], send);
+    send('done', {});
+  } catch (err) {
+    console.error('analyze-video error:', err.message);
+    send('error', { text: err.message });
+  }
+
+  res.end();
+});
+
+// ── File upload analysis ──────────────────────────────────────────────────────
+
+app.post('/api/analyze-upload', upload.single('video'), async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  if (isAnalysisLimited(ip)) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    return res.status(429).json({ error: 'Analysis limit reached. Try again in an hour.' });
+  }
+  if (!req.file) return res.status(400).json({ error: 'No video file provided' });
+
+  const filePath = req.file.path;
+  const title = req.file.originalname.replace(/\.[^.]+$/, '') || 'BJJ Match';
+  console.log(`[${new Date().toISOString()}] ip=${ip} analyze-upload "${req.file.originalname}" ${(req.file.size / 1e6).toFixed(1)}MB`);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const send = (type, payload) => res.write(`data: ${JSON.stringify({ type, ...payload })}\n\n`);
+
+  try {
+    send('video-info', { videoId: null, title, thumbnail: null });
+    send('status', { text: 'Extracting frames…' });
+
+    const frames = await extractFramesFromVideo(filePath);
+    if (frames.length === 0) throw new Error('Could not extract frames from this video file.');
+
+    send('status', { text: `Analysing ${frames.length} frames (~1 per 10s)…` });
+    await streamAnalysis(frames, title, frames.length * 10, [], send);
+    send('done', {});
+  } catch (err) {
+    console.error('analyze-upload error:', err.message);
+    send('error', { text: err.message });
+  } finally {
+    try { fs.unlinkSync(filePath); } catch {}
+  }
+
+  res.end();
 });
 
 // ── Startup ───────────────────────────────────────────────────────────────────
