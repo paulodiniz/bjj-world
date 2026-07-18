@@ -314,6 +314,10 @@ async function seedDatabase() {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
+app.get('/api/nodes', (req, res) => {
+  res.json(ragChunks.map(c => ({ id: c.id, name: c.name, type: c.type })));
+});
+
 app.post('/api/chat', async (req, res) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
   if (isRateLimited(ip)) {

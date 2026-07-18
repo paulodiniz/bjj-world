@@ -51,6 +51,9 @@
     body {
       font-family: var(--sans);
       background: var(--bg);
+      background-image: radial-gradient(circle, oklch(0.19 0 0) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-attachment: fixed;
       color: var(--ink);
       height: 100dvh;
       display: flex;
@@ -549,6 +552,29 @@
       padding: 4px 0;
     }
 
+    /* ── Node chips ───────────────────────────────────────────── */
+    .nc {
+      font-family: var(--mono);
+      font-size: 0.80em;
+      padding: 0.1em 0.38em;
+      border-radius: 3px;
+      background: color-mix(in oklch, var(--nc-color) 10%, transparent);
+      color: var(--nc-color);
+      white-space: nowrap;
+      vertical-align: baseline;
+    }
+    .nc-position   { --nc-color: var(--c-position); }
+    .nc-submission { --nc-color: var(--c-submission); }
+    .nc-sweep      { --nc-color: var(--c-sweep); }
+    .nc-guard_pass { --nc-color: var(--c-guard_pass); }
+    .nc-takedown   { --nc-color: var(--c-takedown); }
+    .nc-escape     { --nc-color: var(--c-escape); }
+    .nc-counter    { --nc-color: var(--c-counter); }
+    .nc-concept    { --nc-color: var(--c-concept); }
+    .nc-competitor { --nc-color: var(--c-competitor); }
+    .nc-system     { --nc-color: var(--c-system); }
+    .nc-technique  { --nc-color: var(--c-technique); }
+
     /* ── Reduced motion ───────────────────────────────────────── */
     @media (prefers-reduced-motion: reduce) {
       .msg { animation: none; }
@@ -634,6 +660,74 @@
   </div>
 
   <script>
+    // ── Node chips ────────────────────────────────────────────
+    let nodeList = [];
+    let chipRe   = null;
+
+    async function loadNodes() {
+      try {
+        const data = await fetch('/api/nodes').then(r => r.json());
+        // Sort longest first to prevent partial matches (e.g. "Guard" inside "Closed Guard")
+        nodeList = data.sort((a, b) => b.name.length - a.name.length);
+        const escaped = nodeList.map(n =>
+          n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        );
+        chipRe = new RegExp('\\b(?:' + escaped.join('|') + ')\\b', 'gi');
+      } catch (e) {
+        console.warn('Failed to load node list for chips', e);
+      }
+    }
+
+    function applyChips(container) {
+      if (!chipRe || !nodeList.length) return;
+      walkForChips(container);
+    }
+
+    function walkForChips(el) {
+      if (!el) return;
+      const skip = new Set(['CODE','PRE','SCRIPT','STYLE']);
+      for (const child of [...el.childNodes]) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          chipifyTextNode(child);
+        } else if (child.nodeType === Node.ELEMENT_NODE
+                   && !skip.has(child.tagName)
+                   && !child.classList.contains('nc')) {
+          walkForChips(child);
+        }
+      }
+    }
+
+    function chipifyTextNode(textNode) {
+      const text = textNode.textContent;
+      chipRe.lastIndex = 0;
+      if (!chipRe.test(text)) return;
+      chipRe.lastIndex = 0;
+
+      const frag = document.createDocumentFragment();
+      let last = 0, match;
+
+      while ((match = chipRe.exec(text)) !== null) {
+        if (match.index > last) {
+          frag.appendChild(document.createTextNode(text.slice(last, match.index)));
+        }
+        const node = nodeList.find(n => n.name.toLowerCase() === match[0].toLowerCase());
+        if (node) {
+          const span = document.createElement('span');
+          span.className = `nc nc-${node.type}`;
+          span.textContent = match[0];
+          frag.appendChild(span);
+        } else {
+          frag.appendChild(document.createTextNode(match[0]));
+        }
+        last = match.index + match[0].length;
+      }
+
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      textNode.replaceWith(frag);
+    }
+
+    loadNodes();
+
     // ── Tab switching ──────────────────────────────────────────
     const TABS = ['chat', 'path'];
 
@@ -687,6 +781,7 @@
       messages.appendChild(answerDiv);
 
       let buffer = '';
+      let textEl = null;
 
       try {
         const res = await fetch('/api/chat', {
@@ -717,7 +812,6 @@
 
             } else if (event.type === 'token') {
               buffer += event.text;
-              let textEl = answerDiv.querySelector('.answer-text');
               if (!textEl) {
                 textEl = document.createElement('div');
                 textEl.className = 'answer-text';
@@ -746,6 +840,7 @@
             } else if (event.type === 'done') {
               statusDiv.remove();
               answerDiv.removeAttribute('data-streaming');
+              if (textEl) applyChips(textEl);
               if (buffer) conversationHistory.push({ role: 'assistant', content: buffer });
 
             } else if (event.type === 'error') {
