@@ -792,7 +792,7 @@
       <button class="hint-pill" role="listitem" type="button"
         onclick="useHint(this)">What are my options from half guard?</button>
       <button class="hint-pill" role="listitem" type="button"
-        onclick="useHint(this)">Paste a YouTube BJJ match link to analyse it</button>
+        onclick="useHint(this)">Paste a YouTube or direct video URL to analyse a match</button>
     </div>
 
     <p class="landing-path-link">
@@ -942,29 +942,39 @@
     let lastQuestion  = '';
 
     function extractYouTubeId(text) {
-      // Match a YouTube URL anywhere in the input string
       const m = text.match(
         /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?[^\s]*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
       );
       return m ? m[1] : null;
     }
 
+    function isDirectVideoUrl(text) {
+      return /^https?:\/\/.+\.(mp4|mov|webm|mkv|avi|m4v)(\?.*)?$/i.test(text) ||
+        /dropbox\.com\//.test(text) ||
+        /dropboxusercontent\.com\//.test(text) ||
+        /drive\.google\.com\/file\//.test(text);
+    }
+
+    function handleInput(q) {
+      if (!q) return;
+      const ytId = extractYouTubeId(q);
+      if (ytId) { submitVideoAnalysis(q, ytId); }
+      else if (isDirectVideoUrl(q)) { submitDirectVideoAnalysis(q); }
+      else { submitQuestion(q); }
+    }
+
     document.getElementById('landing-form').addEventListener('submit', e => {
       e.preventDefault();
       const q = document.getElementById('landing-input').value.trim();
-      if (!q) return;
       document.getElementById('landing-input').value = '';
-      const ytId = extractYouTubeId(q);
-      if (ytId) { submitVideoAnalysis(q, ytId); } else { submitQuestion(q); }
+      handleInput(q);
     });
 
     document.getElementById('header-form').addEventListener('submit', e => {
       e.preventDefault();
       const q = document.getElementById('header-input').value.trim();
-      if (!q) return;
       document.getElementById('header-input').value = '';
-      const ytId = extractYouTubeId(q);
-      if (ytId) { submitVideoAnalysis(q, ytId); } else { submitQuestion(q); }
+      handleInput(q);
     });
 
     document.getElementById('header-stop-btn').addEventListener('click', () => {
@@ -1276,6 +1286,132 @@
         entryA.removeAttribute('data-streaming');
         if (err.name !== 'AbortError') showError(entryA, err.message, url);
         else if (statusEl.parentNode) statusEl.remove();
+      } finally {
+        setStreaming(false);
+        abortCtrl = null;
+      }
+    }
+
+    // ── Direct video analysis ───────────────────────────────
+    async function submitDirectVideoAnalysis(url) {
+      if (abortCtrl) abortCtrl.abort();
+      abortCtrl = new AbortController();
+
+      if (!hasResults) { hasResults = true; setMode('results'); }
+
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+
+      const entryQ = document.createElement('div');
+      entryQ.className = 'entry-q';
+      entryQ.innerHTML = `<span class="entry-q-glyph" aria-hidden="true">▸</span>
+        <span class="entry-q-text">Analysing video: <a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:var(--accent-text)">${escHtml(url.length > 60 ? url.slice(0, 60) + '…' : url)}</a></span>`;
+
+      const entryA = document.createElement('div');
+      entryA.className = 'entry-a';
+      entryA.setAttribute('data-streaming', '');
+
+      const statusEl = document.createElement('div');
+      statusEl.className = 'entry-status';
+      statusEl.innerHTML = '<span class="status-dot" aria-hidden="true"></span><span class="status-label">Starting…</span>';
+      entryA.appendChild(statusEl);
+
+      entry.appendChild(entryQ);
+      entry.appendChild(entryA);
+      entries.appendChild(entry);
+      entry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setStreaming(true);
+
+      let fightHeader = null, fightTimeline = null, fightSummaryEl = null;
+
+      try {
+        const res = await fetch('/api/analyze-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+          signal: abortCtrl.signal,
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let sseBuffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const parts = sseBuffer.split('\n\n');
+          sseBuffer = parts.pop();
+
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+            let event;
+            try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+            if (event.type === 'status') {
+              const lbl = statusEl.querySelector('.status-label');
+              if (lbl) lbl.textContent = event.text;
+
+            } else if (event.type === 'video-info') {
+              if (statusEl.parentNode) statusEl.remove();
+              fightHeader = document.createElement('div');
+              fightHeader.className = 'fight-header';
+              fightHeader.innerHTML = `
+                <div class="fight-meta">
+                  <div class="fight-title">${escHtml(event.title)}</div>
+                  <div class="fight-summary" id="fight-summary-direct"></div>
+                  <div class="fight-fighters" id="fight-fighters-direct"></div>
+                </div>`;
+              entryA.appendChild(fightHeader);
+              fightSummaryEl = fightHeader.querySelector('#fight-summary-direct');
+              fightTimeline = document.createElement('div');
+              fightTimeline.className = 'fight-timeline';
+              entryA.appendChild(fightTimeline);
+              entryA.appendChild(statusEl);
+
+            } else if (event.type === 'analysis-summary') {
+              if (fightSummaryEl) fightSummaryEl.textContent = event.summary;
+              const fightersEl = fightHeader?.querySelector('#fight-fighters-direct');
+              if (fightersEl && event.fighter_a !== 'Fighter A') {
+                fightersEl.textContent = `${event.fighter_a} vs ${event.fighter_b}`;
+              }
+
+            } else if (event.type === 'analysis-event') {
+              if (statusEl.parentNode) statusEl.remove();
+              if (!fightTimeline) continue;
+              const BADGE_LABELS = { position:'position', transition:'transition', submission_attempt:'sub attempt', submission:'submission ✓', escape:'escape', takedown:'takedown' };
+              const row = document.createElement('div');
+              row.className = 'timeline-row';
+              row.innerHTML = `
+                <span class="timeline-ts">${escHtml(event.label)}</span>
+                <span class="timeline-badge ${escHtml(event.type)}">${escHtml(BADGE_LABELS[event.type] || event.type)}</span>
+                <span class="timeline-desc">${escHtml(event.description)}</span>`;
+              fightTimeline.appendChild(row);
+              entry.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+            } else if (event.type === 'analysis-text') {
+              if (statusEl.parentNode) statusEl.remove();
+              const pre = document.createElement('p');
+              pre.className = 'analysis-raw';
+              pre.textContent = event.text;
+              entryA.appendChild(pre);
+
+            } else if (event.type === 'done') {
+              entryA.removeAttribute('data-streaming');
+              if (statusEl.parentNode) statusEl.remove();
+              if (fightTimeline) fightTimeline.querySelectorAll('.timeline-desc').forEach(el => applyChips(el));
+              if (fightSummaryEl) applyChips(fightSummaryEl);
+
+            } else if (event.type === 'error') {
+              entryA.removeAttribute('data-streaming');
+              showError(entryA, event.text, url);
+            }
+          }
+        }
+      } catch (err) {
+        entryA.removeAttribute('data-streaming');
+        if (err.name !== 'AbortError') showError(entryA, err.message, url);
       } finally {
         setStreaming(false);
         abortCtrl = null;
