@@ -772,6 +772,124 @@
     }
     .landing-user-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
 
+    /* ── History ────────────────────────────────────────── */
+    .history-area {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px 48px;
+    }
+    [data-mode="history"] .history-area { display: block; }
+    [data-mode="history"] .app-header   { display: flex; }
+    .history-area::-webkit-scrollbar { width: 3px; }
+    .history-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .history-inner {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .history-title {
+      font-family: var(--sans);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .history-new-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms;
+    }
+    .history-new-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+
+    .history-group { margin-bottom: 28px; }
+    .history-group-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .history-list { display: flex; flex-direction: column; gap: 2px; }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 120ms;
+    }
+    .history-item:hover { background: var(--surface); }
+    .history-item-title {
+      flex: 1;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      color: var(--ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 120ms;
+    }
+    .history-item:hover .history-item-title { color: var(--ink); }
+    .history-item-date {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      flex-shrink: 0;
+    }
+    .history-item-del {
+      background: none;
+      border: none;
+      color: var(--ink-3);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 4px;
+      border-radius: 3px;
+      opacity: 0;
+      transition: opacity 120ms, color 120ms;
+      flex-shrink: 0;
+    }
+    .history-item:hover .history-item-del { opacity: 1; }
+    .history-item-del:hover { color: var(--accent-text); }
+    .history-empty {
+      font-family: var(--mono);
+      font-size: 0.80rem;
+      color: var(--ink-3);
+      text-align: center;
+      padding: 48px 0;
+    }
+    .history-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+      display: none;
+    }
+    .history-toggle-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+    [data-mode="history"] .history-toggle-btn { border-color: var(--accent); color: var(--accent-text); }
+
     /* ── Auth ───────────────────────────────────────────── */
     .auth-btn {
       background: none;
@@ -1357,6 +1475,8 @@
         onclick="togglePath()">Path →</button>
       <button type="button" class="graph-toggle-btn" id="graph-toggle-btn"
         onclick="toggleGraph()">Graph</button>
+      <button type="button" class="history-toggle-btn" id="history-toggle-btn"
+        onclick="toggleHistory()">History</button>
       <button type="button" class="auth-btn" id="signin-btn"
         onclick="openAuthDialog()" style="display:none">Sign in</button>
       <button type="button" class="user-btn" id="user-btn"
@@ -1489,6 +1609,17 @@
       </div>
 
       <div id="path-result" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- ── History ── -->
+  <div class="history-area" role="main" aria-label="Chat history">
+    <div class="history-inner">
+      <div class="history-head">
+        <h2 class="history-title">History</h2>
+        <button class="history-new-btn" onclick="startNewConversation()">+ New conversation</button>
+      </div>
+      <div id="history-list"></div>
     </div>
   </div>
 
@@ -1679,7 +1810,7 @@
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, history: conversationHistory.slice(-6) }),
+          body: JSON.stringify({ question, history: conversationHistory.slice(-6), conversation_id: currentConversationId }),
           signal: abortCtrl.signal
         });
 
@@ -1700,7 +1831,10 @@
             let event;
             try { event = JSON.parse(line.slice(6)); } catch { continue; }
 
-            if (event.type === 'status') {
+            if (event.type === 'conversation_id') {
+              currentConversationId = event.id;
+
+            } else if (event.type === 'status') {
               const lbl = statusEl.querySelector('.status-label');
               if (lbl) lbl.textContent = event.text;
 
@@ -2406,6 +2540,140 @@
       }
     }
 
+    // ── History ──────────────────────────────────────────────
+    let currentConversationId = null;
+
+    function toggleHistory() {
+      if (document.documentElement.dataset.mode === 'history') {
+        setMode(hasResults ? 'results' : 'landing');
+      } else {
+        setMode('history');
+        loadHistory();
+      }
+    }
+
+    function startNewConversation() {
+      currentConversationId = null;
+      conversationHistory.length = 0;
+      entries.innerHTML = '';
+      hasResults = false;
+      setMode('landing');
+    }
+
+    function relativeDate(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      const today = new Date(now); today.setHours(0,0,0,0);
+      const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      const dDay = new Date(d); dDay.setHours(0,0,0,0);
+      if (dDay >= today) return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      if (dDay >= yesterday) return 'Yesterday';
+      return d.toLocaleDateString([], {month:'short', day:'numeric'});
+    }
+
+    function groupConversations(convs) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      const groups = [
+        { label: 'Today',     items: [] },
+        { label: 'Yesterday', items: [] },
+        { label: 'Earlier',   items: [] },
+      ];
+      for (const c of convs) {
+        const d = new Date(c.updated_at); d.setHours(0,0,0,0);
+        if (d >= today)     groups[0].items.push(c);
+        else if (d >= yesterday) groups[1].items.push(c);
+        else                groups[2].items.push(c);
+      }
+      return groups.filter(g => g.items.length > 0);
+    }
+
+    async function loadHistory() {
+      const listEl = document.getElementById('history-list');
+      listEl.innerHTML = `<p class="history-empty">Loading…</p>`;
+      try {
+        const res  = await fetch('/api/conversations');
+        if (res.status === 401) { listEl.innerHTML = `<p class="history-empty">Sign in to see your history.</p>`; return; }
+        const data = await res.json();
+        const convs = data.conversations || [];
+        if (!convs.length) { listEl.innerHTML = `<p class="history-empty">No conversations yet.</p>`; return; }
+
+        const groups = groupConversations(convs);
+        listEl.innerHTML = '';
+        for (const group of groups) {
+          const groupEl = document.createElement('div');
+          groupEl.className = 'history-group';
+          groupEl.innerHTML = `<div class="history-group-label">${group.label}</div><div class="history-list"></div>`;
+          const ul = groupEl.querySelector('.history-list');
+          for (const conv of group.items) {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+              <span class="history-item-title">${escHtml(conv.title)}</span>
+              <span class="history-item-date">${relativeDate(conv.updated_at)}</span>
+              <button class="history-item-del" title="Delete" aria-label="Delete conversation">✕</button>`;
+            item.querySelector('.history-item-del').addEventListener('click', async e => {
+              e.stopPropagation();
+              await fetch(`/api/conversations/${conv.id}`, { method: 'DELETE' });
+              item.remove();
+              if (!listEl.querySelector('.history-item')) listEl.innerHTML = `<p class="history-empty">No conversations yet.</p>`;
+            });
+            item.addEventListener('click', () => resumeConversation(conv.id));
+            ul.appendChild(item);
+          }
+          listEl.appendChild(groupEl);
+        }
+      } catch {
+        listEl.innerHTML = `<p class="history-empty">Failed to load history.</p>`;
+      }
+    }
+
+    async function resumeConversation(id) {
+      try {
+        const res  = await fetch(`/api/conversations/${id}`);
+        const data = await res.json();
+        if (!data.messages) return;
+
+        // Restore conversation state
+        currentConversationId = id;
+        conversationHistory.length = 0;
+        entries.innerHTML = '';
+        hasResults = true;
+        setMode('results');
+
+        for (let i = 0; i < data.messages.length; i += 2) {
+          const userMsg = data.messages[i];
+          const asstMsg = data.messages[i + 1];
+          if (!userMsg) break;
+
+          const entry = document.createElement('div');
+          entry.className = 'entry';
+
+          const entryQ = document.createElement('div');
+          entryQ.className = 'entry-q';
+          entryQ.innerHTML = `<span class="entry-q-glyph" aria-hidden="true">▸</span><span class="entry-q-text">${escHtml(userMsg.content)}</span>`;
+          entry.appendChild(entryQ);
+
+          if (asstMsg) {
+            const entryA = document.createElement('div');
+            entryA.className = 'entry-a';
+            const textEl = document.createElement('div');
+            textEl.className = 'answer-text';
+            textEl.innerHTML = marked.parse(asstMsg.content);
+            entryA.appendChild(textEl);
+            applyChips(textEl);
+            entry.appendChild(entryA);
+            conversationHistory.push({ role: 'user', content: userMsg.content });
+            conversationHistory.push({ role: 'assistant', content: asstMsg.content });
+          }
+          entries.appendChild(entry);
+        }
+        entries.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } catch {
+        console.error('Failed to load conversation');
+      }
+    }
+
     // ── Graph visualizer ────────────────────────────────────
     let graphInitialized = false;
 
@@ -2742,6 +3010,7 @@
       const emailEl          = document.getElementById('user-btn-email');
       const landingSigninBtn = document.getElementById('landing-signin-btn');
       const landingUserBtn   = document.getElementById('landing-user-btn');
+      const historyBtn = document.getElementById('history-toggle-btn');
       if (currentUser) {
         signinBtn.style.display        = 'none';
         userBtn.style.display          = 'flex';
@@ -2749,11 +3018,13 @@
         landingSigninBtn.style.display = 'none';
         landingUserBtn.style.display   = 'block';
         landingUserBtn.textContent     = currentUser.email;
+        historyBtn.style.display       = 'block';
       } else {
         signinBtn.style.display        = 'block';
         userBtn.style.display          = 'none';
         landingSigninBtn.style.display = 'block';
         landingUserBtn.style.display   = 'none';
+        historyBtn.style.display       = 'none';
       }
     }
 

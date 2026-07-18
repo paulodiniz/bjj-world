@@ -5,9 +5,15 @@ from collections import defaultdict
 
 import httpx
 from anthropic import AsyncAnthropic
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Cookie, Request
 from fastapi.responses import StreamingResponse
 
+from services.auth import get_user_by_session
+from services.history import (
+    conversation_belongs_to_user,
+    create_conversation,
+    save_messages,
+)
 from services.rag import retrieve
 
 router = APIRouter()
@@ -81,7 +87,7 @@ def _sse(type_: str, payload: dict) -> str:
 
 
 @router.post("/api/chat")
-async def chat(request: Request):
+async def chat(request: Request, bjj_session: str = Cookie(default=None)):
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or request.client.host
     if _is_rate_limited(ip):
         return StreamingResponse(
@@ -93,6 +99,7 @@ async def chat(request: Request):
     body = await request.json()
     question: str = body.get("question", "")
     history: list[dict] = body.get("history", [])
+    conversation_id: str | None = body.get("conversation_id")
 
     if not question:
         return StreamingResponse(
@@ -101,12 +108,13 @@ async def chat(request: Request):
             status_code=400,
         )
 
-    print(f"ip={ip} question={question!r}")
+    user = await get_user_by_session(bjj_session) if bjj_session else None
+    print(f"ip={ip} user={user['email'] if user else 'anon'} question={question!r}")
 
     async def generate():
         import re as _re
 
-        # Video-only shortcut
+        # Video-only shortcut (no conversation saved for these)
         is_video_request = bool(_re.search(r"\b(video|videos|watch|youtube)\b", question, _re.IGNORECASE))
         last_assistant = next((m for m in reversed(history) if m["role"] == "assistant"), None)
         if is_video_request and YOUTUBE_API_KEY and last_assistant:
@@ -123,6 +131,16 @@ async def chat(request: Request):
             yield _sse("token", {"text": msg})
             yield _sse("done", {})
             return
+
+        # Resolve or create conversation for signed-in users
+        conv_id = conversation_id
+        if user:
+            if conv_id and not await conversation_belongs_to_user(conv_id, str(user["id"])):
+                conv_id = None
+            if not conv_id:
+                title = question[:80] + ("…" if len(question) > 80 else "")
+                conv_id = await create_conversation(str(user["id"]), title)
+            yield _sse("conversation_id", {"id": conv_id})
 
         yield _sse("status", {"text": "Searching knowledge base..."})
         chunks = await retrieve(question)
@@ -144,5 +162,8 @@ async def chat(request: Request):
                 yield _sse("videos", {"videos": videos})
 
         yield _sse("done", {})
+
+        if user and conv_id and full_text:
+            await save_messages(conv_id, question, full_text)
 
     return StreamingResponse(generate(), media_type="text/event-stream")
