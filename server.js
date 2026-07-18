@@ -5,10 +5,7 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const ytdl = require('@distube/ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-ffmpeg.setFfmpegPath(ffmpegPath);
+const sharp = require('sharp');
 
 const app = express();
 app.use(express.json());
@@ -342,6 +339,142 @@ async function seedDatabase() {
   }
 }
 
+// ── Storyboard frame extraction ───────────────────────────────────────────────
+
+async function fetchStoryboardSpec(videoId) {
+  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+    }
+  });
+  if (!res.ok) throw new Error(`YouTube page ${res.status}`);
+  const html = await res.text();
+
+  const token = 'ytInitialPlayerResponse = ';
+  const start = html.indexOf(token);
+  if (start === -1) throw new Error('ytInitialPlayerResponse not found');
+
+  const jsonStart = html.indexOf('{', start + token.length);
+  let depth = 0, inStr = false, esc = false, i = jsonStart;
+  for (; i < html.length; i++) {
+    const ch = html[i];
+    if (esc) { esc = false; continue; }
+    if (ch === '\\' && inStr) { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (!inStr) {
+      if (ch === '{') depth++;
+      else if (ch === '}' && --depth === 0) break;
+    }
+  }
+
+  const playerResp = JSON.parse(html.slice(jsonStart, i + 1));
+  const spec = playerResp?.storyboards?.playerStoryboardSpecRenderer?.spec;
+  if (!spec) throw new Error('No storyboard spec in player response');
+  return spec;
+}
+
+// Spec format: "{urlTemplate}|{w}#{h}#{count}#{cols}#{rows}#{intervalMs}#{nameTpl}#{sigh}|..."
+// urlTemplate uses $L (level index) and $N (replaced by nameTpl with $M = sprite index)
+function parseStoryboardSpec(spec) {
+  const parts = spec.split('|');
+  const urlTemplate = parts[0];
+  const levels = [];
+  for (let i = 1; i < parts.length; i++) {
+    const f = parts[i].split('#');
+    if (f.length < 6) continue;
+    levels.push({
+      frameW:     parseInt(f[0]),
+      frameH:     parseInt(f[1]),
+      totalFrames: parseInt(f[2]),
+      cols:       parseInt(f[3]),
+      rows:       parseInt(f[4]),
+      intervalMs: parseInt(f[5]),
+      nameTpl:    f[6] || 'M$M',
+      sigh:       f[7] || '',
+    });
+  }
+  return { urlTemplate, levels };
+}
+
+async function fetchStoryboardFrames(videoId, durationSecs) {
+  let specStr;
+  try {
+    specStr = await fetchStoryboardSpec(videoId);
+  } catch (e) {
+    console.warn('Storyboard spec fetch failed:', e.message);
+    return [];
+  }
+
+  const { urlTemplate, levels } = parseStoryboardSpec(specStr);
+
+  // Try best levels first (highest resolution with M$M name template)
+  const orderedLevels = [...levels.keys()]
+    .filter(i => levels[i].nameTpl.includes('$M'))
+    .sort((a, b) => b - a); // descending: try highest level first
+
+  for (const levelIdx of orderedLevels) {
+    try {
+      const level = levels[levelIdx];
+      const frames = await fetchStoryboardLevel(urlTemplate, levelIdx, level);
+      if (frames.length >= 5) {
+        console.log(`Storyboard L${levelIdx} (${level.frameW}×${level.frameH}): ${frames.length} frames`);
+        return frames;
+      }
+    } catch (e) {
+      console.warn(`Storyboard L${levelIdx} failed:`, e.message);
+    }
+  }
+  return [];
+}
+
+async function fetchStoryboardLevel(urlTemplate, levelIdx, level) {
+  const { frameW, frameH, totalFrames, cols, rows, intervalMs, nameTpl, sigh } = level;
+  const framesPerSprite = cols * rows;
+  const numSprites = Math.ceil(totalFrames / framesPerSprite);
+
+  const sprites = [];
+  for (let n = 0; n < numSprites; n++) {
+    const spriteName = nameTpl.replace('$M', String(n));
+    let url = urlTemplate
+      .replace('$L', String(levelIdx))
+      .replace('$N', spriteName);
+    if (sigh) url += '&sigh=' + sigh;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) break;
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length < 2000) break;
+      sprites.push(buf);
+    } catch { break; }
+  }
+  if (sprites.length === 0) return [];
+
+  // Subsample to max 50 frames
+  const step = Math.max(1, Math.ceil(totalFrames / 50));
+  const secPerFrame = intervalMs / 1000;
+
+  const frames = [];
+  for (let s = 0; s < sprites.length; s++) {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = s * framesPerSprite + r * cols + c;
+        if (idx >= totalFrames) continue;
+        if (idx % step !== 0) continue;
+        const ts = Math.round(idx * secPerFrame);
+
+        const buf = await sharp(sprites[s])
+          .extract({ left: c * frameW, top: r * frameH, width: frameW, height: frameH })
+          .jpeg({ quality: 90 })
+          .toBuffer();
+
+        frames.push({ timestamp: ts, label: formatTimestamp(ts), data: buf.toString('base64') });
+      }
+    }
+  }
+  return frames;
+}
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.get('/api/nodes', (req, res) => {
@@ -501,10 +634,8 @@ app.post('/api/analyze-fight', async (req, res) => {
     }
 
     send('video-info', { videoId, title, thumbnail });
-    send('status', { text: 'Fetching video frames…' });
 
     // ── 2. Parse description for chapter timestamps ───────────
-    // Many BJJ uploads have chapters like "0:45 Guard Pull\n2:30 Back Take"
     const chapterRe = /(?:^|\n)(?:(\d+):)?(\d+):(\d+)\s+(.+)/gm;
     const chapters = [];
     let cm;
@@ -513,39 +644,36 @@ app.post('/api/analyze-fight', async (req, res) => {
       chapters.push({ timestamp: secs, label: formatTimestamp(secs), name: cm[4].trim() });
     }
 
-    // ── 3. Fetch thumbnail frames from img.youtube.com ────────
-    // These are served freely without auth or rate-limits.
-    // 1.jpg / 2.jpg / 3.jpg are frames at ~25%, ~50%, ~75% of the video.
-    const thumbUrls = [
-      { url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, label: 'thumbnail' },
-      { url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,     label: 'thumbnail (hq)' },
-      { url: `https://img.youtube.com/vi/${videoId}/1.jpg`, label: '~25% mark' },
-      { url: `https://img.youtube.com/vi/${videoId}/2.jpg`, label: '~50% mark' },
-      { url: `https://img.youtube.com/vi/${videoId}/3.jpg`, label: '~75% mark' },
-    ];
+    // ── 3. Fetch storyboard frames ────────────────────────────
+    send('status', { text: 'Fetching video frames…' });
+    let frames = await fetchStoryboardFrames(videoId, durationSecs);
 
-    const frames = (await Promise.all(thumbUrls.map(async ({ url, label }) => {
-      try {
-        const r = await fetch(url);
-        if (!r.ok) return null;
-        const buf = Buffer.from(await r.arrayBuffer());
-        // Skip the grey "no thumbnail" placeholder YouTube returns (< 2 KB)
-        if (buf.length < 2000) return null;
-        return { label, data: buf.toString('base64') };
-      } catch { return null; }
-    }))).filter(Boolean);
+    if (frames.length === 0) {
+      // Fallback: YouTube thumbnail frames at 25/50/75%
+      const thumbUrls = [
+        { url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, label: 'thumbnail' },
+        { url: `https://img.youtube.com/vi/${videoId}/1.jpg`, label: '~25% mark' },
+        { url: `https://img.youtube.com/vi/${videoId}/2.jpg`, label: '~50% mark' },
+        { url: `https://img.youtube.com/vi/${videoId}/3.jpg`, label: '~75% mark' },
+      ];
+      frames = (await Promise.all(thumbUrls.map(async ({ url, label }) => {
+        try {
+          const r = await fetch(url);
+          if (!r.ok) return null;
+          const buf = Buffer.from(await r.arrayBuffer());
+          if (buf.length < 2000) return null;
+          return { timestamp: null, label, data: buf.toString('base64') };
+        } catch { return null; }
+      }))).filter(Boolean);
+    }
 
-    // Deduplicate: maxresdefault and hqdefault are the same image at different sizes
-    // Keep only the larger one if both loaded
-    const dedupedFrames = frames.reduce((acc, f) => {
-      if (f.label === 'thumbnail (hq)' && acc.some(x => x.label === 'thumbnail')) return acc;
-      acc.push(f);
-      return acc;
-    }, []);
+    if (frames.length === 0) throw new Error('Could not fetch any frames from this video. It may be private or unavailable.');
 
-    if (dedupedFrames.length === 0) throw new Error('Could not fetch any frames from this video. It may be private or unavailable.');
+    const approxInterval = durationSecs && frames.length > 1
+      ? Math.round(durationSecs / frames.length)
+      : null;
 
-    send('status', { text: `Analysing ${dedupedFrames.length} frame${dedupedFrames.length > 1 ? 's' : ''}${chapters.length ? ` + ${chapters.length} chapter markers` : ''}…` });
+    send('status', { text: `Analysing ${frames.length} frames${approxInterval ? ` (~1 per ${approxInterval}s)` : ''}…` });
 
     // ── 4. Build vision message ───────────────────────────────
     const knownTechniques = ragChunks
@@ -554,52 +682,52 @@ app.post('/api/analyze-fight', async (req, res) => {
       .slice(0, 80)
       .join(', ');
 
+    const chapterText = chapters.length > 0
+      ? `\nChapter markers:\n${chapters.map(c => `  ${c.label} — ${c.name}`).join('\n')}`
+      : '';
+
     const visionContent = [];
-    for (const frame of dedupedFrames) {
-      visionContent.push({ type: 'text', text: `Video frame (${frame.label}):` });
+    for (const frame of frames) {
+      visionContent.push({ type: 'text', text: `[${frame.label}]` });
       visionContent.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: frame.data } });
     }
 
-    const chapterText = chapters.length > 0
-      ? `\nChapter markers from video description:\n${chapters.map(c => `  ${c.label} — ${c.name}`).join('\n')}`
-      : '';
-
     visionContent.push({
       type: 'text',
-      text: `Video title: "${title}"
-Duration: ~${Math.round(durationSecs / 60)} minutes
+      text: `Video: "${title}" (~${Math.round(durationSecs / 60)} min)
 ${chapterText}
 
-Known BJJ positions and techniques — use these exact names when applicable:
-${knownTechniques}
+Known BJJ techniques — use these exact names: ${knownTechniques}
 
-Analyse this BJJ match using the visual frames and any chapter markers. Identify the key positions, transitions, submission attempts, sweeps, takedowns, and notable moments. When chapter markers are present, use them as the primary timestamp reference and expand on what likely happened at each stage. Use the visual frames to confirm positions.
+You have ${frames.length} frames sampled at ~${approxInterval ?? '?'}s intervals. Each is labeled [M:SS].
 
-Return ONLY valid JSON with no markdown or code fences:
+Examine every frame. Emit an event each time something meaningful happens or changes: takedowns, guard passes, sweeps, position changes, submission attempts, escapes, reversals, transitions. If consecutive frames show the same static position, emit only the first one. Use the exact timestamp shown in the frame label.
+
+Return ONLY valid JSON, no markdown:
 {
   "summary": "2-3 sentence match summary",
-  "fighter_a": "competitor name or Fighter A",
-  "fighter_b": "competitor name or Fighter B",
+  "fighter_a": "name or Fighter A",
+  "fighter_b": "name or Fighter B",
   "events": [
     {
       "timestamp": 45,
       "label": "0:45",
       "type": "position|transition|submission_attempt|submission|escape|takedown",
-      "position": "exact name from known list or null",
-      "from_position": "for transitions — starting position",
-      "to_position": "for transitions — ending position",
+      "position": "name from known list or null",
+      "from_position": "for transitions",
+      "to_position": "for transitions",
       "description": "one concise sentence"
     }
   ]
 }
 
-Aim for 8-20 events. Timestamps must be integers (seconds). If this is not a BJJ match, return valid JSON with the summary explaining that.`,
+Aim for 20–50 events. Timestamps must be integers (seconds).`,
     });
 
     // ── 5. Claude Vision call ────────────────────────────────
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: visionContent }],
     });
 
