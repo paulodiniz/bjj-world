@@ -341,21 +341,11 @@ async function seedDatabase() {
 
 // ── Storyboard frame extraction ───────────────────────────────────────────────
 
-async function fetchStoryboardSpec(videoId) {
-  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9',
-    }
-  });
-  if (!res.ok) throw new Error(`YouTube page ${res.status}`);
-  const html = await res.text();
-
-  const token = 'ytInitialPlayerResponse = ';
+function extractJsonFromHtml(html, token) {
   const start = html.indexOf(token);
-  if (start === -1) throw new Error('ytInitialPlayerResponse not found');
-
+  if (start === -1) return null;
   const jsonStart = html.indexOf('{', start + token.length);
+  if (jsonStart === -1) return null;
   let depth = 0, inStr = false, esc = false, i = jsonStart;
   for (; i < html.length; i++) {
     const ch = html[i];
@@ -367,11 +357,31 @@ async function fetchStoryboardSpec(videoId) {
       else if (ch === '}' && --depth === 0) break;
     }
   }
+  try { return JSON.parse(html.slice(jsonStart, i + 1)); } catch { return null; }
+}
 
-  const playerResp = JSON.parse(html.slice(jsonStart, i + 1));
-  const spec = playerResp?.storyboards?.playerStoryboardSpecRenderer?.spec;
-  if (!spec) throw new Error('No storyboard spec in player response');
-  return spec;
+async function fetchStoryboardSpec(videoId) {
+  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+      // Bypass GDPR consent gate that strips storyboard data on some server IPs
+      'Cookie': 'CONSENT=YES+cb; SOCS=CAESEwgDEgk2NDMwNTI4ODQaAmVuIAEaBgiA0YeyBg',
+    }
+  });
+  if (!res.ok) throw new Error(`YouTube page ${res.status}`);
+  const html = await res.text();
+
+  console.log(`[storyboard] page size=${html.length} hasIPR=${html.includes('ytInitialPlayerResponse')} hasSBSpec=${html.includes('playerStoryboardSpecRenderer')}`);
+
+  // Try the two token variants YouTube uses
+  for (const token of ['ytInitialPlayerResponse = ', 'ytInitialPlayerResponse=']) {
+    const obj = extractJsonFromHtml(html, token);
+    const spec = obj?.storyboards?.playerStoryboardSpecRenderer?.spec;
+    if (spec) return spec;
+  }
+
+  throw new Error('playerStoryboardSpecRenderer not found in page');
 }
 
 // Spec format: "{urlTemplate}|{w}#{h}#{count}#{cols}#{rows}#{intervalMs}#{nameTpl}#{sigh}|..."
@@ -697,31 +707,45 @@ app.post('/api/analyze-fight', async (req, res) => {
       text: `Video: "${title}" (~${Math.round(durationSecs / 60)} min)
 ${chapterText}
 
-Known BJJ techniques — use these exact names: ${knownTechniques}
+Known BJJ positions and techniques (use these exact names when applicable):
+${knownTechniques}
 
-You have ${frames.length} frames sampled at ~${approxInterval ?? '?'}s intervals. Each is labeled [M:SS].
+You have ${frames.length} frames, each labeled [M:SS] — that timestamp IS the event time.
 
-Examine every frame. Emit an event each time something meaningful happens or changes: takedowns, guard passes, sweeps, position changes, submission attempts, escapes, reversals, transitions. If consecutive frames show the same static position, emit only the first one. Use the exact timestamp shown in the frame label.
+YOUR TASK: For each frame, identify exactly what is happening on the mat. Be specific:
+- Who has positional advantage (top/bottom, which fighter)?
+- What named position or technique is shown?
+- Is anyone attacking, defending, transitioning?
 
-Return ONLY valid JSON, no markdown:
+Generate one event per frame. If the position is identical to the previous frame, still emit it but mark type "position". Only skip a frame if it shows literally nothing (camera cut, celebration, etc.).
+
+Use the fighter names from the video title. Never use vague language like "grappling continues" or "technical exchange" — always name the specific position.
+
+Examples of good descriptions:
+  "Marcelo pulls guard, establishes closed guard"
+  "Kron passes to side control on Marcelo's left"
+  "Marcelo takes the back, both hooks in"
+  "Marcelo attacks rear naked choke, Kron defends chin"
+
+Return ONLY valid JSON, no markdown fences:
 {
-  "summary": "2-3 sentence match summary",
-  "fighter_a": "name or Fighter A",
-  "fighter_b": "name or Fighter B",
+  "summary": "2-3 sentence factual summary with result",
+  "fighter_a": "first fighter name",
+  "fighter_b": "second fighter name",
   "events": [
     {
       "timestamp": 45,
       "label": "0:45",
       "type": "position|transition|submission_attempt|submission|escape|takedown",
-      "position": "name from known list or null",
-      "from_position": "for transitions",
-      "to_position": "for transitions",
-      "description": "one concise sentence"
+      "position": "exact name from known list or null",
+      "from_position": "only for transitions — starting position",
+      "to_position": "only for transitions — ending position",
+      "description": "SPECIFIC one sentence: who does what to whom"
     }
   ]
 }
 
-Aim for 20–50 events. Timestamps must be integers (seconds).`,
+Timestamps must be integers (seconds). Aim for one event per frame.`,
     });
 
     // ── 5. Claude Vision call ────────────────────────────────
