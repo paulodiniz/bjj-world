@@ -5,7 +5,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load .env.local first (local dev), then .env (fallback)
+_root = Path(__file__).parent.parent
+load_dotenv(_root / ".env.local", override=False)
+load_dotenv(_root / ".env", override=False)
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
