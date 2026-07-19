@@ -5,9 +5,14 @@ import { useRouter } from 'next/navigation'
 import { chatStream } from '@/lib/api'
 
 declare global {
-  interface Window {
-    marked: any
+  interface Window { marked: any }
+}
+
+function renderMarkdown(text: string): string {
+  if (typeof window !== 'undefined' && window.marked) {
+    return window.marked.parse(text)
   }
+  return text.replace(/\n/g, '<br/>')
 }
 
 interface Message {
@@ -18,9 +23,10 @@ interface Message {
 interface ChatProps {
   conversationId: string
   initialMessages: Message[]
+  autoQuestion?: string
 }
 
-export function Chat({ conversationId: initialConvId, initialMessages }: ChatProps) {
+export function Chat({ conversationId: initialConvId, initialMessages, autoQuestion }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [conversationId, setConversationId] = useState(initialConvId)
   const [query, setQuery] = useState('')
@@ -28,6 +34,7 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
   const [currentResponse, setCurrentResponse] = useState('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const entriesRef = useRef<HTMLDivElement>(null)
+  const autoSentRef = useRef(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -36,13 +43,16 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
     }
   }, [messages, currentResponse])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!query.trim() || isLoading) return
+  // Auto-send the initial question once on mount
+  useEffect(() => {
+    if (autoQuestion && !autoSentRef.current) {
+      autoSentRef.current = true
+      sendMessage(autoQuestion, [])
+    }
+  }, [autoQuestion])
 
-    const userMessage = query
-    setQuery('')
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
+  const sendMessage = async (text: string, history: Message[]) => {
+    setMessages((prev) => [...prev, { role: 'user', content: text }])
     setIsLoading(true)
     setCurrentResponse('')
 
@@ -51,20 +61,15 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
 
     try {
       let response = ''
+      let currentConvId = conversationId
 
-      for await (const event of chatStream(
-        userMessage,
-        messages,
-        conversationId,
-        controller.signal
-      )) {
+      for await (const event of chatStream(text, history, currentConvId === 'new' ? undefined : currentConvId, controller.signal)) {
         if (controller.signal.aborted) break
 
         if (event.type === 'conversation_id') {
+          currentConvId = event.id
           setConversationId(event.id)
-          if (conversationId === 'new' || !conversationId) {
-            router.push(`/c/${event.id}`)
-          }
+          router.replace(`/c/${event.id}`, { scroll: false })
         } else if (event.type === 'token') {
           response += event.text
           setCurrentResponse(response)
@@ -86,12 +91,18 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
     }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!query.trim() || isLoading) return
+    const text = query
+    setQuery('')
+    await sendMessage(text, messages)
+  }
+
   const handleStop = () => {
-    if (abortController) {
-      abortController.abort()
-      setAbortController(null)
-      setIsLoading(false)
-    }
+    abortController?.abort()
+    setAbortController(null)
+    setIsLoading(false)
   }
 
   return (
@@ -105,12 +116,7 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
             </div>
           ) : (
             <div className="entry-a">
-              <div
-                className="answer-text"
-                dangerouslySetInnerHTML={{
-                  __html: window.marked?.parse(msg.content) || msg.content,
-                }}
-              />
+              <div className="answer-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
             </div>
           )}
         </div>
@@ -119,12 +125,7 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
       {currentResponse && (
         <div className="entry">
           <div className="entry-a">
-            <div
-              className="answer-text"
-              dangerouslySetInnerHTML={{
-                __html: window.marked?.parse(currentResponse),
-              }}
-            />
+            <div className="answer-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(currentResponse) }} />
           </div>
         </div>
       )}
@@ -137,43 +138,17 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask a follow-up question…"
             disabled={isLoading}
-            style={{
-              flex: 1,
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              font: 'inherit',
-            }}
+            style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', font: 'inherit' }}
           />
           {isLoading ? (
-            <button
-              type="button"
-              onClick={handleStop}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
+            <button type="button" onClick={handleStop}
+              style={{ padding: '10px 20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
               Stop
             </button>
           ) : (
-            <button
-              type="submit"
-              disabled={isLoading || !query.trim()}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: isLoading || !query.trim() ? 'not-allowed' : 'pointer',
-                opacity: isLoading || !query.trim() ? 0.5 : 1,
-              }}
-            >
+            <button type="submit" disabled={!query.trim()}
+              style={{ padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px',
+                cursor: !query.trim() ? 'not-allowed' : 'pointer', opacity: !query.trim() ? 0.5 : 1 }}>
               Ask
             </button>
           )}

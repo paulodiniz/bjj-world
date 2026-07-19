@@ -16,7 +16,6 @@ const hints = [
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [query, setQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,58 +25,7 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
-
-    setIsLoading(true)
-
-    try {
-      const response = await fetch(`/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: query,
-          history: [],
-          conversation_id: null,
-        }),
-        credentials: 'include',
-      })
-
-      if (!response.ok) throw new Error('Failed to start chat')
-
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('No response body')
-
-      const decoder = new TextDecoder()
-      let sseBuffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        sseBuffer += decoder.decode(value, { stream: true })
-        const parts = sseBuffer.split('\n\n')
-        sseBuffer = parts.pop() || ''
-
-        for (const part of parts) {
-          const line = part.trim()
-          if (!line.startsWith('data: ')) continue
-
-          try {
-            const event = JSON.parse(line.slice(6))
-            if (event.type === 'conversation_id') {
-              router.push(`/c/${event.id}`)
-              return
-            }
-          } catch {
-            continue
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Chat error:', error)
-      alert('Failed to start conversation')
-    } finally {
-      setIsLoading(false)
-    }
+    router.push(`/c/new?q=${encodeURIComponent(query.trim())}`)
   }
 
   const handleHint = (hint: string) => {
@@ -108,11 +56,8 @@ export default function Home() {
           placeholder="Ask about any technique, position, or path…"
           aria-label="Your question"
           autoFocus
-          disabled={isLoading}
         />
-        <button type="submit" className="landing-ask-btn" disabled={isLoading}>
-          {isLoading ? 'Searching...' : 'Ask'}
-        </button>
+        <button type="submit" className="landing-ask-btn">Ask</button>
       </form>
 
       <div className="hint-pills" role="list" aria-label="Example questions">
@@ -123,7 +68,6 @@ export default function Home() {
             role="listitem"
             type="button"
             onClick={() => handleHint(hint)}
-            disabled={isLoading}
           >
             {hint}
           </button>

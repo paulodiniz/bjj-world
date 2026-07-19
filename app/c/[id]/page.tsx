@@ -1,29 +1,42 @@
-import { getConversation } from '@/lib/api'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Chat } from '@/components/Chat'
 
-export default async function ConversationPage({
-  params,
-}: {
-  params: { id: string }
-}) {
-  try {
-    const conversation = await getConversation(params.id)
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+}
 
-    return (
-      <div className="results-area" role="main" aria-label="Answers">
-        <Chat
-          conversationId={params.id}
-          initialMessages={conversation.messages || []}
-        />
-      </div>
-    )
-  } catch (error) {
-    return (
-      <div className="results-area" role="main" aria-label="Answers">
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <p>Conversation not found</p>
-        </div>
-      </div>
-    )
-  }
+export default function ConversationPage({ params }: { params: { id: string } }) {
+  const { id } = params
+  const searchParams = useSearchParams()
+  const initialQuestion = searchParams.get('q') || ''
+
+  const [messages, setMessages] = useState<Message[]>([])
+  const [ready, setReady] = useState(id === 'new')
+
+  useEffect(() => {
+    if (id === 'new') return
+    fetch(`/api/conversations/${id}`, { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data) => {
+        setMessages(data.messages || [])
+        setReady(true)
+      })
+      .catch(() => setReady(true))
+  }, [id])
+
+  if (!ready) return null
+
+  return (
+    <div className="results-area" role="main" aria-label="Answers">
+      <Chat
+        conversationId={id}
+        initialMessages={messages}
+        autoQuestion={id === 'new' ? initialQuestion : ''}
+      />
+    </div>
+  )
 }
