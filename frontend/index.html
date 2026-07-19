@@ -902,43 +902,35 @@
     .an-notes-textarea:focus { border-color: var(--border); color: var(--ink); }
     .an-notes-textarea::placeholder { color: var(--ink-3); }
 
-    /* Per-event notes */
-    .ev-note-trigger {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 8px;
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      color: var(--ink-3);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 2px 0;
-      transition: color 150ms;
+    /* Per-event notes — live inside .timeline-info */
+    .ev-note-body {
+      margin-top: 9px;
     }
-    .ev-note-trigger:hover { color: var(--ink-2); }
-    .ev-note-trigger.has-note { color: var(--accent-text); }
-    .ev-note-wrap {
-      margin-top: 8px;
-      display: none;
-    }
-    .ev-note-wrap.open { display: block; }
-    .ev-note-input {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border-sub);
-      border-radius: 6px;
-      padding: 7px 10px;
-      font-family: var(--mono);
-      font-size: 0.70rem;
+    .ev-note-text {
+      font-family: var(--sans);
+      font-size: 0.80rem;
       color: var(--ink-2);
-      outline: none;
-      transition: border-color 150ms;
-      box-sizing: border-box;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      text-wrap: pretty;
+      cursor: text;
+      padding: 6px 0 2px;
+      border-top: 1px solid var(--border-sub);
     }
-    .ev-note-input:focus { border-color: var(--border); }
-    .ev-note-input::placeholder { color: var(--ink-3); }
+    .ev-note-text:empty::before {
+      content: 'Add note…';
+      color: var(--ink-3);
+    }
+    .ev-note-text:focus {
+      outline: none;
+      color: var(--ink);
+    }
+    .ev-note-text:focus { border-top-color: var(--border); }
+    /* Show add-note affordance only on row hover when no note exists */
+    .timeline-row .ev-note-body { display: none; }
+    .timeline-row:hover .ev-note-body,
+    .timeline-row .ev-note-body.has-note,
+    .timeline-row .ev-note-body.editing { display: block; }
 
     /* ── Shared view ────────────────────────────────────── */
     .shared-area {
@@ -3036,8 +3028,9 @@
     // ── Saved analyses ───────────────────────────────────────
     async function _autoSaveNotes(id, noteArea, timeline, savedEl) {
       const eventNotes = {};
-      timeline.querySelectorAll('.ev-note-input').forEach(inp => {
-        if (inp.value.trim()) eventNotes[inp.dataset.ts] = inp.value.trim();
+      timeline.querySelectorAll('.ev-note-text').forEach(el => {
+        const val = el.textContent.trim();
+        if (val) eventNotes[el.dataset.ts] = val;
       });
       try {
         await fetch(`/api/analyses/${id}/notes`, {
@@ -3190,7 +3183,7 @@
         notesSection.appendChild(noteArea);
         entryA.appendChild(notesSection);
 
-        // ── Timeline with collapsible per-event notes ────────
+        // ── Timeline with inline per-event notes ─────────────
         const timeline = document.createElement('div');
         timeline.className = 'fight-timeline';
 
@@ -3199,47 +3192,40 @@
           const tsKey = String(ev.timestamp ?? 0);
           const existingNote = eventNotes[tsKey] || '';
 
-          const trigger = document.createElement('button');
-          trigger.className = 'ev-note-trigger' + (existingNote ? ' has-note' : '');
-          trigger.textContent = existingNote ? `✎ ${existingNote.slice(0, 40)}${existingNote.length > 40 ? '…' : ''}` : '+ add note';
-          trigger.dataset.ts = tsKey;
+          // Append note body into .timeline-info, not the flex row
+          const info = row.querySelector('.timeline-info');
+          if (info) {
+            const noteBody = document.createElement('div');
+            noteBody.className = 'ev-note-body' + (existingNote ? ' has-note' : '');
 
-          const noteWrap = document.createElement('div');
-          noteWrap.className = 'ev-note-wrap' + (existingNote ? ' open' : '');
+            const noteEl = document.createElement('div');
+            noteEl.className = 'ev-note-text';
+            noteEl.contentEditable = 'true';
+            noteEl.dataset.ts = tsKey;
+            noteEl.textContent = existingNote;
+            noteEl.setAttribute('aria-label', 'Note for this moment');
 
-          const noteInput = document.createElement('input');
-          noteInput.className = 'ev-note-input';
-          noteInput.type = 'text';
-          noteInput.placeholder = 'Note for this moment…';
-          noteInput.value = existingNote;
-          noteInput.dataset.ts = tsKey;
-          noteWrap.appendChild(noteInput);
+            noteEl.addEventListener('focus', () => noteBody.classList.add('editing'));
+            noteEl.addEventListener('blur', () => {
+              noteBody.classList.remove('editing');
+              const val = noteEl.textContent.trim();
+              noteBody.classList.toggle('has-note', !!val);
+              _autoSaveNotes(id, noteArea, timeline, savedEl);
+            });
 
-          trigger.addEventListener('click', () => {
-            noteWrap.classList.toggle('open');
-            if (noteWrap.classList.contains('open')) noteInput.focus();
-          });
+            noteBody.appendChild(noteEl);
+            info.appendChild(noteBody);
+          }
 
-          noteInput.addEventListener('input', () => {
-            const val = noteInput.value.trim();
-            trigger.textContent = val ? `✎ ${val.slice(0, 40)}${val.length > 40 ? '…' : ''}` : '+ add note';
-            trigger.classList.toggle('has-note', !!val);
-          });
-
-          row.appendChild(trigger);
-          row.appendChild(noteWrap);
           timeline.appendChild(row);
         }
 
         applyChips(timeline);
         entryA.appendChild(timeline);
 
-        // Auto-save on blur from note area or any event note input
+        // Auto-save on blur from global note area
         const triggerSave = () => _autoSaveNotes(id, noteArea, timeline, savedEl);
         noteArea.addEventListener('blur', triggerSave);
-        timeline.addEventListener('blur', e => {
-          if (e.target.classList.contains('ev-note-input')) triggerSave();
-        }, true);
 
         entry.appendChild(entryA);
         entries.appendChild(entry);
