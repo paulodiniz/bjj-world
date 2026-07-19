@@ -9,7 +9,7 @@ from services.graph_db import driver
 
 router = APIRouter()
 
-_GRAPH_PATH = Path(__file__).parent.parent.parent / "graph.json"
+_GRAPH_PATH = Path(__file__).parent.parent / "graph.json"
 _graph_cache: dict | None = None
 
 def _graph_data() -> dict:

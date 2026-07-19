@@ -5,16 +5,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load .env.local first (local dev), then .env (fallback)
-_root = Path(__file__).parent.parent
+_root = Path(__file__).parent
 load_dotenv(_root / ".env.local", override=False)
 load_dotenv(_root / ".env", override=False)
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from routes.analyses import router as analyses_router
 from routes.auth import router as auth_router
@@ -32,18 +28,7 @@ from services.profile import init_db as init_profile_db
 from services.graph_db import seed_database
 from services.rag import init_rag
 
-GRAPH_PATH = str(Path(__file__).parent.parent / "graph.json")
-FRONTEND_DIR = str(Path(__file__).parent.parent / "frontend")
-INDEX_HTML = str(Path(FRONTEND_DIR) / "index.html")
-
-
-class SPAStaticFiles(StaticFiles):
-    """Serve static files; fall back to index.html for unknown paths (SPA routing)."""
-    async def get_response(self, path: str, scope):
-        try:
-            return await super().get_response(path, scope)
-        except (StarletteHTTPException, Exception):
-            return FileResponse(INDEX_HTML)
+GRAPH_PATH = str(Path(__file__).parent / "graph.json")
 
 
 @asynccontextmanager
@@ -94,6 +79,3 @@ app.include_router(path_router)
 app.include_router(analyze_router)
 app.include_router(prep_router)
 app.include_router(profile_router)
-
-# Mount SPA last — serves static files and falls back to index.html for all other paths
-app.mount("/", SPAStaticFiles(directory=FRONTEND_DIR, html=True), name="spa")
