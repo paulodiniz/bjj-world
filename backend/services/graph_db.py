@@ -19,13 +19,7 @@ async def seed_database(graph_path: str) -> None:
         record = await result.single()
         count = record["count"]
 
-        video_result = await session.run(
-            "MATCH (n:BJJNode) WHERE n.video_url IS NOT NULL RETURN count(n) as c"
-        )
-        video_record = await video_result.single()
-        video_count = video_record["c"]
-
-        if count == len(graph["nodes"]) and video_count == len(graph["nodes"]):
+        if count == len(graph["nodes"]):
             print(f"Database up to date with {count} nodes")
             return
 
