@@ -242,7 +242,7 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
     tmp.close()
 
     contents = await video.read()
-    size_mb = len(contents) / 1e6
+    size_mb = len(contents) / (1024 * 1024)  # MiB — matches what OS file managers report
     if size_mb > 100:
         os.unlink(tmp_path)
         return StreamingResponse(
