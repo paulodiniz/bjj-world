@@ -14,9 +14,10 @@ async function handler(req: NextRequest, { params }: { params: { path: string[] 
   const forwarded = req.headers.get('x-forwarded-for')
   if (forwarded) headers['x-forwarded-for'] = forwarded
 
-  let body: string | undefined
+  let body: BodyInit | undefined
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    body = await req.text()
+    const ct = req.headers.get('content-type') || ''
+    body = ct.includes('multipart/form-data') ? await req.arrayBuffer() : await req.text()
   }
 
   const upstream = await fetch(url, { method: req.method, headers, body, redirect: 'manual' })
