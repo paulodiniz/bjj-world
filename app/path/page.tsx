@@ -1,8 +1,10 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { getNodes, getPath } from '@/lib/api'
+import { getNodes, getPath, chatStream } from '@/lib/api'
+
+const PATH_TYPES = ['position', 'submission', 'sweep', 'guard_pass', 'takedown', 'escape']
 
 interface Node { id: string; name: string; type: string }
 
@@ -14,31 +16,62 @@ function PathFinder() {
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [loadingNodes, setLoadingNodes] = useState(true)
+  const [explanation, setExplanation] = useState('')
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     getNodes().then((data) => {
-      setNodes(Array.isArray(data) ? data : [])
+      const relevant = (Array.isArray(data) ? data : []).filter((n: Node) => PATH_TYPES.includes(n.type))
+      setNodes(relevant)
     }).finally(() => setLoadingNodes(false))
   }, [])
 
+  const nodeMap = Object.fromEntries(nodes.map((n) => [n.name.toLowerCase(), n]))
+
   const handleFind = async () => {
-    const fromNode = nodes.find((n) => n.name.toLowerCase() === from.toLowerCase())
-    const toNode = nodes.find((n) => n.name.toLowerCase() === to.toLowerCase())
-    if (!fromNode || !toNode) return
+    const fromNode = nodeMap[from.trim().toLowerCase()]
+    const toNode = nodeMap[to.trim().toLowerCase()]
+    if (!fromNode || !toNode) {
+      setResult({ error: 'Type an exact technique name from the suggestions.' })
+      return
+    }
+    if (fromNode.id === toNode.id) {
+      setResult({ error: 'Pick two different techniques.' })
+      return
+    }
+
+    abortRef.current?.abort()
+    abortRef.current = new AbortController()
+
     setLoading(true)
     setResult(null)
+    setExplanation('')
+
     try {
       const data = await getPath(fromNode.id, toNode.id)
       setResult(data)
-    } catch {
-      setResult({ found: false, error: 'Failed to find path' })
+
+      if (data.found && data.steps?.length > 0) {
+        const pathStr = data.steps.map((s: any, i: number) =>
+          i < data.transitions.length ? `${s.name} --[${data.transitions[i]}]-->` : s.name
+        ).join(' ')
+
+        const signal = abortRef.current.signal
+        for await (const ev of chatStream(
+          `Explain this BJJ path step by step as a coach: ${pathStr}. Be concise and practical.`,
+          [],
+          undefined,
+          signal
+        )) {
+          if (ev.type === 'token') setExplanation((t) => t + ev.text)
+        }
+      }
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') setResult({ error: 'Something went wrong — try again.' })
     } finally {
       setLoading(false)
     }
   }
-
-  const fromMatches = nodes.filter((n) => n.name.toLowerCase().includes(from.toLowerCase())).slice(0, 10)
-  const toMatches = nodes.filter((n) => n.name.toLowerCase().includes(to.toLowerCase())).slice(0, 10)
 
   return (
     <div className="path-area" style={{ display: 'block' }} role="main" aria-label="Path Finder">
@@ -53,20 +86,18 @@ function PathFinder() {
             <div className="path-field">
               <label className="path-field-label" htmlFor="path-from">FROM</label>
               <input id="path-from" className="path-combobox" type="text" value={from}
-                onChange={(e) => setFrom(e.target.value)} placeholder="Search techniques…" list="path-from-list" />
-              <datalist id="path-from-list">
-                {fromMatches.map((n) => <option key={n.id} value={n.name} />)}
-              </datalist>
+                onChange={(e) => setFrom(e.target.value)} placeholder="Search techniques…" list="path-nodes-list" />
             </div>
 
             <div className="path-field">
               <label className="path-field-label" htmlFor="path-to">TO</label>
               <input id="path-to" className="path-combobox" type="text" value={to}
-                onChange={(e) => setTo(e.target.value)} placeholder="Search techniques…" list="path-to-list" />
-              <datalist id="path-to-list">
-                {toMatches.map((n) => <option key={n.id} value={n.name} />)}
-              </datalist>
+                onChange={(e) => setTo(e.target.value)} placeholder="Search techniques…" list="path-nodes-list" />
             </div>
+
+            <datalist id="path-nodes-list">
+              {nodes.map((n) => <option key={n.id} value={n.name} />)}
+            </datalist>
 
             <button className="path-find-btn" type="button" onClick={handleFind}
               disabled={loading || !from || !to}>
@@ -81,7 +112,9 @@ function PathFinder() {
               <p className="path-no-result">{result.error}</p>
             ) : result.found && result.steps?.length > 0 ? (
               <>
-                <p className="path-meta"><strong>{result.steps.length - 1}</strong> step{result.steps.length !== 2 ? 's' : ''}</p>
+                <p className="path-meta">
+                  <strong>{result.steps.length}</strong> steps — <strong>{result.steps[0].name}</strong> to <strong>{result.steps[result.steps.length - 1].name}</strong>
+                </p>
                 <div className="step-sequence">
                   {result.steps.map((step: any, idx: number) => (
                     <div key={idx} className="step-item">
@@ -98,6 +131,10 @@ function PathFinder() {
                     </div>
                   ))}
                 </div>
+                {explanation && (
+                  <div id="path-explanation"
+                    dangerouslySetInnerHTML={{ __html: (window as any).marked?.parse(explanation) || explanation }} />
+                )}
               </>
             ) : (
               <p className="path-no-result">No path found between these positions.</p>
