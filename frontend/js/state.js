@@ -37,6 +37,15 @@
       }
     }
 
+    function toggleGraph() {
+      if (document.documentElement.dataset.mode === 'graph') {
+        setMode(hasResults ? 'results' : 'landing');
+      } else {
+        setMode('graph');
+        if (!graphInitialized) initGraph();
+      }
+    }
+
     function startNewConversation() {
       currentConversationId = null;
       conversationHistory.length = 0;
