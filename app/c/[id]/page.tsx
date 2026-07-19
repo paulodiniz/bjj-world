@@ -1,7 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Chat } from '@/components/Chat'
 
 interface Message {
@@ -9,23 +8,27 @@ interface Message {
   content: string
 }
 
-function ConversationInner({ id }: { id: string }) {
-  const searchParams = useSearchParams()
-  const initialQuestion = searchParams.get('q') || ''
-
+export default function ConversationPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const [messages, setMessages] = useState<Message[]>([])
-  const [ready, setReady] = useState(!!initialQuestion) // ready immediately if starting fresh
+  const [autoQuestion, setAutoQuestion] = useState('')
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (initialQuestion) return // starting a new conversation, no need to fetch
+    const pending = sessionStorage.getItem(`pending_q_${id}`)
+    if (pending) {
+      sessionStorage.removeItem(`pending_q_${id}`)
+      setAutoQuestion(pending)
+      setReady(true)
+      return
+    }
+
     fetch(`/api/conversations/${id}`, { credentials: 'include' })
       .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then((data) => {
-        setMessages(data.messages || [])
-        setReady(true)
-      })
-      .catch(() => setReady(true))
-  }, [id, initialQuestion])
+      .then((data) => setMessages(data.messages || []))
+      .catch(() => {})
+      .finally(() => setReady(true))
+  }, [id])
 
   if (!ready) return null
 
@@ -34,16 +37,8 @@ function ConversationInner({ id }: { id: string }) {
       <Chat
         conversationId={id}
         initialMessages={messages}
-        autoQuestion={id === 'new' ? initialQuestion : ''}
+        autoQuestion={autoQuestion}
       />
     </div>
-  )
-}
-
-export default function ConversationPage({ params }: { params: { id: string } }) {
-  return (
-    <Suspense>
-      <ConversationInner id={params.id} />
-    </Suspense>
   )
 }

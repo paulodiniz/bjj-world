@@ -26,7 +26,8 @@ export default function Home() {
     e.preventDefault()
     if (!query.trim()) return
     const id = crypto.randomUUID()
-    router.push(`/c/${id}?q=${encodeURIComponent(query.trim())}`)
+    sessionStorage.setItem(`pending_q_${id}`, query.trim())
+    router.push(`/c/${id}`)
   }
 
   const handleHint = (hint: string) => {
