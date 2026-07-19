@@ -90,19 +90,20 @@ export function Header() {
         )}
         <Link href="/path" className="path-toggle-btn">Path →</Link>
         <Link href="/graph" className="path-toggle-btn">Graph</Link>
+        {user && <Link href="/profile" className="path-toggle-btn">Profile</Link>}
+        {user && <Link href="/history" className="path-toggle-btn">History</Link>}
         {user?.plan === 'coach' && <Link href="/prep" className="path-toggle-btn">Prep</Link>}
 
         {user ? (
           <>
-            <button ref={btnRef} className="user-btn" onClick={handleUserBtn} aria-label="Account options">
+            <button ref={btnRef} className="user-btn" onClick={handleUserBtn} aria-label="Account options"
+              style={{ padding: '5px 10px', gap: '4px' }}>
               <span className="user-btn-dot" />
-              <span className="user-btn-email">{user.email}</span>
-              <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>▾</span>
+              <span style={{ fontSize: '0.6rem', color: 'var(--ink-3)' }}>▾</span>
             </button>
             {showMenu && (
               <div className="user-menu" style={{ position: 'fixed', top: menuPos.top, right: menuPos.right }}>
-                <Link href="/history" className="user-menu-item" onClick={() => setShowMenu(false)}>History</Link>
-                <Link href="/profile" className="user-menu-item" onClick={() => setShowMenu(false)}>My game profile</Link>
+                <span className="user-menu-item" style={{ color: 'var(--ink-3)', cursor: 'default', fontSize: '0.65rem' }}>{user.email}</span>
                 <button onClick={handleSignOut} className="user-menu-item danger"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
                   Sign out
