@@ -31,6 +31,9 @@ async def init_db() -> None:
         )
     """)
     await pool.execute("""
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'free'
+    """)
+    await pool.execute("""
         CREATE TABLE IF NOT EXISTS magic_tokens (
             token TEXT PRIMARY KEY,
             email TEXT NOT NULL,
@@ -136,7 +139,7 @@ async def get_user_by_session(session_id: str) -> dict | None:
     pool = await _get_pool()
     now = datetime.now(timezone.utc)
     row = await pool.fetchrow(
-        """SELECT u.id, u.email FROM sessions s
+        """SELECT u.id, u.email, u.plan FROM sessions s
            JOIN users u ON u.id = s.user_id
            WHERE s.id = $1 AND s.expires_at > $2""",
         session_id, now,

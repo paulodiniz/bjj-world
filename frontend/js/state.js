@@ -46,6 +46,14 @@
       }
     }
 
+    function togglePrep() {
+      if (document.documentElement.dataset.mode === 'prep') {
+        setMode(hasResults ? 'results' : 'landing');
+      } else {
+        openPrep();
+      }
+    }
+
     function startNewConversation() {
       currentConversationId = null;
       conversationHistory.length = 0;

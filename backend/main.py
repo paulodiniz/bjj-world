@@ -22,6 +22,7 @@ from routes.history import router as history_router
 from routes.nodes import router as nodes_router
 from routes.path import router as path_router
 from routes.analyze import router as analyze_router
+from routes.prep import router as prep_router
 from routes.profile import router as profile_router
 from services.analyses import init_db as init_analyses_db
 from services.auth import init_db as init_auth_db
@@ -72,6 +73,7 @@ app.include_router(history_router)
 app.include_router(nodes_router)
 app.include_router(path_router)
 app.include_router(analyze_router)
+app.include_router(prep_router)
 app.include_router(profile_router)
 
 # Mount SPA last — serves static files and falls back to index.html for all other paths

@@ -30,8 +30,9 @@
       const emailEl          = document.getElementById('user-btn-email');
       const landingSigninBtn = document.getElementById('landing-signin-btn');
       const landingUserBtn   = document.getElementById('landing-user-btn');
-      const historyBtn       = document.getElementById('history-toggle-btn');
+      const historyBtn        = document.getElementById('history-toggle-btn');
       const landingHistoryBtn = document.getElementById('landing-history-btn');
+      const landingPrepBtn    = document.getElementById('landing-prep-btn');
       if (currentUser) {
         signinBtn.style.display         = 'none';
         userBtn.style.display           = 'flex';
@@ -41,6 +42,7 @@
         landingUserBtn.textContent      = currentUser.email;
         historyBtn.style.display        = 'block';
         landingHistoryBtn.style.display = 'flex';
+        landingPrepBtn.style.display    = currentUser.plan === 'coach' ? 'flex' : 'none';
       } else {
         signinBtn.style.display         = 'block';
         userBtn.style.display           = 'none';
@@ -48,6 +50,7 @@
         landingUserBtn.style.display    = 'none';
         historyBtn.style.display        = 'none';
         landingHistoryBtn.style.display = 'none';
+        landingPrepBtn.style.display    = 'none';
       }
     }
 

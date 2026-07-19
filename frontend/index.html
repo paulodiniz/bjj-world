@@ -142,6 +142,15 @@
         </span>
         <span class="landing-mode-arrow" aria-hidden="true">→</span>
       </button>
+      <button class="landing-mode" type="button" id="landing-prep-btn"
+        onclick="togglePrep()" style="display:none">
+        <span class="landing-mode-glyph" aria-hidden="true">⊡</span>
+        <span class="landing-mode-body">
+          <span class="landing-mode-name">Class Prep</span>
+          <span class="landing-mode-desc">Generate a lesson plan from the knowledge graph</span>
+        </span>
+        <span class="landing-mode-arrow" aria-hidden="true">→</span>
+      </button>
     </nav>
 
     <label class="upload-zone" id="upload-zone" for="video-file-input">
@@ -224,6 +233,11 @@
     <div class="profile-inner" id="profile-content"></div>
   </div>
 
+  <!-- ── Class Prep ── -->
+  <div class="prep-area" role="main" aria-label="Class prep">
+    <div class="prep-inner" id="prep-content"></div>
+  </div>
+
   <!-- ── User menu dropdown ── -->
   <div class="user-menu" id="user-menu" style="display:none" role="menu">
     <button class="user-menu-item" onclick="openProfile()" role="menuitem">My game profile</button>
@@ -241,6 +255,7 @@
   <script src="/js/graph.js"></script>
   <script src="/js/technique.js"></script>
   <script src="/js/profile.js"></script>
+  <script src="/js/prep.js"></script>
   <script src="/js/router.js"></script>
 </body>
 </html>

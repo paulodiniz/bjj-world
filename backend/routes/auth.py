@@ -93,7 +93,7 @@ async def get_me(bjj_session: str = Cookie(default=None)):
     user = await get_user_by_session(bjj_session)
     if not user:
         return JSONResponse({"user": None}, status_code=401)
-    return JSONResponse({"user": {"email": user["email"]}})
+    return JSONResponse({"user": {"email": user["email"], "plan": user["plan"]}})
 
 
 @router.post("/api/auth/logout")
