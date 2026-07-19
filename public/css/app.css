@@ -1993,6 +1993,34 @@
       color: var(--accent-text);
     }
 
+    /* Detected gaps section */
+    .profile-gaps {
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+    .profile-gap-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .profile-gap-tag {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-2);
+      cursor: default;
+    }
+    .profile-gaps-hint {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      line-height: 1.6;
+      margin: 0;
+    }
+
     /* Profile link in header user button */
     .user-menu {
       position: absolute;

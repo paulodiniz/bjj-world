@@ -12,8 +12,10 @@ from fastapi.responses import StreamingResponse
 import services.rag as _rag
 from services.analyses import save_analysis
 from services.auth import get_user_by_session
+from services.profile import merge_weak_nodes
 from services.rag import retrieve
 from services.video import extract_frames, format_timestamp
+from services.weak_nodes import detect_weak_nodes
 
 router = APIRouter()
 anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -107,6 +109,20 @@ async def _run_analysis(frames: list[dict], title: str):
         return json.loads(cleaned)
     except json.JSONDecodeError:
         return None, raw
+
+
+async def _update_graph_profile(user_id: str, collected: dict) -> None:
+    try:
+        node_ids = await detect_weak_nodes(
+            collected.get("events", []),
+            collected.get("fighter_a", ""),
+            _rag.rag_chunks or [],
+        )
+        if node_ids:
+            await merge_weak_nodes(user_id, node_ids)
+            print(f"[weak_nodes] {user_id} → {node_ids}")
+    except Exception as exc:
+        print(f"[weak_nodes] detection failed: {exc}")
 
 
 def _sse(type_: str, payload: dict) -> str:
@@ -217,6 +233,7 @@ async def analyze_video(request: Request, bjj_session: str = Cookie(default=None
                     collected["events"],
                 )
                 yield _sse("analysis_id", {"id": analysis_id})
+                asyncio.create_task(_update_graph_profile(str(user["id"]), collected))
         except Exception as exc:
             yield _sse("error", {"text": str(exc)})
 
@@ -275,6 +292,7 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
                     collected["events"],
                 )
                 yield _sse("analysis_id", {"id": analysis_id})
+                asyncio.create_task(_update_graph_profile(str(user["id"]), collected))
         except Exception as exc:
             yield _sse("error", {"text": str(exc)})
         finally:

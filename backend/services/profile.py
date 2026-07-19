@@ -32,6 +32,9 @@ async def init_db() -> None:
             updated_at TIMESTAMPTZ DEFAULT NOW()
         )
     """)
+    await pool.execute("""
+        ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS weak_nodes JSONB NOT NULL DEFAULT '[]'
+    """)
     # Safe migration: add as JSONB if missing, or convert from TEXT if the
     # column was created before we switched to the node-picker approach.
     await pool.execute("""
@@ -78,7 +81,35 @@ async def get_profile(user_id: str) -> dict | None:
         "submission_prefs": json.loads(row["submission_prefs"]),
         "notes": row["notes"],
         "favourite_game": json.loads(row["favourite_game"]),
+        "weak_nodes": json.loads(row["weak_nodes"]) if row["weak_nodes"] else [],
     }
+
+
+async def merge_weak_nodes(user_id: str, node_ids: list[str]) -> None:
+    """Increment count for each detected weak node, inserting new ones as needed."""
+    if not node_ids:
+        return
+    pool = await _get_pool()
+    row = await pool.fetchrow(
+        "SELECT weak_nodes FROM user_profiles WHERE user_id = $1", user_id
+    )
+    existing: list[dict] = json.loads(row["weak_nodes"]) if row and row["weak_nodes"] else []
+    by_id = {n["id"]: n for n in existing}
+
+    name_map = {c["id"]: c for c in _rag.rag_chunks} if _rag.rag_chunks else {}
+    for nid in node_ids:
+        if nid in by_id:
+            by_id[nid]["count"] = by_id[nid].get("count", 1) + 1
+        else:
+            chunk = name_map.get(nid, {})
+            by_id[nid] = {"id": nid, "name": chunk.get("name", nid), "type": chunk.get("type", ""), "count": 1}
+
+    merged = sorted(by_id.values(), key=lambda x: x["count"], reverse=True)
+    await pool.execute(
+        """INSERT INTO user_profiles (user_id, weak_nodes) VALUES ($1, $2)
+           ON CONFLICT (user_id) DO UPDATE SET weak_nodes = $2""",
+        user_id, json.dumps(merged),
+    )
 
 
 async def save_profile(user_id: str, data: dict) -> dict:
@@ -144,6 +175,14 @@ def build_profile_context(profile: dict | None) -> str:
     notes = profile.get("notes")
     if notes:
         parts.append(f"Additional context: {notes}")
+
+    weak = profile.get("weak_nodes") or []
+    if weak:
+        gap_names = [n["name"] for n in weak[:5]]
+        parts.append(
+            f"Detected gaps from video analysis: {', '.join(gap_names)} — "
+            "when relevant, help this practitioner address these weak areas"
+        )
 
     if not parts:
         return ""

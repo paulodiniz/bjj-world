@@ -13,6 +13,13 @@ const PASS_TYPES = ['guard_pass', 'technique']
 const SUB_TYPES = ['submission']
 const GAME_TYPES = ['position', 'technique', 'submission', 'guard_pass', 'concept', 'system', 'sweep', 'takedown', 'escape']
 
+interface WeakNode {
+  id: string
+  name: string
+  type: string
+  count: number
+}
+
 interface Profile {
   belt?: string
   gi_preference?: string
@@ -21,6 +28,7 @@ interface Profile {
   submission_prefs?: string[]
   favourite_game?: string[]
   notes?: string | null
+  weak_nodes?: WeakNode[]
 }
 
 export default function ProfilePage() {
@@ -32,6 +40,7 @@ export default function ProfilePage() {
   const [subPrefs, setSubPrefs] = useState<string[]>([])
   const [favGame, setFavGame] = useState<string[]>([])
   const [notes, setNotes] = useState('')
+  const [weakNodes, setWeakNodes] = useState<WeakNode[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -50,6 +59,7 @@ export default function ProfilePage() {
       setSubPrefs(p.submission_prefs || [])
       setFavGame(p.favourite_game || [])
       setNotes(p.notes || '')
+      setWeakNodes(p.weak_nodes || [])
     }).catch(() => {}).finally(() => setLoading(false))
   }, [router])
 
@@ -116,6 +126,20 @@ export default function ProfilePage() {
             placeholder="e.g. &quot;Recovering from a knee injury, avoiding leg entanglements&quot;"
             value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
+
+        {weakNodes.length > 0 && (
+          <div className="profile-section profile-gaps">
+            <span className="profile-section-label">Detected gaps · from your video analyses</span>
+            <div className="profile-gap-list">
+              {weakNodes.slice(0, 8).map((n) => (
+                <span key={n.id} className="profile-gap-tag" title={`Flagged ${n.count}×`}>
+                  {n.name}
+                </span>
+              ))}
+            </div>
+            <p className="profile-gaps-hint">These positions surfaced repeatedly in your video analyses. Your AI answers are already weighted toward these areas.</p>
+          </div>
+        )}
 
         <div className="profile-footer">
           <button type="button" className="profile-save-btn" disabled={saving} onClick={handleSave}>
