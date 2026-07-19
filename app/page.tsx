@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
-import { useEffect } from 'react'
 import type { User } from '@/lib/auth'
+import { Chat } from '@/components/Chat'
 
 const hints = [
   'What can I attack from closed guard?',
@@ -16,22 +15,30 @@ const hints = [
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [query, setQuery] = useState('')
-  const router = useRouter()
+  const [activeConv, setActiveConv] = useState<{ id: string; question: string } | null>(null)
 
   useEffect(() => {
     getCurrentUser().then(setUser)
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
     const id = crypto.randomUUID()
-    sessionStorage.setItem(`pending_q_${id}`, query.trim())
-    router.push(`/c/${id}`)
+    window.history.replaceState(null, '', `/c/${id}`)
+    setActiveConv({ id, question: query.trim() })
   }
 
-  const handleHint = (hint: string) => {
-    setQuery(hint)
+  if (activeConv) {
+    return (
+      <div className="results-area" style={{ display: 'flex' }} role="main">
+        <Chat
+          conversationId={activeConv.id}
+          initialMessages={[]}
+          autoQuestion={activeConv.question}
+        />
+      </div>
+    )
   }
 
   return (
@@ -64,20 +71,15 @@ export default function Home() {
 
       <div className="hint-pills" role="list" aria-label="Example questions">
         {hints.map((hint) => (
-          <button
-            key={hint}
-            className="hint-pill"
-            role="listitem"
-            type="button"
-            onClick={() => handleHint(hint)}
-          >
+          <button key={hint} className="hint-pill" role="listitem" type="button"
+            onClick={() => setQuery(hint)}>
             {hint}
           </button>
         ))}
       </div>
 
       {user && (
-        <div className="profile-nudge" role="complementary" aria-label="Personalise your answers">
+        <div className="profile-nudge" role="complementary">
           <span className="profile-nudge-text">Personalise your answers —</span>
           <Link href="/profile" className="profile-nudge-btn">Set up your game →</Link>
         </div>
@@ -102,46 +104,17 @@ export default function Home() {
           <span className="landing-mode-arrow" aria-hidden="true">→</span>
         </Link>
 
-        <button className="landing-mode" type="button">
-          <span className="landing-mode-glyph" aria-hidden="true">▶</span>
-          <span className="landing-mode-body">
-            <span className="landing-mode-name">Video Analysis</span>
-            <span className="landing-mode-desc">Upload a match — AI reads every position</span>
-          </span>
-          <span className="landing-mode-arrow" aria-hidden="true">→</span>
-        </button>
-
         {user && (
-          <>
-            <Link href="/history" className="landing-mode">
-              <span className="landing-mode-glyph" aria-hidden="true">◷</span>
-              <span className="landing-mode-body">
-                <span className="landing-mode-name">Recent</span>
-                <span className="landing-mode-desc">Your saved conversations</span>
-              </span>
-              <span className="landing-mode-arrow" aria-hidden="true">→</span>
-            </Link>
-
-            {user.plan === 'coach' && (
-              <Link href="/prep" className="landing-mode">
-                <span className="landing-mode-glyph" aria-hidden="true">⊡</span>
-                <span className="landing-mode-body">
-                  <span className="landing-mode-name">Class Prep</span>
-                  <span className="landing-mode-desc">Generate a lesson plan from the knowledge graph</span>
-                </span>
-                <span className="landing-mode-arrow" aria-hidden="true">→</span>
-              </Link>
-            )}
-          </>
+          <Link href="/history" className="landing-mode">
+            <span className="landing-mode-glyph" aria-hidden="true">◷</span>
+            <span className="landing-mode-body">
+              <span className="landing-mode-name">Recent</span>
+              <span className="landing-mode-desc">Your saved conversations</span>
+            </span>
+            <span className="landing-mode-arrow" aria-hidden="true">→</span>
+          </Link>
         )}
       </nav>
-
-      <label className="upload-zone">
-        <span className="upload-zone-glyph" aria-hidden="true">↑</span>
-        <span className="upload-zone-text">or drag and drop a video file here</span>
-        <span className="upload-zone-meta">mp4 · mov · webm · up to 60 MB</span>
-        <input type="file" accept="video/*" style={{ display: 'none' }} />
-      </label>
     </div>
   )
 }
