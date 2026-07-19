@@ -68,17 +68,18 @@ export function Header() {
         )}
         <Link href="/path" className="path-toggle-btn">Path →</Link>
         <Link href="/graph" className="path-toggle-btn">Graph</Link>
-        {user && <Link href="/history" className="path-toggle-btn">History</Link>}
-        {user && <Link href="/profile" className="path-toggle-btn">Profile</Link>}
+        {user && <Link href="/prep" className="path-toggle-btn">Prep</Link>}
 
         {user ? (
           <div style={{ position: 'relative' }}>
             <button className="user-btn" onClick={() => setShowMenu(!showMenu)} aria-label="Account options">
               <span className="user-btn-dot" />
               <span className="user-btn-email">{user.email}</span>
+              <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>▾</span>
             </button>
             {showMenu && (
               <div className="user-menu" style={{ display: 'block' }}>
+                <Link href="/history" className="user-menu-item" onClick={() => setShowMenu(false)}>History</Link>
                 <Link href="/profile" className="user-menu-item" onClick={() => setShowMenu(false)}>My game profile</Link>
                 <button onClick={handleSignOut} className="user-menu-item danger"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
