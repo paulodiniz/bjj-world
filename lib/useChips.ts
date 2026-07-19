@@ -1,33 +1,30 @@
 import { useEffect, useRef } from 'react'
 import { getNodes } from './api'
 
-interface BJJNode {
-  id: string
-  name: string
-  type: string
+interface BJJNode { id: string; name: string; type: string }
+
+let _cache: { nodes: BJJNode[]; re: RegExp } | null = null
+let _loading = false
+const _waiters: Array<() => void> = []
+
+function loadNodes(): Promise<{ nodes: BJJNode[]; re: RegExp } | null> {
+  if (_cache) return Promise.resolve(_cache)
+  return new Promise((resolve) => {
+    _waiters.push(() => resolve(_cache))
+    if (!_loading) {
+      _loading = true
+      getNodes().then((data: BJJNode[]) => {
+        const nodes = Array.isArray(data) ? data.sort((a, b) => b.name.length - a.name.length) : []
+        const escaped = nodes.map((n) => n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        _cache = { nodes, re: new RegExp('\\b(?:' + escaped.join('|') + ')\\b', 'gi') }
+        _waiters.forEach((fn) => fn())
+        _waiters.length = 0
+      }).catch(() => { _loading = false; _waiters.forEach((fn) => fn()); _waiters.length = 0 })
+    }
+  })
 }
 
-let cachedNodes: BJJNode[] | null = null
-let chipRe: RegExp | null = null
-
-async function loadNodes(): Promise<{ nodes: BJJNode[]; re: RegExp } | null> {
-  if (cachedNodes && chipRe) return { nodes: cachedNodes, re: chipRe }
-  try {
-    const data: BJJNode[] = await getNodes()
-    cachedNodes = data.sort((a, b) => b.name.length - a.name.length)
-    const escaped = cachedNodes.map((n) => n.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    chipRe = new RegExp('\\b(?:' + escaped.join('|') + ')\\b', 'gi')
-    return { nodes: cachedNodes, re: chipRe }
-  } catch {
-    return null
-  }
-}
-
-function chipifyTextNode(
-  textNode: Text,
-  nodes: BJJNode[],
-  re: RegExp,
-) {
+function chipifyTextNode(textNode: Text, nodes: BJJNode[], re: RegExp) {
   const text = textNode.textContent || ''
   re.lastIndex = 0
   if (!re.test(text)) return
@@ -38,9 +35,7 @@ function chipifyTextNode(
   let match: RegExpExecArray | null
 
   while ((match = re.exec(text)) !== null) {
-    if (match.index > last) {
-      frag.appendChild(document.createTextNode(text.slice(last, match.index)))
-    }
+    if (match.index > last) frag.appendChild(document.createTextNode(text.slice(last, match.index)))
     const node = nodes.find((n) => n.name.toLowerCase() === match![0].toLowerCase())
     if (node) {
       const a = document.createElement('a')
@@ -73,23 +68,28 @@ function walkForChips(el: Element, nodes: BJJNode[], re: RegExp) {
   }
 }
 
+export function applyChipsToContainer(container: HTMLElement) {
+  if (!_cache) return
+  const answers = container.querySelectorAll<HTMLElement>('.answer-text:not([data-chipped])')
+  answers.forEach((el) => {
+    el.setAttribute('data-chipped', '1')
+    walkForChips(el, _cache!.nodes, _cache!.re)
+  })
+}
+
 export function useChips(containerRef: React.RefObject<HTMLElement>, deps: any[]) {
-  const nodesRef = useRef<{ nodes: BJJNode[]; re: RegExp } | null>(null)
+  const pendingRef = useRef(false)
 
+  // Load nodes once; when they arrive, chip anything already rendered
   useEffect(() => {
-    loadNodes().then((result) => {
-      if (result) nodesRef.current = result
+    loadNodes().then(() => {
+      if (containerRef.current) applyChipsToContainer(containerRef.current)
     })
-  }, [])
+  }, []) // eslint-disable-line
 
+  // Chip newly rendered elements whenever deps change
   useEffect(() => {
-    const container = containerRef.current
-    if (!container || !nodesRef.current) return
-    // Only process answer elements that haven't been chipped yet
-    const answers = container.querySelectorAll<HTMLElement>('.answer-text:not([data-chipped])')
-    answers.forEach((el) => {
-      el.setAttribute('data-chipped', '1')
-      walkForChips(el, nodesRef.current!.nodes, nodesRef.current!.re)
-    })
-  }, deps)
+    if (!_cache) { pendingRef.current = true; return }
+    if (containerRef.current) applyChipsToContainer(containerRef.current)
+  }, deps) // eslint-disable-line
 }

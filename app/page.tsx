@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import type { User } from '@/lib/auth'
 import { Chat } from '@/components/Chat'
+import { setPendingFile } from '@/lib/pendingFile'
 
 const hints = [
   'What can I attack from closed guard?',
@@ -16,6 +18,18 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [query, setQuery] = useState('')
   const [activeConv, setActiveConv] = useState<{ id: string; question: string } | null>(null)
+  const [uploadError, setUploadError] = useState('')
+  const router = useRouter()
+
+  const MAX_UPLOAD = 60 * 1024 * 1024
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith('video/')) { setUploadError('Please upload a video file.'); return }
+    if (file.size > MAX_UPLOAD) { setUploadError(`File too large (${(file.size / 1e6).toFixed(0)} MB — max 60 MB)`); return }
+    setUploadError('')
+    setPendingFile(file)
+    router.push('/a/new')
+  }
 
   useEffect(() => {
     getCurrentUser().then(setUser)
@@ -115,6 +129,19 @@ export default function Home() {
           </Link>
         )}
       </nav>
+
+      <label className="upload-zone"
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over') }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.classList.remove('drag-over') }}
+        onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+      >
+        <span className="upload-zone-glyph" aria-hidden="true">↑</span>
+        <span className="upload-zone-text">or drag and drop a video file here</span>
+        <span className="upload-zone-meta">mp4 · mov · webm · up to 60 MB</span>
+        {uploadError && <span className="upload-zone-error">{uploadError}</span>}
+        <input type="file" accept="video/*" style={{ display: 'none' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
+      </label>
     </div>
   )
 }
