@@ -23,11 +23,11 @@ export default function Home() {
   const [uploadError, setUploadError] = useState('')
   const router = useRouter()
 
-  const MAX_UPLOAD = 60 * 1024 * 1024
+  const MAX_UPLOAD = 100 * 1024 * 1024
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('video/')) { setUploadError('Please upload a video file.'); return }
-    if (file.size > MAX_UPLOAD) { setUploadError(`File too large (${(file.size / 1e6).toFixed(0)} MB — max 60 MB)`); return }
+    if (file.size > MAX_UPLOAD) { setUploadError(`File too large (${(file.size / 1e6).toFixed(0)} MB — max 100 MB)`); return }
     setUploadError('')
     setPendingFile(file)
     router.push('/a/new')
@@ -172,7 +172,7 @@ export default function Home() {
       >
         <span className="upload-zone-glyph" aria-hidden="true">↑</span>
         <span className="upload-zone-text">or drag and drop a video file here</span>
-        <span className="upload-zone-meta">mp4 · mov · webm · up to 60 MB</span>
+        <span className="upload-zone-meta">mp4 · mov · webm · up to 100 MB</span>
         {uploadError && <span className="upload-zone-error">{uploadError}</span>}
         <input type="file" accept="video/*" style={{ display: 'none' }}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />

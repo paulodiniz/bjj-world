@@ -243,10 +243,10 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
 
     contents = await video.read()
     size_mb = len(contents) / 1e6
-    if size_mb > 60:
+    if size_mb > 100:
         os.unlink(tmp_path)
         return StreamingResponse(
-            iter([_sse("error", {"text": "File too large. Maximum upload size is 60 MB."})]),
+            iter([_sse("error", {"text": "File too large. Maximum upload size is 100 MB."})]),
             media_type="text/event-stream",
             status_code=413,
         )
