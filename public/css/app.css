@@ -1234,6 +1234,8 @@
     .auth-btn:hover { border-color: var(--ink-2); color: var(--ink); }
 
     .user-btn {
+      width: 36px;
+      justify-content: center;
       display: flex;
       align-items: center;
       gap: 7px;
