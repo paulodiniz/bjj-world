@@ -3618,8 +3618,7 @@
       askBtn.className = 'tp-ask-btn';
       askBtn.textContent = `Ask coach about ${data.name} →`;
       askBtn.addEventListener('click', () => {
-        fillQuery(`Tell me more about ${data.name}`);
-        setMode(hasResults ? 'results' : 'landing');
+        submitQuestion(`Tell me more about ${data.name}`);
       });
       const pathBtn = document.createElement('button');
       pathBtn.className = 'tp-path-btn';
