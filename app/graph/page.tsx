@@ -14,8 +14,16 @@ export default function GraphPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (typeof d3 === 'undefined') return
+    // D3 is loaded via CDN — wait until it's available
+    const tryInit = () => {
+      if (typeof d3 !== 'undefined') { initGraph(); return }
+      setTimeout(tryInit, 100)
+    }
+    tryInit()
+    return () => { /* cleanup handled by d3 overwriting svg */ }
+  }, []) // eslint-disable-line
 
+  const initGraph = () => {
     const svgEl = svgRef.current!
     const W = svgEl.clientWidth || window.innerWidth
     const H = svgEl.clientHeight || (window.innerHeight - 52)
@@ -110,7 +118,7 @@ export default function GraphPage() {
         }
       })
       .catch(() => setError(true))
-  }, []) // eslint-disable-line
+  } // end initGraph
 
   const toggleType = (type: string) => {
     setActiveTypes((prev) => {

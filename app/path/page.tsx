@@ -31,7 +31,7 @@ function PathFinder() {
       const data = await getPath(fromNode.id, toNode.id)
       setResult(data)
     } catch {
-      setResult({ error: 'Failed to find path' })
+      setResult({ found: false, error: 'Failed to find path' })
     } finally {
       setLoading(false)
     }
@@ -79,12 +79,19 @@ function PathFinder() {
           <div id="path-result" aria-live="polite" style={{ marginTop: '32px' }}>
             {result.error ? (
               <p style={{ color: 'var(--ink-3)', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>{result.error}</p>
-            ) : result.path?.length > 0 ? (
+            ) : result.found && result.steps?.length > 0 ? (
               <div className="path-result">
-                <p className="path-result-meta">{result.path.length - 1} step{result.path.length !== 2 ? 's' : ''}</p>
+                <p className="path-result-meta">{result.steps.length - 1} step{result.steps.length !== 2 ? 's' : ''}</p>
                 <ol className="path-steps">
-                  {result.path.map((node: string, idx: number) => (
-                    <li key={idx} className="path-step">{node}</li>
+                  {result.steps.map((step: any, idx: number) => (
+                    <li key={idx} className="path-step">
+                      <a href={`/technique/${encodeURIComponent(step.id)}`} className={`nc nc-${step.type}`}>{step.name}</a>
+                      {result.transitions[idx] && (
+                        <span style={{ color: 'var(--ink-3)', fontSize: '0.75rem', marginLeft: 8 }}>
+                          {result.transitions[idx].toLowerCase().replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </li>
                   ))}
                 </ol>
               </div>

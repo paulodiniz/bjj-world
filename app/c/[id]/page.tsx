@@ -39,8 +39,8 @@ export default function ConversationPage({ params }: { params: { id: string } })
 
   if (status === 'unauth') return (
     <div className="results-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-      <p style={{ fontFamily: 'var(--mono)', fontSize: '0.85rem', color: 'var(--ink-3)' }}>Sign in to view saved conversations.</p>
-      <Link href="/signin" style={{ color: 'var(--accent-text)', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>Sign in →</Link>
+      <p style={{ fontFamily: 'var(--mono)', fontSize: '0.85rem', color: 'var(--ink-3)' }}>Conversation not found.</p>
+      <Link href="/" style={{ color: 'var(--accent-text)', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>← Start a new one</Link>
     </div>
   )
 

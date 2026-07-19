@@ -144,11 +144,8 @@ export async function getNodes() {
   return apiCall('/api/nodes')
 }
 
-export async function getPath(fromNode: string, toNode: string) {
-  return apiCall('/api/path', {
-    method: 'POST',
-    body: { from_node: fromNode, to_node: toNode },
-  })
+export async function getPath(fromId: string, toId: string) {
+  return apiCall(`/api/path?from=${encodeURIComponent(fromId)}&to=${encodeURIComponent(toId)}`)
 }
 
 /**

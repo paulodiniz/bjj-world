@@ -1,24 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { chatStream } from '@/lib/api'
-import { useChips } from '@/lib/useChips'
+import { chatStream, getNodes } from '@/lib/api'
+import { setChipNodes, chipifyHtml } from '@/lib/chipifyHtml'
 
-declare global {
-  interface Window { marked: any }
-}
+declare global { interface Window { marked: any } }
 
 function renderMarkdown(text: string): string {
-  if (typeof window !== 'undefined' && window.marked) {
-    return window.marked.parse(text)
-  }
-  return text.replace(/\n/g, '<br/>')
+  const html = (typeof window !== 'undefined' && window.marked)
+    ? window.marked.parse(text)
+    : text.replace(/\n/g, '<br/>')
+  return chipifyHtml(html)
 }
 
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
+interface Message { role: 'user' | 'assistant'; content: string }
 
 interface ChatProps {
   conversationId: string
@@ -33,10 +28,17 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
   const [isLoading, setIsLoading] = useState(false)
   const [currentResponse, setCurrentResponse] = useState('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
+  const [nodesReady, setNodesReady] = useState(false)
   const entriesRef = useRef<HTMLDivElement>(null)
   const autoSentRef = useRef(false)
 
-  useChips(entriesRef, [messages, currentResponse])
+  // Load nodes once and register with chipifyHtml
+  useEffect(() => {
+    getNodes().then((data: any[]) => {
+      setChipNodes(Array.isArray(data) ? data : [])
+      setNodesReady(true)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (entriesRef.current) {
@@ -44,13 +46,12 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
     }
   }, [messages, currentResponse])
 
-  // Auto-send the initial question once on mount
   useEffect(() => {
     if (autoQuestion && !autoSentRef.current) {
       autoSentRef.current = true
       sendMessage(autoQuestion, [])
     }
-  }, [autoQuestion])
+  }, [autoQuestion]) // eslint-disable-line
 
   const sendMessage = async (text: string, history: Message[]) => {
     setMessages((prev) => [...prev, { role: 'user', content: text }])
@@ -70,7 +71,6 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
         if (event.type === 'conversation_id') {
           currentConvId = event.id
           setConversationId(event.id)
-          // Update URL silently without navigating — router.replace unmounts this component
           window.history.replaceState(null, '', `/c/${event.id}`)
         } else if (event.type === 'token') {
           response += event.text
@@ -84,7 +84,6 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
       }
     } catch (error: any) {
       if (error.name !== 'AbortError') {
-        console.error('Chat error:', error)
         setCurrentResponse('Error: Failed to get response. Please try again.')
       }
     } finally {
@@ -107,10 +106,13 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
     setIsLoading(false)
   }
 
+  // Re-render with chips once nodes are ready (applies to initialMessages too)
+  const renderKey = nodesReady ? 'chipped' : 'plain'
+
   return (
     <div className="entries" ref={entriesRef} role="log" aria-live="polite">
       {messages.map((msg, idx) => (
-        <div key={idx} className="entry">
+        <div key={`${renderKey}-${idx}`} className="entry">
           {msg.role === 'user' ? (
             <div className="entry-q">
               <span className="entry-q-glyph" aria-hidden="true">▸</span>
@@ -134,14 +136,9 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
 
       <form onSubmit={handleSubmit} style={{ marginTop: '20px', padding: '0 20px' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask a follow-up question…"
-            disabled={isLoading}
-            style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', font: 'inherit' }}
-          />
+          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ask a follow-up question…" disabled={isLoading}
+            style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', font: 'inherit' }} />
           {isLoading ? (
             <button type="button" onClick={handleStop}
               style={{ padding: '10px 20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>

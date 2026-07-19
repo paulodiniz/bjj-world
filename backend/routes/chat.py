@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import uuid
 from collections import defaultdict
 
 import httpx
@@ -10,6 +11,7 @@ from fastapi.responses import StreamingResponse
 
 from services.auth import get_user_by_session
 from services.history import (
+    conversation_belongs_to_anon,
     conversation_belongs_to_user,
     create_conversation,
     save_messages,
@@ -90,7 +92,7 @@ def _sse(type_: str, payload: dict) -> str:
 
 
 @router.post("/api/chat")
-async def chat(request: Request, bjj_session: str = Cookie(default=None)):
+async def chat(request: Request, bjj_session: str = Cookie(default=None), anon_session: str = Cookie(default=None)):
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or request.client.host
     if _is_rate_limited(ip):
         return StreamingResponse(
@@ -116,6 +118,13 @@ async def chat(request: Request, bjj_session: str = Cookie(default=None)):
     if user:
         profile = await get_profile(str(user["id"]))
         profile_ctx = build_profile_context(profile)
+
+    # Generate anon session if user is not logged in and has no session yet
+    new_anon_session: str | None = None
+    if not user and not anon_session:
+        anon_session = str(uuid.uuid4())
+        new_anon_session = anon_session
+
     print(f"ip={ip} user={user['email'] if user else 'anon'} question={question!r}")
 
     async def generate():
@@ -139,14 +148,20 @@ async def chat(request: Request, bjj_session: str = Cookie(default=None)):
             yield _sse("done", {})
             return
 
-        # Resolve or create conversation for signed-in users
+        # Resolve or create conversation
         conv_id = conversation_id
+        title = question[:80] + ("…" if len(question) > 80 else "")
         if user:
             if conv_id and not await conversation_belongs_to_user(conv_id, str(user["id"])):
                 conv_id = None
             if not conv_id:
-                title = question[:80] + ("…" if len(question) > 80 else "")
-                conv_id = await create_conversation(str(user["id"]), title)
+                conv_id = await create_conversation(title, user_id=str(user["id"]))
+            yield _sse("conversation_id", {"id": conv_id})
+        elif anon_session:
+            if conv_id and not await conversation_belongs_to_anon(conv_id, anon_session):
+                conv_id = None
+            if not conv_id:
+                conv_id = await create_conversation(title, anon_session_id=anon_session)
             yield _sse("conversation_id", {"id": conv_id})
 
         yield _sse("status", {"text": "Searching knowledge base..."})
@@ -170,7 +185,17 @@ async def chat(request: Request, bjj_session: str = Cookie(default=None)):
 
         yield _sse("done", {})
 
-        if user and conv_id and full_text:
+        if conv_id and full_text:
             await save_messages(conv_id, question, full_text)
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    response = StreamingResponse(generate(), media_type="text/event-stream")
+    if new_anon_session:
+        response.set_cookie(
+            "anon_session", new_anon_session,
+            max_age=365 * 86400,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            path="/",
+        )
+    return response
