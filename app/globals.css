@@ -24,7 +24,13 @@ input[type="text"] {
   gap: 8px;
 }
 
-/* Ensure header search input stretches to fill available space */
+/* Ensure header search input stretches and never fully collapses */
 .header-cmd {
   flex: 1;
+  min-width: 100px;
+}
+
+/* Prevent email from wrapping to two lines */
+.user-btn-email {
+  white-space: nowrap;
 }

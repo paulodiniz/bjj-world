@@ -67,9 +67,9 @@ export function Header() {
           <button type="submit" form="header-form" className="header-btn">Ask</button>
         )}
         <Link href="/path" className="path-toggle-btn">Path →</Link>
-        <Link href="/graph" className="graph-toggle-btn">Graph</Link>
-        {user && <Link href="/history" className="history-toggle-btn">History</Link>}
-        {user && <Link href="/profile" className="history-toggle-btn">Profile</Link>}
+        <Link href="/graph" className="path-toggle-btn">Graph</Link>
+        {user && <Link href="/history" className="path-toggle-btn">History</Link>}
+        {user && <Link href="/profile" className="path-toggle-btn">Profile</Link>}
 
         {user ? (
           <div style={{ position: 'relative' }}>
