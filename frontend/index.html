@@ -774,84 +774,158 @@
     .landing-user-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
 
     /* ── Analysis notes & share ─────────────────────────── */
-    .analysis-toolbar {
+    /* ── Analysis owner view ────────────────────────────── */
+    .an-share-panel {
+      border: 1px solid var(--border-sub);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .an-share-head {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface);
     }
-    .analysis-share-btn, .analysis-unshare-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-family: var(--mono);
-      font-size: 0.72rem;
-      color: var(--ink-2);
-      cursor: pointer;
-      transition: border-color 150ms, color 150ms;
-    }
-    .analysis-share-btn:hover { border-color: var(--accent-text); color: var(--accent-text); }
-    .analysis-unshare-btn:hover { border-color: var(--ink-2); color: var(--ink); }
-    .analysis-share-url {
-      flex: 1;
+    .an-share-label {
       font-family: var(--mono);
       font-size: 0.68rem;
       color: var(--ink-3);
-      background: var(--surface);
+      letter-spacing: 0.04em;
+    }
+    .an-share-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms, background 150ms;
+    }
+    .an-share-toggle:hover { border-color: var(--accent-text); color: var(--accent-text); }
+    .an-share-toggle.active {
+      border-color: var(--c-position);
+      color: var(--c-position);
+      background: color-mix(in oklch, var(--c-position) 8%, transparent);
+    }
+    .an-share-body {
+      border-top: 1px solid var(--border-sub);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .an-share-link {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-2);
+      background: var(--bg);
       border: 1px solid var(--border-sub);
-      border-radius: 6px;
+      border-radius: 5px;
       padding: 6px 10px;
       cursor: pointer;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
-      transition: border-color 150ms;
+      transition: border-color 150ms, color 150ms;
+      user-select: all;
     }
-    .analysis-share-url:hover { border-color: var(--border); color: var(--ink-2); }
-    .analysis-global-note {
+    .an-share-link:hover { border-color: var(--border); }
+    .an-copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms;
+      flex-shrink: 0;
+    }
+    .an-copy-btn:hover { border-color: var(--ink-2); color: var(--ink); }
+    .an-copy-btn.copied { color: var(--c-position); border-color: var(--c-position); }
+    .an-revoke-btn {
+      background: none;
+      border: none;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      cursor: pointer;
+      padding: 4px 0;
+      flex-shrink: 0;
+      transition: color 150ms;
+    }
+    .an-revoke-btn:hover { color: var(--accent-text); }
+
+    /* Notes section */
+    .an-notes-section {
+      margin-bottom: 24px;
+    }
+    .an-notes-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .an-notes-saved {
+      color: var(--c-position);
+      opacity: 0;
+      transition: opacity 200ms ease-out;
+    }
+    .an-notes-saved.visible { opacity: 1; }
+    .an-notes-textarea {
       width: 100%;
       background: var(--surface);
       border: 1px solid var(--border-sub);
       border-radius: 8px;
-      padding: 10px 14px;
+      padding: 11px 14px;
       font-family: var(--sans);
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--ink-2);
+      line-height: 1.65;
       resize: vertical;
       outline: none;
-      min-height: 64px;
-      transition: border-color 150ms;
-      box-sizing: border-box;
-      margin-bottom: 8px;
-    }
-    .analysis-global-note:focus { border-color: var(--accent); color: var(--ink); }
-    .analysis-global-note::placeholder { color: var(--ink-3); }
-    .analysis-save-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 5px 12px;
-      font-family: var(--mono);
-      font-size: 0.70rem;
-      color: var(--ink-3);
-      cursor: pointer;
+      min-height: 72px;
       transition: border-color 150ms, color 150ms;
+      box-sizing: border-box;
     }
-    .analysis-save-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
-    .analysis-saved-flash {
-      font-family: var(--mono);
-      font-size: 0.68rem;
-      color: var(--c-position);
-      opacity: 0;
-      transition: opacity 300ms;
-    }
-    .analysis-saved-flash.visible { opacity: 1; }
-    .event-note-input {
-      width: 100%;
+    .an-notes-textarea:focus { border-color: var(--border); color: var(--ink); }
+    .an-notes-textarea::placeholder { color: var(--ink-3); }
+
+    /* Per-event notes */
+    .ev-note-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 0;
+      transition: color 150ms;
+    }
+    .ev-note-trigger:hover { color: var(--ink-2); }
+    .ev-note-trigger.has-note { color: var(--accent-text); }
+    .ev-note-wrap {
+      margin-top: 8px;
+      display: none;
+    }
+    .ev-note-wrap.open { display: block; }
+    .ev-note-input {
+      width: 100%;
       background: var(--bg);
       border: 1px solid var(--border-sub);
       border-radius: 6px;
@@ -863,69 +937,147 @@
       transition: border-color 150ms;
       box-sizing: border-box;
     }
-    .event-note-input:focus { border-color: var(--accent); }
-    .event-note-input::placeholder { color: var(--ink-3); }
-    .event-note-display {
-      margin-top: 7px;
-      padding: 7px 10px;
-      background: color-mix(in oklch, var(--c-position) 8%, transparent);
-      border-radius: 6px;
-      font-family: var(--mono);
-      font-size: 0.70rem;
-      color: var(--ink-2);
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
-    .share-badge {
-      font-family: var(--mono);
-      font-size: 0.62rem;
-      color: var(--c-position);
-      border: 1px solid var(--c-position);
-      border-radius: 4px;
-      padding: 2px 7px;
-      letter-spacing: 0.04em;
-    }
+    .ev-note-input:focus { border-color: var(--border); }
+    .ev-note-input::placeholder { color: var(--ink-3); }
 
     /* ── Shared view ────────────────────────────────────── */
     .shared-area {
       display: none;
       flex: 1;
       overflow-y: auto;
-      padding: 32px 24px 64px;
     }
     [data-mode="shared"] .shared-area { display: block; }
     [data-mode="shared"] body { overflow: auto; }
-    .shared-inner {
-      max-width: 680px;
-      margin: 0 auto;
+
+    .shared-header {
+      border-bottom: 1px solid var(--border-sub);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
-    .shared-brand {
+    .shared-brand-link {
       font-family: var(--sans);
       font-style: italic;
       font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--ink-3);
+      font-size: 1rem;
+      color: var(--ink);
       letter-spacing: -0.02em;
-      margin-bottom: 28px;
-      display: block;
+      text-decoration: none;
+      flex-shrink: 0;
     }
-    .shared-coach-note {
-      margin-top: 10px;
-      padding: 12px 16px;
-      background: color-mix(in oklch, var(--c-position) 8%, transparent);
-      border-radius: 8px;
+    .shared-brand-link:hover { color: var(--ink-2); }
+    .shared-cta-link {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 150ms;
+      white-space: nowrap;
+    }
+    .shared-cta-link:hover { color: var(--ink-2); }
+    @media (max-width: 480px) { .shared-cta-link { display: none; } }
+
+    .shared-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 36px 24px 72px;
+    }
+    .shared-title {
       font-family: var(--sans);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 1.5rem;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      line-height: 1.15;
+      margin-bottom: 8px;
+      text-wrap: balance;
+    }
+    .shared-fighters {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--ink-3);
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+    .shared-summary {
       font-size: 0.88rem;
       color: var(--ink-2);
       line-height: 1.7;
+      text-wrap: pretty;
+      max-width: 60ch;
+      margin-bottom: 28px;
+    }
+    .shared-coach-note {
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 8px;
+      margin-bottom: 28px;
+    }
+    .shared-coach-note-byline {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+    }
+    .shared-coach-note-body {
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      color: var(--ink-2);
+      line-height: 1.75;
+      white-space: pre-wrap;
+      text-wrap: pretty;
+    }
+    .shared-ev-note {
+      margin-top: 8px;
+      padding: 7px 11px;
+      background: var(--surface);
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--ink-2);
+      line-height: 1.55;
       white-space: pre-wrap;
     }
-    .shared-coach-note-label {
+    .shared-bottom-cta {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-sub);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .shared-bottom-cta-text {
       font-family: var(--mono);
-      font-size: 0.64rem;
-      color: var(--c-position);
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
+      font-size: 0.75rem;
+      color: var(--ink-3);
+    }
+    .shared-bottom-cta-link {
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent-text);
+      text-decoration: none;
+      transition: color 150ms;
+    }
+    .shared-bottom-cta-link:hover { color: var(--ink); }
+
+    /* event-note-display kept for legacy saved analyses read-only rendering */
+    .event-note-display {
+      margin-top: 7px;
+      padding: 7px 10px;
+      background: var(--surface);
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 0.70rem;
+      color: var(--ink-2);
+      line-height: 1.5;
+      white-space: pre-wrap;
     }
 
     /* ── History ────────────────────────────────────────── */
@@ -1770,6 +1922,10 @@
 
   <!-- ── Shared analysis (public view) ── -->
   <div class="shared-area" role="main" aria-label="Shared analysis">
+    <header class="shared-header">
+      <a href="/" class="shared-brand-link">Tapcodex</a>
+      <a href="/" class="shared-cta-link">Analyse your own matches →</a>
+    </header>
     <div class="shared-inner" id="shared-content"></div>
   </div>
 
@@ -2878,6 +3034,22 @@
     }
 
     // ── Saved analyses ───────────────────────────────────────
+    async function _autoSaveNotes(id, noteArea, timeline, savedEl) {
+      const eventNotes = {};
+      timeline.querySelectorAll('.ev-note-input').forEach(inp => {
+        if (inp.value.trim()) eventNotes[inp.dataset.ts] = inp.value.trim();
+      });
+      try {
+        await fetch(`/api/analyses/${id}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ global_note: noteArea.value, event_notes: eventNotes }),
+        });
+        savedEl.classList.add('visible');
+        setTimeout(() => savedEl.classList.remove('visible'), 1800);
+      } catch {}
+    }
+
     async function loadAnalysisFromHistory(id, push = true) {
       try {
         const res = await fetch(`/api/analyses/${id}`);
@@ -2888,10 +3060,10 @@
         entries.innerHTML = '';
         hasResults = true;
         setMode('results');
+        document.title = `${data.title} — Tapcodex`;
 
         const eventNotes = data.event_notes || {};
-        let globalNote = data.global_note || '';
-        let shareUrl = data.is_shared ? null : null; // loaded lazily
+        let shareUrl = null;
 
         const entry = document.createElement('div');
         entry.className = 'entry';
@@ -2905,63 +3077,87 @@
         const entryA = document.createElement('div');
         entryA.className = 'entry-a';
 
-        // Toolbar
-        const toolbar = document.createElement('div');
-        toolbar.className = 'analysis-toolbar';
+        // ── Share panel ──────────────────────────────────────
+        const sharePanel = document.createElement('div');
+        sharePanel.className = 'an-share-panel';
 
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'analysis-share-btn';
-        shareBtn.textContent = data.is_shared ? 'Shared ✓' : 'Share';
+        const shareHead = document.createElement('div');
+        shareHead.className = 'an-share-head';
+
+        const shareLabel = document.createElement('span');
+        shareLabel.className = 'an-share-label';
+        shareLabel.textContent = data.is_shared ? 'Shared' : 'Share this analysis';
+
+        const shareToggle = document.createElement('button');
+        shareToggle.className = 'an-share-toggle' + (data.is_shared ? ' active' : '');
+        shareToggle.textContent = data.is_shared ? 'Sharing on' : 'Share';
+
+        shareHead.appendChild(shareLabel);
+        shareHead.appendChild(shareToggle);
+        sharePanel.appendChild(shareHead);
+
+        const shareBody = document.createElement('div');
+        shareBody.className = 'an-share-body';
+        shareBody.style.display = data.is_shared ? 'flex' : 'none';
 
         const shareLinkEl = document.createElement('span');
-        shareLinkEl.className = 'analysis-share-url';
-        shareLinkEl.style.display = 'none';
-        shareLinkEl.title = 'Click to copy';
+        shareLinkEl.className = 'an-share-link';
+        shareLinkEl.title = 'Click to select';
 
-        const unshareBtn = document.createElement('button');
-        unshareBtn.className = 'analysis-unshare-btn';
-        unshareBtn.textContent = 'Revoke link';
-        unshareBtn.style.display = 'none';
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'an-copy-btn';
+        copyBtn.textContent = 'Copy';
+
+        const revokeBtn = document.createElement('button');
+        revokeBtn.className = 'an-revoke-btn';
+        revokeBtn.textContent = 'Revoke';
+
+        shareBody.appendChild(shareLinkEl);
+        shareBody.appendChild(copyBtn);
+        shareBody.appendChild(revokeBtn);
+        sharePanel.appendChild(shareBody);
+
+        const populateShareUrl = (url) => {
+          shareUrl = url;
+          shareLinkEl.textContent = url;
+        };
 
         if (data.is_shared) {
           fetch(`/api/analyses/${id}/share`, { method: 'POST' })
-            .then(r => r.json()).then(d => {
-              shareUrl = d.share_url;
-              shareLinkEl.textContent = shareUrl;
-              shareLinkEl.style.display = 'block';
-              unshareBtn.style.display = 'block';
-            });
+            .then(r => r.json()).then(d => populateShareUrl(d.share_url));
         }
 
-        shareBtn.addEventListener('click', async () => {
+        shareToggle.addEventListener('click', async () => {
+          if (shareToggle.classList.contains('active')) return;
+          shareToggle.textContent = 'Sharing…';
           const r = await fetch(`/api/analyses/${id}/share`, { method: 'POST' });
           const d = await r.json();
-          shareUrl = d.share_url;
-          shareLinkEl.textContent = shareUrl;
-          shareLinkEl.style.display = 'block';
-          unshareBtn.style.display = 'block';
-          shareBtn.textContent = 'Shared ✓';
+          populateShareUrl(d.share_url);
+          shareToggle.classList.add('active');
+          shareToggle.textContent = 'Sharing on';
+          shareLabel.textContent = 'Shared';
+          shareBody.style.display = 'flex';
         });
 
-        shareLinkEl.addEventListener('click', () => {
+        copyBtn.addEventListener('click', () => {
+          if (!shareUrl) return;
           navigator.clipboard.writeText(shareUrl);
-          shareLinkEl.textContent = 'Copied!';
-          setTimeout(() => { shareLinkEl.textContent = shareUrl; }, 1500);
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1800);
         });
 
-        unshareBtn.addEventListener('click', async () => {
+        revokeBtn.addEventListener('click', async () => {
           await fetch(`/api/analyses/${id}/share`, { method: 'DELETE' });
-          shareLinkEl.style.display = 'none';
-          unshareBtn.style.display = 'none';
-          shareBtn.textContent = 'Share';
+          shareBody.style.display = 'none';
+          shareToggle.classList.remove('active');
+          shareToggle.textContent = 'Share';
+          shareLabel.textContent = 'Share this analysis';
         });
 
-        toolbar.appendChild(shareBtn);
-        toolbar.appendChild(shareLinkEl);
-        toolbar.appendChild(unshareBtn);
-        entryA.appendChild(toolbar);
+        entryA.appendChild(sharePanel);
 
-        // Fight header
+        // ── Fight header ─────────────────────────────────────
         const header = document.createElement('div');
         header.className = 'fight-header';
         header.innerHTML = `
@@ -2974,57 +3170,76 @@
           </div>`;
         entryA.appendChild(header);
 
-        // Global note
+        // ── Coach notes ──────────────────────────────────────
+        const notesSection = document.createElement('div');
+        notesSection.className = 'an-notes-section';
+
+        const notesLabelRow = document.createElement('div');
+        notesLabelRow.className = 'an-notes-label';
+        notesLabelRow.innerHTML = `<span>Your notes</span>`;
+        const savedEl = document.createElement('span');
+        savedEl.className = 'an-notes-saved';
+        savedEl.textContent = '✓ Saved';
+        notesLabelRow.appendChild(savedEl);
+        notesSection.appendChild(notesLabelRow);
+
         const noteArea = document.createElement('textarea');
-        noteArea.className = 'analysis-global-note';
-        noteArea.placeholder = 'Add coaching notes for this analysis…';
-        noteArea.value = globalNote;
-        entryA.appendChild(noteArea);
+        noteArea.className = 'an-notes-textarea';
+        noteArea.placeholder = 'Add coaching notes for this analysis — they appear for anyone you share this with.';
+        noteArea.value = data.global_note || '';
+        notesSection.appendChild(noteArea);
+        entryA.appendChild(notesSection);
 
-        const noteFooter = document.createElement('div');
-        noteFooter.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:20px';
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'analysis-save-btn';
-        saveBtn.textContent = 'Save notes';
-        const savedFlash = document.createElement('span');
-        savedFlash.className = 'analysis-saved-flash';
-        savedFlash.textContent = 'Saved';
-        noteFooter.appendChild(saveBtn);
-        noteFooter.appendChild(savedFlash);
-        entryA.appendChild(noteFooter);
-
-        // Timeline with per-event note inputs
+        // ── Timeline with collapsible per-event notes ────────
         const timeline = document.createElement('div');
         timeline.className = 'fight-timeline';
+
         for (const ev of data.events || []) {
           const row = buildTimelineRow(ev, new Map());
           const tsKey = String(ev.timestamp ?? 0);
+          const existingNote = eventNotes[tsKey] || '';
+
+          const trigger = document.createElement('button');
+          trigger.className = 'ev-note-trigger' + (existingNote ? ' has-note' : '');
+          trigger.textContent = existingNote ? `✎ ${existingNote.slice(0, 40)}${existingNote.length > 40 ? '…' : ''}` : '+ add note';
+          trigger.dataset.ts = tsKey;
+
+          const noteWrap = document.createElement('div');
+          noteWrap.className = 'ev-note-wrap' + (existingNote ? ' open' : '');
+
           const noteInput = document.createElement('input');
-          noteInput.className = 'event-note-input';
+          noteInput.className = 'ev-note-input';
           noteInput.type = 'text';
-          noteInput.placeholder = 'Add note for this moment…';
-          noteInput.value = eventNotes[tsKey] || '';
+          noteInput.placeholder = 'Note for this moment…';
+          noteInput.value = existingNote;
           noteInput.dataset.ts = tsKey;
-          row.appendChild(noteInput);
+          noteWrap.appendChild(noteInput);
+
+          trigger.addEventListener('click', () => {
+            noteWrap.classList.toggle('open');
+            if (noteWrap.classList.contains('open')) noteInput.focus();
+          });
+
+          noteInput.addEventListener('input', () => {
+            const val = noteInput.value.trim();
+            trigger.textContent = val ? `✎ ${val.slice(0, 40)}${val.length > 40 ? '…' : ''}` : '+ add note';
+            trigger.classList.toggle('has-note', !!val);
+          });
+
+          row.appendChild(trigger);
+          row.appendChild(noteWrap);
           timeline.appendChild(row);
         }
+
         applyChips(timeline);
         entryA.appendChild(timeline);
 
-        // Save handler
-        saveBtn.addEventListener('click', async () => {
-          const newEventNotes = {};
-          timeline.querySelectorAll('.event-note-input').forEach(inp => {
-            if (inp.value.trim()) newEventNotes[inp.dataset.ts] = inp.value.trim();
-          });
-          await fetch(`/api/analyses/${id}/notes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ global_note: noteArea.value, event_notes: newEventNotes }),
-          });
-          savedFlash.classList.add('visible');
-          setTimeout(() => savedFlash.classList.remove('visible'), 2000);
-        });
+        // Auto-save on blur from note area or any event note input
+        const triggerSave = () => _autoSaveNotes(id, noteArea, timeline, savedEl);
+        noteArea.addEventListener('blur', triggerSave);
+        timeline.addEventListener('blur', e => {
+          if (e.target.classList.contains('ev-note-input')) triggerSave();
+        }, true);
 
         entry.appendChild(entryA);
         entries.appendChild(entry);
@@ -3039,44 +3254,53 @@
       if (push) history.pushState({ share_token: token }, '', `/s/${token}`);
       setMode('shared');
       const container = document.getElementById('shared-content');
-      container.innerHTML = `<span class="shared-brand">Tapcodex</span><p style="color:var(--ink-3);font-family:var(--mono);font-size:0.8rem">Loading…</p>`;
+      container.innerHTML = `<p style="color:var(--ink-3);font-family:var(--mono);font-size:0.80rem;padding-top:8px">Loading…</p>`;
 
       try {
         const res = await fetch(`/api/share/${token}`);
         if (!res.ok) {
-          container.innerHTML = `<span class="shared-brand">Tapcodex</span><p style="color:var(--ink-3);font-family:var(--mono);font-size:0.85rem">This analysis is no longer shared or doesn't exist.</p>`;
+          container.innerHTML = `<p style="color:var(--ink-3);font-family:var(--mono);font-size:0.85rem">This analysis is no longer shared or doesn't exist.</p>`;
           return;
         }
         const data = await res.json();
         const eventNotes = data.event_notes || {};
+        document.title = `${data.title} — Tapcodex`;
 
         container.innerHTML = '';
-        const brand = document.createElement('a');
-        brand.className = 'shared-brand';
-        brand.href = '/';
-        brand.textContent = 'Tapcodex';
-        container.appendChild(brand);
 
-        // Header
-        const header = document.createElement('div');
-        header.className = 'fight-header';
-        header.innerHTML = `
-          <div class="fight-meta">
-            <div class="fight-title">${escHtml(data.title)}</div>
-            <div class="fight-summary">${escHtml(data.summary || '')}</div>
-            ${data.fighter_a && data.fighter_a !== 'Fighter A'
-              ? `<div class="fight-fighters">${escHtml(data.fighter_a)} vs ${escHtml(data.fighter_b)}</div>`
-              : ''}
-          </div>`;
-        container.appendChild(header);
+        // Title block
+        const titleEl = document.createElement('h1');
+        titleEl.className = 'shared-title';
+        titleEl.textContent = data.title;
+        container.appendChild(titleEl);
 
-        // Global note
+        if (data.fighter_a && data.fighter_a !== 'Fighter A') {
+          const fightersEl = document.createElement('div');
+          fightersEl.className = 'shared-fighters';
+          fightersEl.textContent = `${data.fighter_a} vs ${data.fighter_b}`;
+          container.appendChild(fightersEl);
+        }
+
+        if (data.summary) {
+          const summaryEl = document.createElement('p');
+          summaryEl.className = 'shared-summary';
+          summaryEl.textContent = data.summary;
+          container.appendChild(summaryEl);
+        }
+
+        // Coach note
         if (data.global_note) {
-          const noteEl = document.createElement('div');
-          noteEl.innerHTML = `<div class="shared-coach-note-label">COACH NOTES</div>
-            <div class="shared-coach-note">${escHtml(data.global_note)}</div>`;
-          noteEl.style.marginBottom = '24px';
-          container.appendChild(noteEl);
+          const noteBlock = document.createElement('div');
+          noteBlock.className = 'shared-coach-note';
+          const byline = document.createElement('div');
+          byline.className = 'shared-coach-note-byline';
+          byline.textContent = 'Coach notes';
+          const body = document.createElement('div');
+          body.className = 'shared-coach-note-body';
+          body.textContent = data.global_note;
+          noteBlock.appendChild(byline);
+          noteBlock.appendChild(body);
+          container.appendChild(noteBlock);
         }
 
         // Timeline
@@ -3087,7 +3311,7 @@
           const tsKey = String(ev.timestamp ?? 0);
           if (eventNotes[tsKey]) {
             const noteEl = document.createElement('div');
-            noteEl.className = 'event-note-display';
+            noteEl.className = 'shared-ev-note';
             noteEl.textContent = eventNotes[tsKey];
             row.appendChild(noteEl);
           }
@@ -3095,9 +3319,17 @@
         }
         applyChips(timeline);
         container.appendChild(timeline);
-        document.title = `${data.title} — Tapcodex`;
+
+        // Bottom CTA
+        const cta = document.createElement('div');
+        cta.className = 'shared-bottom-cta';
+        cta.innerHTML = `
+          <span class="shared-bottom-cta-text">Analyse your own matches</span>
+          <a href="/" class="shared-bottom-cta-link">Try Tapcodex →</a>`;
+        container.appendChild(cta);
+
       } catch {
-        container.innerHTML = `<span class="shared-brand">Tapcodex</span><p style="color:var(--ink-3);font-family:var(--mono);font-size:0.85rem">Failed to load analysis.</p>`;
+        container.innerHTML = `<p style="color:var(--ink-3);font-family:var(--mono);font-size:0.85rem">Failed to load analysis.</p>`;
       }
     }
 
