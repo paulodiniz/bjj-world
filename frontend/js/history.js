@@ -146,5 +146,3 @@
       }
     }
 
-    // ── Saved analyses ───────────────────────────────────────
-    async function _autoSaveNotes(id, noteArea, timeline, savedEl) {

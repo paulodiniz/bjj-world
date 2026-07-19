@@ -251,5 +251,3 @@
       return row;
     }
 
-    // ── REMOVED: YouTube fight analysis (use file upload or direct URL instead) ──
-    async function _removed_submitVideoAnalysis(url, videoId) {
