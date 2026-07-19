@@ -10,9 +10,10 @@ _root = Path(__file__).parent.parent
 load_dotenv(_root / ".env.local", override=False)
 load_dotenv(_root / ".env", override=False)
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from routes.analyses import router as analyses_router
 from routes.auth import router as auth_router
@@ -32,6 +33,15 @@ from services.rag import init_rag
 GRAPH_PATH = str(Path(__file__).parent.parent / "graph.json")
 FRONTEND_DIR = str(Path(__file__).parent.parent / "frontend")
 INDEX_HTML = str(Path(FRONTEND_DIR) / "index.html")
+
+
+class SPAStaticFiles(StaticFiles):
+    """Serve static files; fall back to index.html for unknown paths (SPA routing)."""
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except (StarletteHTTPException, Exception):
+            return FileResponse(INDEX_HTML)
 
 
 @asynccontextmanager
@@ -64,11 +74,5 @@ app.include_router(path_router)
 app.include_router(analyze_router)
 app.include_router(profile_router)
 
-# Serve static assets (css, js) — must come before the SPA catch-all
-app.mount("/css", StaticFiles(directory=str(Path(FRONTEND_DIR) / "css")), name="css")
-app.mount("/js",  StaticFiles(directory=str(Path(FRONTEND_DIR) / "js")),  name="js")
-
-
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
-    return FileResponse(INDEX_HTML)
+# Mount SPA last — serves static files and falls back to index.html for all other paths
+app.mount("/", SPAStaticFiles(directory=FRONTEND_DIR, html=True), name="spa")
