@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { chatStream } from '@/lib/api'
 import { useChips } from '@/lib/useChips'
 
@@ -36,7 +35,6 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const entriesRef = useRef<HTMLDivElement>(null)
   const autoSentRef = useRef(false)
-  const router = useRouter()
 
   useChips(entriesRef, [messages, currentResponse])
 

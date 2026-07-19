@@ -4,159 +4,125 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getProfile, updateProfile } from '@/lib/api'
 import { getCurrentUser } from '@/lib/auth'
-import type { User } from '@/lib/auth'
+import { NodePicker } from '@/components/NodePicker'
+
+const BELTS = ['white', 'blue', 'purple', 'brown', 'black']
+const GI_OPTIONS = [{ value: 'gi', label: 'Gi' }, { value: 'nogi', label: 'No-Gi' }, { value: 'both', label: 'Both' }]
+const GUARD_TYPES = ['position', 'technique']
+const PASS_TYPES = ['guard_pass', 'technique']
+const SUB_TYPES = ['submission']
+const GAME_TYPES = ['position', 'technique', 'submission', 'guard_pass', 'concept', 'system', 'sweep', 'takedown', 'escape']
 
 interface Profile {
-  favourite_game: string[]
-  weight: string
-  belt: string
+  belt?: string
+  gi_preference?: string
+  primary_guard?: string | null
+  passing_style?: string | null
+  submission_prefs?: string[]
+  favourite_game?: string[]
+  notes?: string | null
 }
 
-const gameOptions = [
-  'Top',
-  'Bottom',
-  'Guard',
-  'Mount',
-  'Side Control',
-  'Submissions',
-  'Escapes',
-  'Transitions',
-  'Footlock',
-  'Leg Lock',
-]
-
 export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile>({
-    favourite_game: [],
-    weight: '',
-    belt: '',
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const [email, setEmail] = useState('')
+  const [belt, setBelt] = useState('white')
+  const [gi, setGi] = useState('both')
+  const [primaryGuard, setPrimaryGuard] = useState<string[]>([])
+  const [passingStyle, setPassingStyle] = useState<string[]>([])
+  const [subPrefs, setSubPrefs] = useState<string[]>([])
+  const [favGame, setFavGame] = useState<string[]>([])
+  const [notes, setNotes] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const router = useRouter()
 
   useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      const currentUser = await getCurrentUser()
-      if (!currentUser) {
-        router.push('/signin')
-        return
-      }
-      setUser(currentUser)
-
-      const profileData = await getProfile()
-      if (profileData?.profile) {
-        setProfile(profileData.profile)
-      }
-    } catch (error) {
-      console.error('Failed to load profile:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleGameToggle = (game: string) => {
-    setProfile((prev) => ({
-      ...prev,
-      favourite_game: prev.favourite_game.includes(game)
-        ? prev.favourite_game.filter((g) => g !== game)
-        : [...prev.favourite_game, game],
-    }))
-  }
+    Promise.all([getCurrentUser(), getProfile()]).then(([user, data]) => {
+      if (!user) { router.push('/signin'); return }
+      setEmail(user.email)
+      const p: Profile = data?.profile || {}
+      setBelt(p.belt || 'white')
+      setGi(p.gi_preference || 'both')
+      setPrimaryGuard(p.primary_guard ? [p.primary_guard] : [])
+      setPassingStyle(p.passing_style ? [p.passing_style] : [])
+      setSubPrefs(p.submission_prefs || [])
+      setFavGame(p.favourite_game || [])
+      setNotes(p.notes || '')
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [router])
 
   const handleSave = async () => {
-    setIsSaving(true)
+    setSaving(true)
+    setSaveError('')
     try {
-      await updateProfile(profile)
-      alert('Profile saved!')
-    } catch (error) {
-      console.error('Failed to save profile:', error)
-      alert('Failed to save profile')
+      await updateProfile({
+        belt,
+        gi_preference: gi,
+        primary_guard: primaryGuard[0] || null,
+        passing_style: passingStyle[0] || null,
+        submission_prefs: subPrefs,
+        favourite_game: favGame,
+        notes: notes.trim() || null,
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch {
+      setSaveError('Save failed — try again.')
     } finally {
-      setIsSaving(false)
+      setSaving(false)
     }
   }
 
-  if (isLoading) return <div className="profile-area">Loading...</div>
-  if (!user) return <div className="profile-area">Not signed in</div>
+  if (loading) return <div className="profile-area"><div className="profile-inner" /></div>
 
   return (
     <div className="profile-area" role="main" aria-label="My game profile">
       <div className="profile-inner" id="profile-content">
-        <h2>My Game Profile</h2>
-        <p>Personalise your answers by telling us about your BJJ game</p>
+        <div className="profile-head">
+          <h2 className="profile-title">My game</h2>
+          <p className="profile-sub">{email} · answers are tailored to your game when this is set</p>
+        </div>
 
-        <div style={{ marginTop: '24px' }}>
-          <label>
-            <strong>Belt Level</strong>
-            <select
-              value={profile.belt}
-              onChange={(e) => setProfile((prev) => ({ ...prev, belt: e.target.value }))}
-              style={{ marginTop: '8px', padding: '8px', width: '100%' }}
-            >
-              <option value="">Select belt level</option>
-              <option value="white">White</option>
-              <option value="blue">Blue</option>
-              <option value="purple">Purple</option>
-              <option value="brown">Brown</option>
-              <option value="black">Black</option>
-            </select>
-          </label>
-
-          <label style={{ display: 'block', marginTop: '16px' }}>
-            <strong>Weight</strong>
-            <input
-              type="text"
-              value={profile.weight}
-              onChange={(e) => setProfile((prev) => ({ ...prev, weight: e.target.value }))}
-              placeholder="e.g. 70kg"
-              style={{ marginTop: '8px', padding: '8px', width: '100%' }}
-            />
-          </label>
-
-          <div style={{ marginTop: '16px' }}>
-            <strong>Favourite Techniques</strong>
-            <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {gameOptions.map((game) => (
-                <button
-                  key={game}
-                  onClick={() => handleGameToggle(game)}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    background: profile.favourite_game.includes(game) ? '#3b82f6' : 'white',
-                    color: profile.favourite_game.includes(game) ? 'white' : 'black',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {game}
-                </button>
-              ))}
-            </div>
+        <div className="profile-section">
+          <span className="profile-section-label" id="label-belt">Belt</span>
+          <div className="belt-options" role="group" aria-labelledby="label-belt">
+            {BELTS.map((b) => (
+              <button key={b} type="button" className={`belt-btn${belt === b ? ' active' : ''}`}
+                aria-pressed={belt === b} onClick={() => setBelt(b)}>{b}</button>
+            ))}
           </div>
+        </div>
 
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            style={{
-              marginTop: '24px',
-              padding: '12px 24px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              opacity: isSaving ? 0.5 : 1,
-            }}
-          >
-            {isSaving ? 'Saving...' : 'Save Profile'}
+        <div className="profile-section">
+          <span className="profile-section-label" id="label-gi">Trains</span>
+          <div className="gi-options" role="group" aria-labelledby="label-gi">
+            {GI_OPTIONS.map(({ value, label }) => (
+              <button key={value} type="button" className={`gi-btn${gi === value ? ' active' : ''}`}
+                aria-pressed={gi === value} onClick={() => setGi(value)}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        <NodePicker label="Primary guard" types={GUARD_TYPES} value={primaryGuard} onChange={setPrimaryGuard} />
+        <NodePicker label="Passing style" types={PASS_TYPES} value={passingStyle} onChange={setPassingStyle} />
+        <NodePicker label="Favourite submissions" types={SUB_TYPES} value={subPrefs} multi onChange={setSubPrefs} />
+        <NodePicker label="Favourite game / focus" types={GAME_TYPES} value={favGame} multi onChange={setFavGame} />
+
+        <div className="profile-section">
+          <span className="profile-section-label" id="label-notes">Anything else? (injuries, goals, style)</span>
+          <textarea className="profile-notes" aria-labelledby="label-notes"
+            placeholder="e.g. &quot;Recovering from a knee injury, avoiding leg entanglements&quot;"
+            value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </div>
+
+        <div className="profile-footer">
+          <button type="button" className="profile-save-btn" disabled={saving} onClick={handleSave}>
+            {saving ? 'Saving…' : 'Save profile'}
           </button>
+          {saved && <span className="profile-saved visible" role="status">✓ Saved</span>}
+          {saveError && <span className="profile-save-error">{saveError}</span>}
         </div>
       </div>
     </div>

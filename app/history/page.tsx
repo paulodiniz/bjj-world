@@ -4,43 +4,53 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getConversations, deleteConversation } from '@/lib/api'
 
-interface Conversation {
-  id: string
-  title: string
-  created_at: string
-  updated_at: string
+interface Conversation { id: string; title: string; created_at: string; updated_at: string }
+
+function relativeDate(iso: string) {
+  const d = new Date(iso)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+  const dDay = new Date(d); dDay.setHours(0, 0, 0, 0)
+  if (dDay >= today) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (dDay >= yesterday) return 'Yesterday'
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
+
+function groupByDate(convs: Conversation[]) {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+  const groups: { label: string; items: Conversation[] }[] = [
+    { label: 'Today', items: [] },
+    { label: 'Yesterday', items: [] },
+    { label: 'Earlier', items: [] },
+  ]
+  for (const c of convs) {
+    const d = new Date(c.updated_at); d.setHours(0, 0, 0, 0)
+    if (d >= today) groups[0].items.push(c)
+    else if (d >= yesterday) groups[1].items.push(c)
+    else groups[2].items.push(c)
+  }
+  return groups.filter((g) => g.items.length > 0)
 }
 
 export default function HistoryPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [unauthorized, setUnauthorized] = useState(false)
 
   useEffect(() => {
-    loadConversations()
+    getConversations()
+      .then((data) => setConversations(data.conversations || []))
+      .catch((e) => { if (String(e).includes('401')) setUnauthorized(true) })
+      .finally(() => setLoading(false))
   }, [])
 
-  const loadConversations = async () => {
-    try {
-      const data = await getConversations()
-      setConversations(data.conversations || [])
-    } catch (error) {
-      console.error('Failed to load conversations:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this conversation?')) return
-
-    try {
-      await deleteConversation(id)
-      setConversations((prev) => prev.filter((c) => c.id !== id))
-    } catch (error) {
-      console.error('Failed to delete conversation:', error)
-      alert('Failed to delete conversation')
-    }
+    await deleteConversation(id)
+    setConversations((prev) => prev.filter((c) => c.id !== id))
   }
+
+  const groups = groupByDate(conversations)
 
   return (
     <div className="history-area" role="main" aria-label="Chat history">
@@ -50,52 +60,28 @@ export default function HistoryPage() {
           <Link href="/" className="history-new-btn">+ New conversation</Link>
         </div>
 
-        {isLoading ? (
-          <p>Loading conversations...</p>
-        ) : conversations.length === 0 ? (
-          <p style={{ padding: '20px', textAlign: 'center' }}>No conversations yet</p>
-        ) : (
-          <div id="history-list">
-            {conversations.map((conv) => (
-              <div
-                key={conv.id}
-                style={{
-                  padding: '12px',
-                  borderBottom: '1px solid #eee',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Link
-                  href={`/c/${conv.id}`}
-                  style={{
-                    flex: 1,
-                    textDecoration: 'none',
-                    color: 'inherit',
-                  }}
-                >
-                  <div style={{ fontWeight: '500' }}>{conv.title}</div>
-                  <div style={{ fontSize: '0.85em', color: '#666' }}>
-                    {new Date(conv.updated_at).toLocaleDateString()}
+        <div id="history-list">
+          {loading && <p className="history-empty">Loading…</p>}
+          {unauthorized && <p className="history-empty">Sign in to see your history.</p>}
+          {!loading && !unauthorized && conversations.length === 0 && (
+            <p className="history-empty">No history yet.</p>
+          )}
+          {groups.map((group) => (
+            <div key={group.label} className="history-group">
+              <div className="history-group-label">{group.label}</div>
+              <div className="history-list">
+                {group.items.map((conv) => (
+                  <div key={conv.id} className="history-item">
+                    <Link href={`/c/${conv.id}`} className="history-item-title">{conv.title}</Link>
+                    <span className="history-item-date">{relativeDate(conv.updated_at)}</span>
+                    <button className="history-item-del" title="Delete" aria-label="Delete"
+                      onClick={() => handleDelete(conv.id)}>✕</button>
                   </div>
-                </Link>
-                <button
-                  onClick={() => handleDelete(conv.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#999',
-                    cursor: 'pointer',
-                    fontSize: '1.2em',
-                  }}
-                >
-                  ✕
-                </button>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

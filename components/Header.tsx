@@ -17,10 +17,13 @@ export function Header() {
     getCurrentUser().then(setUser)
   }, [])
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
-    // Will implement chat flow
+    const id = crypto.randomUUID()
+    sessionStorage.setItem(`pending_q_${id}`, query.trim())
+    setQuery('')
+    router.push(`/c/${id}`)
   }
 
   const handleSignOut = async () => {
