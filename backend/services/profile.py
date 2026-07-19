@@ -30,6 +30,9 @@ async def init_db() -> None:
             updated_at TIMESTAMPTZ DEFAULT NOW()
         )
     """)
+    await pool.execute("""
+        ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS favourite_game TEXT
+    """)
 
 
 async def get_profile(user_id: str) -> dict | None:
@@ -46,6 +49,7 @@ async def get_profile(user_id: str) -> dict | None:
         "passing_style": row["passing_style"],
         "submission_prefs": json.loads(row["submission_prefs"]),
         "notes": row["notes"],
+        "favourite_game": row["favourite_game"],
     }
 
 
@@ -57,16 +61,17 @@ async def save_profile(user_id: str, data: dict) -> dict:
     passing_style = data.get("passing_style") or None
     submission_prefs = json.dumps(data.get("submission_prefs") or [])
     notes = data.get("notes") or None
+    favourite_game = data.get("favourite_game") or None
 
     await pool.execute("""
         INSERT INTO user_profiles
-            (user_id, belt, gi_preference, primary_guard, passing_style, submission_prefs, notes, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            (user_id, belt, gi_preference, primary_guard, passing_style, submission_prefs, notes, favourite_game, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         ON CONFLICT (user_id) DO UPDATE SET
             belt = $2, gi_preference = $3, primary_guard = $4,
             passing_style = $5, submission_prefs = $6, notes = $7,
-            updated_at = NOW()
-    """, user_id, belt, gi, primary_guard, passing_style, submission_prefs, notes)
+            favourite_game = $8, updated_at = NOW()
+    """, user_id, belt, gi, primary_guard, passing_style, submission_prefs, notes, favourite_game)
 
     return await get_profile(user_id)
 
@@ -96,6 +101,10 @@ def build_profile_context(profile: dict | None) -> str:
     subs = profile.get("submission_prefs") or []
     if subs:
         parts.append(f"Favourite submissions: {', '.join(subs)}")
+
+    game = profile.get("favourite_game")
+    if game:
+        parts.append(f"Favourite game / focus: {game} — when relevant, connect your answer back to this game style (e.g. entries, setups, or transitions that fit this focus)")
 
     notes = profile.get("notes")
     if notes:

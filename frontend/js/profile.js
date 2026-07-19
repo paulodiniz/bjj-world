@@ -95,6 +95,18 @@ function buildProfileForm(container, profile, email) {
   const subSection = buildNodePicker('Favourite submissions', SUB_TYPES, profile.submission_prefs || [], true);
   container.appendChild(subSection.el);
 
+  // Favourite game / focus
+  const gameSection = document.createElement('div');
+  gameSection.className = 'profile-section';
+  gameSection.innerHTML = `<span class="profile-section-label">Favourite game / focus</span>`;
+  const gameInput = document.createElement('input');
+  gameInput.type = 'text';
+  gameInput.className = 'profile-text-input';
+  gameInput.placeholder = 'e.g. leg locks, back attacks, guard retention, pressure passing';
+  gameInput.value = profile.favourite_game || '';
+  gameSection.appendChild(gameInput);
+  container.appendChild(gameSection);
+
   // Notes
   const notesSection = document.createElement('div');
   notesSection.className = 'profile-section';
@@ -129,6 +141,7 @@ function buildProfileForm(container, profile, email) {
         primary_guard: guardSection.getSelected()[0] || null,
         passing_style: passSection.getSelected()[0] || null,
         submission_prefs: subSection.getSelected(),
+        favourite_game: gameInput.value.trim() || null,
         notes: notesArea.value.trim() || null,
       };
       const res = await fetch('/api/profile', {

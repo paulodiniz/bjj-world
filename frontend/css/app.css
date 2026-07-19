@@ -1910,6 +1910,22 @@
     .profile-notes:focus { border-color: var(--border); color: var(--ink); }
     .profile-notes::placeholder { color: var(--ink-3); }
 
+    .profile-text-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      color: var(--ink-2);
+      outline: none;
+      transition: border-color 150ms;
+      box-sizing: border-box;
+    }
+    .profile-text-input:focus { border-color: var(--border); color: var(--ink); }
+    .profile-text-input::placeholder { color: var(--ink-3); }
+
     .profile-footer {
       display: flex;
       align-items: center;
