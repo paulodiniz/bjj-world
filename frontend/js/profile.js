@@ -6,14 +6,16 @@ const GI_OPTIONS  = [{ value: 'gi', label: 'Gi' }, { value: 'nogi', label: 'No-G
 const GUARD_TYPES    = ['position', 'technique'];
 const PASSING_TYPES  = ['guard_pass', 'technique'];
 const SUB_TYPES      = ['submission'];
+const GAME_TYPES     = ['position', 'technique', 'submission', 'guard_pass', 'concept', 'system', 'sweep', 'takedown', 'escape'];
 
 let _profile = null; // cached after first load
 
 function openProfile() {
   closeUserMenu();
+  document.getElementById('profile-nudge').style.display = 'none';
   setMode('profile');
   history.pushState({}, '', '/profile');
-  document.title = 'My Game — Tapcodex';
+  document.title = 'My game — Tapcodex';
   renderProfilePage();
 }
 
@@ -46,17 +48,26 @@ function buildProfileForm(container, profile, email) {
   // Belt
   const beltSection = document.createElement('div');
   beltSection.className = 'profile-section';
-  beltSection.innerHTML = `<span class="profile-section-label">Belt</span>`;
+  const beltLabelId = 'profile-label-belt';
+  beltSection.innerHTML = `<span class="profile-section-label" id="${beltLabelId}">Belt</span>`;
   const beltOptions = document.createElement('div');
   beltOptions.className = 'belt-options';
+  beltOptions.setAttribute('role', 'group');
+  beltOptions.setAttribute('aria-labelledby', beltLabelId);
   let selectedBelt = profile.belt || 'white';
   BELT_LEVELS.forEach(b => {
     const btn = document.createElement('button');
     btn.className = 'belt-btn' + (b === selectedBelt ? ' active' : '');
     btn.textContent = b;
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('aria-pressed', b === selectedBelt ? 'true' : 'false');
     btn.addEventListener('click', () => {
       selectedBelt = b;
-      beltOptions.querySelectorAll('.belt-btn').forEach(el => el.classList.toggle('active', el.textContent === b));
+      beltOptions.querySelectorAll('.belt-btn').forEach(el => {
+        const match = el.textContent === b;
+        el.classList.toggle('active', match);
+        el.setAttribute('aria-pressed', match ? 'true' : 'false');
+      });
     });
     beltOptions.appendChild(btn);
   });
@@ -66,17 +77,26 @@ function buildProfileForm(container, profile, email) {
   // Gi preference
   const giSection = document.createElement('div');
   giSection.className = 'profile-section';
-  giSection.innerHTML = `<span class="profile-section-label">Trains</span>`;
+  const giLabelId = 'profile-label-gi';
+  giSection.innerHTML = `<span class="profile-section-label" id="${giLabelId}">Trains</span>`;
   const giOptions = document.createElement('div');
   giOptions.className = 'gi-options';
+  giOptions.setAttribute('role', 'group');
+  giOptions.setAttribute('aria-labelledby', giLabelId);
   let selectedGi = profile.gi_preference || 'both';
   GI_OPTIONS.forEach(({ value, label }) => {
     const btn = document.createElement('button');
     btn.className = 'gi-btn' + (value === selectedGi ? ' active' : '');
     btn.textContent = label;
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('aria-pressed', value === selectedGi ? 'true' : 'false');
     btn.addEventListener('click', () => {
       selectedGi = value;
-      giOptions.querySelectorAll('.gi-btn').forEach(el => el.classList.toggle('active', el.textContent === label));
+      giOptions.querySelectorAll('.gi-btn').forEach((el, i) => {
+        const match = GI_OPTIONS[i].value === value;
+        el.classList.toggle('active', match);
+        el.setAttribute('aria-pressed', match ? 'true' : 'false');
+      });
     });
     giOptions.appendChild(btn);
   });
@@ -95,24 +115,23 @@ function buildProfileForm(container, profile, email) {
   const subSection = buildNodePicker('Favourite submissions', SUB_TYPES, profile.submission_prefs || [], true);
   container.appendChild(subSection.el);
 
-  // Favourite game / focus
-  const gameSection = document.createElement('div');
-  gameSection.className = 'profile-section';
-  gameSection.innerHTML = `<span class="profile-section-label">Favourite game / focus</span>`;
-  const gameInput = document.createElement('input');
-  gameInput.type = 'text';
-  gameInput.className = 'profile-text-input';
-  gameInput.placeholder = 'e.g. leg locks, back attacks, guard retention, pressure passing';
-  gameInput.value = profile.favourite_game || '';
-  gameSection.appendChild(gameInput);
-  container.appendChild(gameSection);
+  // Favourite game / focus (multi select node picker)
+  const gameSection = buildNodePicker('Favourite game / focus', GAME_TYPES, profile.favourite_game || [], true);
+  const gameHint = document.createElement('p');
+  gameHint.className = 'profile-field-hint';
+  gameHint.textContent = 'The AI connects its answers to your game when you ask questions.';
+  gameSection.el.appendChild(gameHint);
+  container.appendChild(gameSection.el);
 
   // Notes
   const notesSection = document.createElement('div');
   notesSection.className = 'profile-section';
-  notesSection.innerHTML = `<span class="profile-section-label">Anything else? (injuries, goals, style)</span>`;
+  const notesLabelId = 'profile-label-notes';
+  notesSection.innerHTML = `<span class="profile-section-label" id="${notesLabelId}">Anything else? (injuries, goals, style)</span>`;
   const notesArea = document.createElement('textarea');
   notesArea.className = 'profile-notes';
+  notesArea.id = 'profile-notes-input';
+  notesArea.setAttribute('aria-labelledby', notesLabelId);
   notesArea.placeholder = 'e.g. "Recovering from a knee injury, avoiding leg entanglements"';
   notesArea.value = profile.notes || '';
   notesSection.appendChild(notesArea);
@@ -123,17 +142,25 @@ function buildProfileForm(container, profile, email) {
   footer.className = 'profile-footer';
   const saveBtn = document.createElement('button');
   saveBtn.className = 'profile-save-btn';
-  saveBtn.textContent = 'Save game profile';
+  saveBtn.setAttribute('type', 'button');
+  saveBtn.textContent = 'Save profile';
   const savedEl = document.createElement('span');
   savedEl.className = 'profile-saved';
   savedEl.textContent = '✓ Saved';
+  savedEl.setAttribute('role', 'status');
+  savedEl.setAttribute('aria-live', 'polite');
+  savedEl.setAttribute('aria-hidden', 'true');
+  const errorEl = document.createElement('span');
+  errorEl.className = 'profile-save-error';
   footer.appendChild(saveBtn);
   footer.appendChild(savedEl);
+  footer.appendChild(errorEl);
   container.appendChild(footer);
 
   saveBtn.addEventListener('click', async () => {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
+    errorEl.textContent = '';
     try {
       const body = {
         belt: selectedBelt,
@@ -141,7 +168,7 @@ function buildProfileForm(container, profile, email) {
         primary_guard: guardSection.getSelected()[0] || null,
         passing_style: passSection.getSelected()[0] || null,
         submission_prefs: subSection.getSelected(),
-        favourite_game: gameInput.value.trim() || null,
+        favourite_game: gameSection.getSelected(),
         notes: notesArea.value.trim() || null,
       };
       const res = await fetch('/api/profile', {
@@ -149,13 +176,22 @@ function buildProfileForm(container, profile, email) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (!res.ok) throw new Error(`Save failed (${res.status})`);
       const data = await res.json();
       _profile = data.profile;
+      // Hide nudge permanently once the user has saved
+      document.getElementById('profile-nudge').style.display = 'none';
+      savedEl.setAttribute('aria-hidden', 'false');
       savedEl.classList.add('visible');
-      setTimeout(() => savedEl.classList.remove('visible'), 2000);
-    } catch {}
+      setTimeout(() => {
+        savedEl.classList.remove('visible');
+        savedEl.setAttribute('aria-hidden', 'true');
+      }, 3000);
+    } catch (e) {
+      errorEl.textContent = 'Save failed — try again.';
+    }
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save game profile';
+    saveBtn.textContent = 'Save profile';
   });
 }
 
@@ -163,8 +199,10 @@ function buildNodePicker(label, types, initialValues, multi) {
   const section = document.createElement('div');
   section.className = 'profile-section';
 
+  const labelId = 'profile-label-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const lbl = document.createElement('span');
   lbl.className = 'profile-section-label';
+  lbl.id = labelId;
   lbl.textContent = label;
   section.appendChild(lbl);
 
@@ -176,6 +214,7 @@ function buildNodePicker(label, types, initialValues, multi) {
   input.type = 'text';
   input.placeholder = 'Search…';
   input.autocomplete = 'off';
+  input.setAttribute('aria-labelledby', labelId);
   wrap.appendChild(input);
 
   const selectedWrap = document.createElement('div');
@@ -191,7 +230,7 @@ function buildNodePicker(label, types, initialValues, multi) {
       if (!node) return;
       const chip = document.createElement('span');
       chip.className = 'node-picker-chip';
-      chip.innerHTML = `${escHtml(node.name)}<button class="node-picker-chip-remove" aria-label="Remove ${escHtml(node.name)}">×</button>`;
+      chip.innerHTML = `${escHtml(node.name)}<button class="node-picker-chip-remove" type="button" aria-label="Remove ${escHtml(node.name)}">×</button>`;
       chip.querySelector('button').addEventListener('click', () => {
         selected = selected.filter(id => id !== nodeId);
         renderSelected();
@@ -201,14 +240,12 @@ function buildNodePicker(label, types, initialValues, multi) {
   };
   renderSelected();
 
-  // Filter nodes by type and input text
   input.addEventListener('input', () => {
     const q = input.value.toLowerCase().trim();
     if (!q) return;
     const matches = nodeList
       .filter(n => types.includes(n.type) && n.name.toLowerCase().includes(q) && !selected.includes(n.id))
       .slice(0, 8);
-    // Use datalist for suggestions
     let dl = wrap.querySelector('datalist');
     if (!dl) { dl = document.createElement('datalist'); dl.id = `picker-dl-${Math.random().toString(36).slice(2)}`; input.setAttribute('list', dl.id); wrap.appendChild(dl); }
     dl.innerHTML = matches.map(n => `<option value="${escHtml(n.name)}" data-id="${escHtml(n.id)}">`).join('');

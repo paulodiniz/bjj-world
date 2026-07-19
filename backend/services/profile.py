@@ -3,6 +3,8 @@ import os
 
 import asyncpg
 
+import services.rag as _rag
+
 _pool: asyncpg.Pool | None = None
 
 BELT_LEVELS = ["white", "blue", "purple", "brown", "black"]
@@ -30,8 +32,34 @@ async def init_db() -> None:
             updated_at TIMESTAMPTZ DEFAULT NOW()
         )
     """)
+    # Safe migration: add as JSONB if missing, or convert from TEXT if the
+    # column was created before we switched to the node-picker approach.
     await pool.execute("""
-        ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS favourite_game TEXT
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'user_profiles' AND column_name = 'favourite_game'
+            ) THEN
+                ALTER TABLE user_profiles
+                    ADD COLUMN favourite_game JSONB NOT NULL DEFAULT '[]';
+            ELSIF (
+                SELECT data_type FROM information_schema.columns
+                WHERE table_name = 'user_profiles' AND column_name = 'favourite_game'
+            ) = 'text' THEN
+                ALTER TABLE user_profiles
+                    ALTER COLUMN favourite_game TYPE JSONB
+                    USING CASE
+                        WHEN favourite_game IS NULL OR favourite_game = ''
+                            THEN '[]'::JSONB
+                        ELSE jsonb_build_array(favourite_game)
+                    END;
+                ALTER TABLE user_profiles
+                    ALTER COLUMN favourite_game SET DEFAULT '[]';
+                ALTER TABLE user_profiles
+                    ALTER COLUMN favourite_game SET NOT NULL;
+            END IF;
+        END $$;
     """)
 
 
@@ -49,7 +77,7 @@ async def get_profile(user_id: str) -> dict | None:
         "passing_style": row["passing_style"],
         "submission_prefs": json.loads(row["submission_prefs"]),
         "notes": row["notes"],
-        "favourite_game": row["favourite_game"],
+        "favourite_game": json.loads(row["favourite_game"]),
     }
 
 
@@ -61,7 +89,7 @@ async def save_profile(user_id: str, data: dict) -> dict:
     passing_style = data.get("passing_style") or None
     submission_prefs = json.dumps(data.get("submission_prefs") or [])
     notes = data.get("notes") or None
-    favourite_game = data.get("favourite_game") or None
+    favourite_game = json.dumps(data.get("favourite_game") or [])
 
     await pool.execute("""
         INSERT INTO user_profiles
@@ -77,7 +105,6 @@ async def save_profile(user_id: str, data: dict) -> dict:
 
 
 def build_profile_context(profile: dict | None) -> str:
-    """Returns a plain-text description of the user's game for the chat system prompt."""
     if not profile:
         return ""
 
@@ -100,11 +127,19 @@ def build_profile_context(profile: dict | None) -> str:
 
     subs = profile.get("submission_prefs") or []
     if subs:
-        parts.append(f"Favourite submissions: {', '.join(subs)}")
+        _name_map = {c["id"]: c["name"] for c in _rag.rag_chunks} if _rag.rag_chunks else {}
+        sub_names = [_name_map.get(s, s.replace("_", " ")) for s in subs]
+        parts.append(f"Favourite submissions: {', '.join(sub_names)}")
 
-    game = profile.get("favourite_game")
-    if game:
-        parts.append(f"Favourite game / focus: {game} — when relevant, connect your answer back to this game style (e.g. entries, setups, or transitions that fit this focus)")
+    game_ids = profile.get("favourite_game") or []
+    if game_ids:
+        _name_map = {c["id"]: c["name"] for c in _rag.rag_chunks} if _rag.rag_chunks else {}
+        game_names = [_name_map.get(g, g.replace("_", " ")) for g in game_ids]
+        parts.append(
+            f"Favourite game / focus: {', '.join(game_names)} — when relevant, "
+            "connect your answer back to this game style (e.g. entries, setups, "
+            "or transitions that fit this focus)"
+        )
 
     notes = profile.get("notes")
     if notes:

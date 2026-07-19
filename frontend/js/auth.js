@@ -9,6 +9,19 @@
         currentUser = null;
       }
       renderAuthState();
+      if (currentUser) checkAndShowProfileNudge();
+    }
+
+    async function checkAndShowProfileNudge() {
+      try {
+        const res = await fetch('/api/profile');
+        if (!res.ok) return;
+        const { profile } = await res.json();
+        const hasGame = profile && Array.isArray(profile.favourite_game) && profile.favourite_game.length > 0;
+        if (!hasGame) {
+          document.getElementById('profile-nudge').style.display = 'flex';
+        }
+      } catch {}
     }
 
     function renderAuthState() {
