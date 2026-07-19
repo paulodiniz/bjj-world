@@ -4,6 +4,12 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { chatStream } from '@/lib/api'
 
+declare global {
+  interface Window {
+    marked: any
+  }
+}
+
 interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -45,7 +51,6 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
 
     try {
       let response = ''
-      let newConversationId = conversationId
 
       for await (const event of chatStream(
         userMessage,
@@ -56,7 +61,6 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
         if (controller.signal.aborted) break
 
         if (event.type === 'conversation_id') {
-          newConversationId = event.id
           setConversationId(event.id)
           if (conversationId === 'new' || !conversationId) {
             router.push(`/c/${event.id}`)
@@ -104,7 +108,7 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
               <div
                 className="answer-text"
                 dangerouslySetInnerHTML={{
-                  __html: marked.parse(msg.content),
+                  __html: window.marked?.parse(msg.content) || msg.content,
                 }}
               />
             </div>
@@ -118,7 +122,7 @@ export function Chat({ conversationId: initialConvId, initialMessages }: ChatPro
             <div
               className="answer-text"
               dangerouslySetInnerHTML={{
-                __html: marked.parse(currentResponse),
+                __html: window.marked?.parse(currentResponse),
               }}
             />
           </div>
