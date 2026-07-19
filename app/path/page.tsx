@@ -41,7 +41,7 @@ function PathFinder() {
   const toMatches = nodes.filter((n) => n.name.toLowerCase().includes(to.toLowerCase())).slice(0, 10)
 
   return (
-    <div className="path-area" role="main" aria-label="Path Finder">
+    <div className="path-area" style={{ display: 'block' }} role="main" aria-label="Path Finder">
       <div className="path-inner">
         <div className="path-head">
           <h2 className="path-title">Path Finder</h2>

@@ -28,7 +28,7 @@ export default function SharedAnalysisPage({ params }: { params: { id: string } 
   }, [data])
 
   if (error) return (
-    <div className="shared-area" role="main">
+    <div className="shared-area" style={{ display: "block" }} role="main">
       <div className="shared-inner">
         <p style={{ fontFamily: 'var(--mono)', fontSize: '0.85rem', color: 'var(--ink-3)' }}>
           This analysis is no longer shared or doesn't exist.
@@ -38,12 +38,12 @@ export default function SharedAnalysisPage({ params }: { params: { id: string } 
     </div>
   )
 
-  if (!data) return <div className="shared-area" role="main"><div className="shared-inner" /></div>
+  if (!data) return <div className="shared-area" style={{ display: "block" }} role="main"><div className="shared-inner" /></div>
 
   const eventNotes: Record<string, string> = data.event_notes || {}
 
   return (
-    <div className="shared-area" role="main" aria-label={data.title}>
+    <div className="shared-area" style={{ display: "block" }} role="main" aria-label={data.title}>
       <div className="shared-inner">
         <h1 className="shared-title">{data.title}</h1>
         {data.fighter_a && data.fighter_a !== 'Fighter A' && (

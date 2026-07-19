@@ -75,10 +75,10 @@ export default function ProfilePage() {
     }
   }
 
-  if (loading) return <div className="profile-area"><div className="profile-inner" /></div>
+  if (loading) return <div className="profile-area" style={{ display: "block" }}><div className="profile-inner" /></div>
 
   return (
-    <div className="profile-area" role="main" aria-label="My game profile">
+    <div className="profile-area" style={{ display: "block" }} role="main" aria-label="My game profile">
       <div className="profile-inner" id="profile-content">
         <div className="profile-head">
           <h2 className="profile-title">My game</h2>

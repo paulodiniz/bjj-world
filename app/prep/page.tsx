@@ -39,7 +39,7 @@ export default function PrepPage() {
     reset()
 
     try {
-      const res = await fetch('/api/prep/generate', {
+      const res = await fetch('/api/prep', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ technique_id: techniqueId[0], duration }),
@@ -80,10 +80,10 @@ export default function PrepPage() {
     }
   }
 
-  if (!ready) return <div className="prep-area" />
+  if (!ready) return <div className="prep-area" style={{ display: "flex" }} />
 
   return (
-    <div className="prep-area" role="main" aria-label="Class prep">
+    <div className="prep-area" style={{ display: "flex" }} role="main" aria-label="Class prep">
       <div className="prep-inner" id="prep-content">
         <div className="prep-head">
           <h2 className="prep-title">Class Prep</h2>

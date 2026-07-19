@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { chatStream, getNodes } from '@/lib/api'
 import { setChipNodes, chipifyHtml } from '@/lib/chipifyHtml'
+import { registerStop, clearStop } from '@/lib/streamControl'
 
 declare global { interface Window { marked: any } }
 
@@ -60,6 +61,7 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
 
     const controller = new AbortController()
     setAbortController(controller)
+    registerStop(() => controller.abort())
 
     try {
       let response = ''
@@ -89,14 +91,23 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
     } finally {
       setIsLoading(false)
       setAbortController(null)
+      clearStop()
     }
   }
+
+  const isYouTubeUrl = (text: string) =>
+    /(?:youtube\.com\/watch|youtu\.be\/)/.test(text)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim() || isLoading) return
-    const text = query
+    const text = query.trim()
     setQuery('')
+    if (isYouTubeUrl(text)) {
+      // Route video URLs to analysis
+      window.location.href = `/a/new?url=${encodeURIComponent(text)}`
+      return
+    }
     await sendMessage(text, messages)
   }
 
@@ -134,24 +145,15 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ marginTop: '20px', padding: '0 20px' }}>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask a follow-up question…" disabled={isLoading}
-            style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', font: 'inherit' }} />
-          {isLoading ? (
-            <button type="button" onClick={handleStop}
-              style={{ padding: '10px 20px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-              Stop
-            </button>
-          ) : (
-            <button type="submit" disabled={!query.trim()}
-              style={{ padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px',
-                cursor: !query.trim() ? 'not-allowed' : 'pointer', opacity: !query.trim() ? 0.5 : 1 }}>
-              Ask
-            </button>
-          )}
-        </div>
+      <form className="landing-cmd" onSubmit={handleSubmit} style={{ marginTop: '20px', maxWidth: 680, margin: '20px auto 0' }}>
+        <span className="landing-cmd-glyph" aria-hidden="true">◎</span>
+        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask a follow-up question…" disabled={isLoading} />
+        {isLoading ? (
+          <button type="button" className="landing-ask-btn" onClick={handleStop}>Stop</button>
+        ) : (
+          <button type="submit" className="landing-ask-btn" disabled={!query.trim()}>Ask</button>
+        )}
       </form>
     </div>
   )

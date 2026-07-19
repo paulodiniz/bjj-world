@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Header } from '@/components/Header'
+import { AuthRedirectHandler } from '@/components/AuthRedirectHandler'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body>
         <Header />
+        <AuthRedirectHandler />
         {children}
       </body>
     </html>

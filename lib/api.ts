@@ -180,9 +180,9 @@ export async function updateProfile(data: any) {
 /**
  * Prep APIs
  */
-export async function generatePrepPlan(topic: string) {
-  return apiCall('/api/prep/generate', {
+export async function generatePrepPlan(techniqueId: string, duration: number) {
+  return apiCall('/api/prep', {
     method: 'POST',
-    body: { topic },
+    body: { technique_id: techniqueId, duration },
   })
 }

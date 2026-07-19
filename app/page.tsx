@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth'
 import type { User } from '@/lib/auth'
 import { Chat } from '@/components/Chat'
 import { setPendingFile } from '@/lib/pendingFile'
+import { getProfile } from '@/lib/api'
 
 const hints = [
   'What can I attack from closed guard?',
@@ -16,6 +17,7 @@ const hints = [
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
+  const [showNudge, setShowNudge] = useState(false)
   const [query, setQuery] = useState('')
   const [activeConv, setActiveConv] = useState<{ id: string; question: string } | null>(null)
   const [uploadError, setUploadError] = useState('')
@@ -32,7 +34,18 @@ export default function Home() {
   }
 
   useEffect(() => {
-    getCurrentUser().then(setUser)
+    getCurrentUser().then((u) => {
+      setUser(u)
+      if (u) {
+        getProfile().then((data) => {
+          const hasGame = data?.profile?.favourite_game?.length > 0
+          setShowNudge(!hasGame)
+        }).catch(() => {})
+      }
+    })
+    const refresh = () => { getCurrentUser().then((u) => { setUser(u) }) }
+    window.addEventListener('auth:refresh', refresh)
+    return () => window.removeEventListener('auth:refresh', refresh)
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -92,7 +105,7 @@ export default function Home() {
         ))}
       </div>
 
-      {user && (
+      {user && showNudge && (
         <div className="profile-nudge" role="complementary">
           <span className="profile-nudge-text">Personalise your answers —</span>
           <Link href="/profile" className="profile-nudge-btn">Set up your game →</Link>

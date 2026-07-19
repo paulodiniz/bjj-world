@@ -42,7 +42,7 @@ export default function TechniquePage({ params }: { params: { name: string } }) 
   }, [data])
 
   if (notFound) return (
-    <div className="technique-area" role="main">
+    <div className="technique-area" style={{ display: "block" }} role="main">
       <div className="tp-inner">
         <div className="tp-back"><button onClick={() => history.back()}>← back</button></div>
         <p style={{ color: 'var(--ink-3)', fontSize: '0.88rem' }}>Technique not found.</p>
@@ -51,7 +51,7 @@ export default function TechniquePage({ params }: { params: { name: string } }) 
   )
 
   if (!data) return (
-    <div className="technique-area" role="main">
+    <div className="technique-area" style={{ display: "block" }} role="main">
       <div className="tp-inner">
         <p style={{ fontFamily: 'var(--mono)', fontSize: '0.8rem', color: 'var(--ink-3)' }}>Loading…</p>
       </div>
@@ -61,7 +61,7 @@ export default function TechniquePage({ params }: { params: { name: string } }) 
   const vid = ytId(data.video_url)
 
   return (
-    <div className="technique-area" role="main" aria-label={`${data.name} technique`}>
+    <div className="technique-area" style={{ display: "block" }} style={{ display: 'block' }} role="main" aria-label={`${data.name} technique`}>
       <div className="tp-inner" id="tp-content">
         <div className="tp-back"><button onClick={() => history.back()}>← back</button></div>
 
