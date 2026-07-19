@@ -19,7 +19,7 @@ async function handler(req: NextRequest, { params }: { params: { path: string[] 
     body = await req.text()
   }
 
-  const upstream = await fetch(url, { method: req.method, headers, body })
+  const upstream = await fetch(url, { method: req.method, headers, body, redirect: 'manual' })
 
   const responseHeaders = new Headers()
   upstream.headers.forEach((value, key) => {

@@ -61,7 +61,7 @@ export default function TechniquePage({ params }: { params: { name: string } }) 
   const vid = ytId(data.video_url)
 
   return (
-    <div className="technique-area" style={{ display: "block" }} style={{ display: 'block' }} role="main" aria-label={`${data.name} technique`}>
+    <div className="technique-area" style={{ display: 'block' }} role="main" aria-label={`${data.name} technique`}>
       <div className="tp-inner" id="tp-content">
         <div className="tp-back"><button onClick={() => history.back()}>← back</button></div>
 
