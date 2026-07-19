@@ -1621,26 +1621,43 @@
 
     /* ── Fight analysis ─────────────────────────────────── */
     .timeline-thumb {
-      width: 96px;
+      width: 160px;
       aspect-ratio: 16/9;
       object-fit: cover;
-      border-radius: 4px;
+      border-radius: 5px;
       background: var(--surface-2);
       display: block;
       flex-shrink: 0;
     }
+    /* Empty thumb placeholder */
+    .timeline-thumb:not([src]) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .timeline-info {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 7px;
       min-width: 0;
-      padding-top: 1px;
+      padding-top: 2px;
     }
     .timeline-meta {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+    }
+    /* On narrow screens: stack thumb above info */
+    @media (max-width: 520px) {
+      .timeline-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .timeline-thumb {
+        width: 100%;
+        border-radius: 5px 5px 0 0;
+      }
     }
     .fight-header {
       display: grid;
@@ -1694,9 +1711,9 @@
     }
     .timeline-row {
       display: flex;
-      gap: 12px;
+      gap: 16px;
       align-items: flex-start;
-      padding: 10px 0;
+      padding: 14px 0;
       border-bottom: 1px solid var(--border-sub);
       animation: entry-in 150ms ease-out both;
     }
@@ -2254,8 +2271,8 @@
       row.className = 'timeline-row';
 
       const thumbEl = thumb
-        ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="">`
-        : '<div class="timeline-thumb"></div>';
+        ? `<img class="timeline-thumb" src="data:image/jpeg;base64,${thumb}" alt="Frame at ${escHtml(event.label)}">`
+        : `<div class="timeline-thumb" style="display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.68rem;color:var(--ink-3)">${escHtml(event.label)}</div>`;
 
       const relatedHtml = (event.related || []).length > 0
         ? `<div class="timeline-related">${event.related.map(n =>
