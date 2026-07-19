@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser, clearUserCache } from '@/lib/auth'
@@ -11,8 +11,10 @@ import { triggerStop } from '@/lib/streamControl'
 export function Header() {
   const [user, setUser] = useState<User | null>(null)
   const [showMenu, setShowMenu] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
   const [query, setQuery] = useState('')
   const [streaming, setStreaming] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -30,6 +32,18 @@ export function Header() {
     }
   }, [])
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return
+    const close = (e: MouseEvent) => {
+      if (btnRef.current && !btnRef.current.closest('div')?.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [showMenu])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
@@ -37,6 +51,14 @@ export function Header() {
     sessionStorage.setItem(`pending_q_${id}`, query.trim())
     setQuery('')
     router.push(`/c/${id}`)
+  }
+
+  const handleUserBtn = () => {
+    if (!showMenu && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    setShowMenu((v) => !v)
   }
 
   const handleSignOut = async () => {
@@ -71,14 +93,14 @@ export function Header() {
         {user?.plan === 'coach' && <Link href="/prep" className="path-toggle-btn">Prep</Link>}
 
         {user ? (
-          <div style={{ position: 'relative' }}>
-            <button className="user-btn" onClick={() => setShowMenu(!showMenu)} aria-label="Account options">
+          <>
+            <button ref={btnRef} className="user-btn" onClick={handleUserBtn} aria-label="Account options">
               <span className="user-btn-dot" />
               <span className="user-btn-email">{user.email}</span>
               <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>▾</span>
             </button>
             {showMenu && (
-              <div className="user-menu" style={{ display: 'block' }}>
+              <div className="user-menu" style={{ position: 'fixed', top: menuPos.top, right: menuPos.right }}>
                 <Link href="/history" className="user-menu-item" onClick={() => setShowMenu(false)}>History</Link>
                 <Link href="/profile" className="user-menu-item" onClick={() => setShowMenu(false)}>My game profile</Link>
                 <button onClick={handleSignOut} className="user-menu-item danger"
@@ -87,7 +109,7 @@ export function Header() {
                 </button>
               </div>
             )}
-          </div>
+          </>
         ) : (
           <Link href="/signin" className="auth-btn">Sign in</Link>
         )}

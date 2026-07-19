@@ -1261,6 +1261,7 @@
     .user-btn-email {
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     #auth-dialog {
