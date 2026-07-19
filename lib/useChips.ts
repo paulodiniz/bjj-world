@@ -27,7 +27,6 @@ function chipifyTextNode(
   textNode: Text,
   nodes: BJJNode[],
   re: RegExp,
-  navigate: (id: string) => void
 ) {
   const text = textNode.textContent || ''
   re.lastIndex = 0
@@ -59,17 +58,17 @@ function chipifyTextNode(
   textNode.replaceWith(frag)
 }
 
-function walkForChips(el: Element, nodes: BJJNode[], re: RegExp, navigate: (id: string) => void) {
+function walkForChips(el: Element, nodes: BJJNode[], re: RegExp) {
   const skip = new Set(['CODE', 'PRE', 'SCRIPT', 'STYLE', 'A'])
   for (const child of [...el.childNodes]) {
     if (child.nodeType === Node.TEXT_NODE) {
-      chipifyTextNode(child as Text, nodes, re, navigate)
+      chipifyTextNode(child as Text, nodes, re)
     } else if (
       child.nodeType === Node.ELEMENT_NODE &&
       !skip.has((child as Element).tagName) &&
       !(child as Element).classList.contains('nc')
     ) {
-      walkForChips(child as Element, nodes, re, navigate)
+      walkForChips(child as Element, nodes, re)
     }
   }
 }
@@ -90,7 +89,7 @@ export function useChips(containerRef: React.RefObject<HTMLElement>, deps: any[]
     const answers = container.querySelectorAll<HTMLElement>('.answer-text:not([data-chipped])')
     answers.forEach((el) => {
       el.setAttribute('data-chipped', '1')
-      walkForChips(el, nodesRef.current!.nodes, nodesRef.current!.re, () => {})
+      walkForChips(el, nodesRef.current!.nodes, nodesRef.current!.re)
     })
   }, deps)
 }

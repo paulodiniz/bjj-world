@@ -72,10 +72,8 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
         if (event.type === 'conversation_id') {
           currentConvId = event.id
           setConversationId(event.id)
-          // Only replace URL if backend assigned a different ID (logged-in flow)
-          if (event.id !== conversationId) {
-            router.replace(`/c/${event.id}`, { scroll: false })
-          }
+          // Update URL silently without navigating — router.replace unmounts this component
+          window.history.replaceState(null, '', `/c/${event.id}`)
         } else if (event.type === 'token') {
           response += event.text
           setCurrentResponse(response)
