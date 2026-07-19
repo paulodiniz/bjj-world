@@ -76,27 +76,31 @@ function PathFinder() {
         )}
 
         {result && (
-          <div id="path-result" aria-live="polite" style={{ marginTop: '32px' }}>
+          <div aria-live="polite">
             {result.error ? (
-              <p style={{ color: 'var(--ink-3)', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>{result.error}</p>
+              <p className="path-no-result">{result.error}</p>
             ) : result.found && result.steps?.length > 0 ? (
-              <div className="path-result">
-                <p className="path-result-meta">{result.steps.length - 1} step{result.steps.length !== 2 ? 's' : ''}</p>
-                <ol className="path-steps">
+              <>
+                <p className="path-meta"><strong>{result.steps.length - 1}</strong> step{result.steps.length !== 2 ? 's' : ''}</p>
+                <div className="step-sequence">
                   {result.steps.map((step: any, idx: number) => (
-                    <li key={idx} className="path-step">
-                      <a href={`/technique/${encodeURIComponent(step.id)}`} className={`nc nc-${step.type}`}>{step.name}</a>
+                    <div key={idx} className="step-item">
+                      <div className="step-node">
+                        <span className={`step-badge ${step.type}`}>{step.type.replace(/_/g, ' ')}</span>
+                        <a href={`/technique/${encodeURIComponent(step.id)}`} className="step-name">{step.name}</a>
+                      </div>
                       {result.transitions[idx] && (
-                        <span style={{ color: 'var(--ink-3)', fontSize: '0.75rem', marginLeft: 8 }}>
-                          {result.transitions[idx].toLowerCase().replace(/_/g, ' ')}
-                        </span>
+                        <div className="step-connector">
+                          <div className="step-line" />
+                          <span className="step-rel">{result.transitions[idx].toLowerCase().replace(/_/g, ' ')}</span>
+                        </div>
                       )}
-                    </li>
+                    </div>
                   ))}
-                </ol>
-              </div>
+                </div>
+              </>
             ) : (
-              <p style={{ color: 'var(--ink-3)', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>No path found between these positions.</p>
+              <p className="path-no-result">No path found between these positions.</p>
             )}
           </div>
         )}

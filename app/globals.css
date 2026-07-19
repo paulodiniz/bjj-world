@@ -23,3 +23,8 @@ input[type="text"] {
 .landing-cmd {
   gap: 8px;
 }
+
+/* Ensure header search input stretches to fill available space */
+.header-cmd {
+  flex: 1;
+}

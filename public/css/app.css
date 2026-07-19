@@ -115,7 +115,7 @@
       margin-right: 8px;
       line-height: 1;
     }
-    #header-input {
+    .header-cmd input {
       flex: 1;
       background: none;
       border: none;
@@ -126,7 +126,7 @@
       padding: 5px 0;
       min-width: 0;
     }
-    #header-input::placeholder { color: var(--ink-3); opacity: 1; }
+    .header-cmd input::placeholder { color: var(--ink-3); opacity: 1; }
 
     .header-actions {
       display: flex;
@@ -672,7 +672,7 @@
     }
     .path-combobox:focus { border-color: var(--accent); }
     .path-combobox::placeholder { color: var(--ink-3); }
-    #path-btn {
+    .path-find-btn {
       background: var(--accent);
       color: oklch(0.98 0 0);
       border: none;
@@ -686,11 +686,9 @@
       white-space: nowrap;
       align-self: flex-end;
     }
-    #path-btn:hover:not(:disabled) { background: var(--accent-hi); }
-    #path-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
-    #path-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-    #path-result { display: none; }
+    .path-find-btn:hover:not(:disabled) { background: var(--accent-hi); }
+    .path-find-btn:disabled { background: var(--surface-2); color: var(--ink-3); cursor: not-allowed; }
+    .path-find-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .path-meta {
       font-family: var(--mono);
@@ -1791,7 +1789,7 @@
       .results-area, .path-area { padding: 24px 16px 40px; }
       .entry-a { padding: 16px 16px; }
       .path-controls { flex-direction: column; }
-      #path-btn { width: 100%; }
+      .path-find-btn { width: 100%; }
       .videos { grid-template-columns: 1fr; }
       .hint-pills { gap: 6px; }
     }
@@ -1994,7 +1992,9 @@
 
     /* Profile link in header user button */
     .user-menu {
-      position: fixed;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
       z-index: 200;
       background: var(--surface);
       border: 1px solid var(--border);
