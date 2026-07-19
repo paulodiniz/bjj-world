@@ -1,8 +1,3 @@
-/**
- * API client for FastAPI backend
- */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'DELETE' | 'PUT'
   body?: any
@@ -23,7 +18,7 @@ async function apiCall(endpoint: string, options: FetchOptions = {}) {
   }
 
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(endpoint, {
       method,
       headers: requestHeaders,
       body: body ? JSON.stringify(body) : undefined,
@@ -71,7 +66,7 @@ export async function* chatStream(
   conversationId?: string,
   signal?: AbortSignal
 ) {
-  const response = await fetch(`${API_URL}/api/chat`, {
+  const response = await fetch(`/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
