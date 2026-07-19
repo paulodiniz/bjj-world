@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { chatStream } from '@/lib/api'
+import { useChips } from '@/lib/useChips'
 
 declare global {
   interface Window { marked: any }
@@ -36,6 +37,8 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
   const entriesRef = useRef<HTMLDivElement>(null)
   const autoSentRef = useRef(false)
   const router = useRouter()
+
+  useChips(entriesRef, [messages, currentResponse])
 
   useEffect(() => {
     if (entriesRef.current) {
