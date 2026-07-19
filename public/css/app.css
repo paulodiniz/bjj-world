@@ -2034,6 +2034,22 @@
       min-width: 160px;
       box-shadow: 0 8px 24px oklch(0 0 0 / 0.4);
     }
+    .user-menu-email {
+      padding: 6px 12px 4px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      border-bottom: 1px solid var(--border-sub);
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-btn-chevron {
+      font-size: 0.55rem;
+      opacity: 0.6;
+      line-height: 1;
+    }
     .user-menu-item {
       display: block;
       width: 100%;

@@ -27,7 +27,7 @@
     function renderAuthState() {
       const signinBtn        = document.getElementById('signin-btn');
       const userBtn          = document.getElementById('user-btn');
-      const emailEl          = document.getElementById('user-btn-email');
+      const emailEl          = document.getElementById('user-menu-email');
       const landingSigninBtn = document.getElementById('landing-signin-btn');
       const landingUserBtn   = document.getElementById('landing-user-btn');
       const historyBtn        = document.getElementById('history-toggle-btn');
