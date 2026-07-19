@@ -1,5 +1,11 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
+import { useEffect } from 'react'
+import type { User } from '@/lib/auth'
 
 const hints = [
   'What can I attack from closed guard?',
@@ -7,8 +13,76 @@ const hints = [
   'What are my options from half guard?',
 ]
 
-export default async function Home() {
-  const user = await getCurrentUser()
+export default function Home() {
+  const [user, setUser] = useState<User | null>(null)
+  const [query, setQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    getCurrentUser().then(setUser)
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!query.trim()) return
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: query,
+          history: [],
+          conversation_id: null,
+        }),
+        credentials: 'include',
+      })
+
+      if (!response.ok) throw new Error('Failed to start chat')
+
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error('No response body')
+
+      const decoder = new TextDecoder()
+      let sseBuffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        sseBuffer += decoder.decode(value, { stream: true })
+        const parts = sseBuffer.split('\n\n')
+        sseBuffer = parts.pop() || ''
+
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data: ')) continue
+
+          try {
+            const event = JSON.parse(line.slice(6))
+            if (event.type === 'conversation_id') {
+              router.push(`/c/${event.id}`)
+              return
+            }
+          } catch {
+            continue
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Chat error:', error)
+      alert('Failed to start conversation')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleHint = (hint: string) => {
+    setQuery(hint)
+  }
 
   return (
     <div className="landing" role="main" aria-label="Tapcodex — knowledge graph">
@@ -25,21 +99,32 @@ export default async function Home() {
         <p className="landing-sub">knowledge graph</p>
       </div>
 
-      <form className="landing-cmd" action="/search" method="POST">
+      <form className="landing-cmd" onSubmit={handleSubmit}>
         <span className="landing-cmd-glyph" aria-hidden="true">◎</span>
         <input
           type="text"
-          name="q"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask about any technique, position, or path…"
           aria-label="Your question"
           autoFocus
+          disabled={isLoading}
         />
-        <button type="submit" className="landing-ask-btn">Ask</button>
+        <button type="submit" className="landing-ask-btn" disabled={isLoading}>
+          {isLoading ? 'Searching...' : 'Ask'}
+        </button>
       </form>
 
       <div className="hint-pills" role="list" aria-label="Example questions">
         {hints.map((hint) => (
-          <button key={hint} className="hint-pill" role="listitem" type="button">
+          <button
+            key={hint}
+            className="hint-pill"
+            role="listitem"
+            type="button"
+            onClick={() => handleHint(hint)}
+            disabled={isLoading}
+          >
             {hint}
           </button>
         ))}

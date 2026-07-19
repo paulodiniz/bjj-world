@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { chatStream } from '@/lib/api'
-import { marked } from 'marked'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -15,22 +14,20 @@ interface ChatProps {
   initialMessages: Message[]
 }
 
-export function Chat({ conversationId, initialMessages }: ChatProps) {
+export function Chat({ conversationId: initialConvId, initialMessages }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [conversationId, setConversationId] = useState(initialConvId)
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [currentResponse, setCurrentResponse] = useState('')
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
   const entriesRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  const scrollToBottom = () => {
+  useEffect(() => {
     if (entriesRef.current) {
       entriesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }
-  }
-
-  useEffect(() => {
-    scrollToBottom()
   }, [messages, currentResponse])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,31 +40,52 @@ export function Chat({ conversationId, initialMessages }: ChatProps) {
     setIsLoading(true)
     setCurrentResponse('')
 
+    const controller = new AbortController()
+    setAbortController(controller)
+
     try {
-      let newConversationId = conversationId
       let response = ''
+      let newConversationId = conversationId
 
       for await (const event of chatStream(
         userMessage,
         messages,
-        conversationId
+        conversationId,
+        controller.signal
       )) {
+        if (controller.signal.aborted) break
+
         if (event.type === 'conversation_id') {
           newConversationId = event.id
-          // Optionally refresh the URL
-          router.push(`/c/${event.id}`)
+          setConversationId(event.id)
+          if (conversationId === 'new' || !conversationId) {
+            router.push(`/c/${event.id}`)
+          }
         } else if (event.type === 'token') {
           response += event.text
           setCurrentResponse(response)
         } else if (event.type === 'done') {
           setMessages((prev) => [...prev, { role: 'assistant', content: response }])
           setCurrentResponse('')
+        } else if (event.type === 'error') {
+          setCurrentResponse(`Error: ${event.text}`)
         }
       }
-    } catch (error) {
-      console.error('Chat error:', error)
-      setCurrentResponse('Error: Failed to get response. Please try again.')
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Chat error:', error)
+        setCurrentResponse('Error: Failed to get response. Please try again.')
+      }
     } finally {
+      setIsLoading(false)
+      setAbortController(null)
+    }
+  }
+
+  const handleStop = () => {
+    if (abortController) {
+      abortController.abort()
+      setAbortController(null)
       setIsLoading(false)
     }
   }
@@ -107,17 +125,55 @@ export function Chat({ conversationId, initialMessages }: ChatProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="chat-form">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask a follow-up question…"
-          disabled={isLoading}
-        />
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Thinking...' : 'Ask'}
-        </button>
+      <form onSubmit={handleSubmit} style={{ marginTop: '20px', padding: '0 20px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ask a follow-up question…"
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              padding: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              font: 'inherit',
+            }}
+          />
+          {isLoading ? (
+            <button
+              type="button"
+              onClick={handleStop}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Stop
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isLoading || !query.trim()}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: isLoading || !query.trim() ? 'not-allowed' : 'pointer',
+                opacity: isLoading || !query.trim() ? 0.5 : 1,
+              }}
+            >
+              Ask
+            </button>
+          )}
+        </div>
       </form>
     </div>
   )

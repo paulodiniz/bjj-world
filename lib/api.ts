@@ -62,7 +62,8 @@ export async function deleteConversation(id: string) {
 export async function* chatStream(
   question: string,
   history: Array<{ role: string; content: string }>,
-  conversationId?: string
+  conversationId?: string,
+  signal?: AbortSignal
 ) {
   const response = await fetch(`${API_URL}/api/chat`, {
     method: 'POST',
@@ -73,6 +74,7 @@ export async function* chatStream(
       conversation_id: conversationId,
     }),
     credentials: 'include',
+    signal,
   })
 
   if (!response.ok) {
@@ -87,6 +89,11 @@ export async function* chatStream(
 
   try {
     while (true) {
+      if (signal?.aborted) {
+        reader.cancel()
+        break
+      }
+
       const { done, value } = await reader.read()
       if (done) break
 
