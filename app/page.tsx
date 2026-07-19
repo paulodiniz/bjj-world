@@ -131,12 +131,34 @@ export default function Home() {
           <span className="landing-mode-arrow" aria-hidden="true">→</span>
         </Link>
 
+        <label className="landing-mode" style={{ cursor: 'pointer' }}>
+          <span className="landing-mode-glyph" aria-hidden="true">▶</span>
+          <span className="landing-mode-body">
+            <span className="landing-mode-name">Video Analysis</span>
+            <span className="landing-mode-desc">Upload a match — AI reads every position</span>
+          </span>
+          <span className="landing-mode-arrow" aria-hidden="true">→</span>
+          <input type="file" accept="video/*" style={{ display: 'none' }}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.currentTarget.value = '' }} />
+        </label>
+
         {user && (
           <Link href="/history" className="landing-mode">
             <span className="landing-mode-glyph" aria-hidden="true">◷</span>
             <span className="landing-mode-body">
               <span className="landing-mode-name">Recent</span>
               <span className="landing-mode-desc">Your saved conversations</span>
+            </span>
+            <span className="landing-mode-arrow" aria-hidden="true">→</span>
+          </Link>
+        )}
+
+        {user?.plan === 'coach' && (
+          <Link href="/prep" className="landing-mode">
+            <span className="landing-mode-glyph" aria-hidden="true">⊡</span>
+            <span className="landing-mode-body">
+              <span className="landing-mode-name">Class Prep</span>
+              <span className="landing-mode-desc">Generate a lesson plan from the knowledge graph</span>
             </span>
             <span className="landing-mode-arrow" aria-hidden="true">→</span>
           </Link>
