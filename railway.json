@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "services": [
+    {
+      "name": "backend",
+      "dockerfile": "backend/Dockerfile",
+      "buildCommand": "pip install -r requirements.txt",
+      "startCommand": "uvicorn main:app --host 0.0.0.0 --port 8000",
+      "port": 8000
+    },
+    {
+      "name": "frontend",
+      "dockerfile": "Dockerfile.frontend",
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "npm run start",
+      "port": 3000
+    }
+  ]
+}
