@@ -136,7 +136,7 @@ export default function GraphPage() {
       : ''
 
   return (
-    <div className="graph-area" aria-label="BJJ knowledge graph">
+    <div className="graph-area" style={{ display: 'flex' }} aria-label="BJJ knowledge graph">
       {loading && !error && <div className="graph-loading" id="graph-loading">Loading graph…</div>}
       {error && <div className="graph-loading">Failed to load graph.</div>}
 

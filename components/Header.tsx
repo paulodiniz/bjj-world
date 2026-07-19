@@ -68,7 +68,7 @@ export function Header() {
         )}
         <Link href="/path" className="path-toggle-btn">Path →</Link>
         <Link href="/graph" className="path-toggle-btn">Graph</Link>
-        {user && <Link href="/prep" className="path-toggle-btn">Prep</Link>}
+        {user?.plan === 'coach' && <Link href="/prep" className="path-toggle-btn">Prep</Link>}
 
         {user ? (
           <div style={{ position: 'relative' }}>

@@ -7,15 +7,13 @@ div.landing {
   display: flex !important;
 }
 
-/* Fix form input layout - remove boxes and borders */
-input[type="text"] {
+/* Reset only the bare search inputs inside the header and landing form */
+.header-cmd input,
+.landing-cmd input {
   background: transparent;
   border: none;
   outline: none;
   color: inherit;
-}
-
-.landing-cmd input {
   flex: 1;
   min-width: 0;
 }
