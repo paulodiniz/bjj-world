@@ -80,7 +80,13 @@
       align-items: baseline;
       gap: 8px;
       flex-shrink: 0;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: none;
     }
+    .header-brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
     .header-brand-name {
       font-family: var(--sans);
       font-style: italic;
@@ -88,7 +94,9 @@
       font-size: 1rem;
       color: var(--ink);
       letter-spacing: -0.02em;
+      transition: color 150ms;
     }
+    .header-brand:hover .header-brand-name { color: var(--ink-2); }
     .header-brand-sub {
       font-family: var(--mono);
       font-size: 0.62rem;
@@ -1772,10 +1780,10 @@
 
   <!-- ── Compact header (results + path modes) ── -->
   <header class="app-header" aria-label="Tapcodex">
-    <div class="header-brand">
+    <button class="header-brand" onclick="goHome()" aria-label="Go to Tapcodex home">
       <span class="header-brand-name">Tapcodex</span>
       <span class="header-brand-sub">knowledge graph</span>
-    </div>
+    </button>
 
     <form class="header-cmd" id="header-form" aria-label="Ask a question">
       <span class="header-cmd-glyph" aria-hidden="true">◎</span>
@@ -1971,6 +1979,13 @@
         pathToggle.textContent = mode === 'path' ? '← Chat' : 'Path →';
         pathToggle.setAttribute('aria-label', mode === 'path' ? 'Back to chat' : 'Open Path Finder');
       }
+    }
+
+    function goHome() {
+      currentConversationId = null;
+      history.pushState({}, '', '/');
+      document.title = 'Tapcodex';
+      setMode('landing');
     }
 
     function togglePath() {
