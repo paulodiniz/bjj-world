@@ -90,12 +90,9 @@
       }
     }
 
-    async function handleUserClick() {
+    function handleUserClick() {
       if (!currentUser) return;
-      if (!confirm(`Sign out of ${currentUser.email}?`)) return;
-      await fetch('/api/auth/logout', { method: 'POST' });
-      currentUser = null;
-      renderAuthState();
+      openUserMenu(document.getElementById('user-btn'));
     }
 
     // Handle redirect after magic link click

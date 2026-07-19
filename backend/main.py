@@ -12,6 +12,7 @@ load_dotenv(_root / ".env", override=False)
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from routes.analyses import router as analyses_router
 from routes.auth import router as auth_router
@@ -20,9 +21,11 @@ from routes.history import router as history_router
 from routes.nodes import router as nodes_router
 from routes.path import router as path_router
 from routes.analyze import router as analyze_router
+from routes.profile import router as profile_router
 from services.analyses import init_db as init_analyses_db
 from services.auth import init_db as init_auth_db
 from services.history import init_db as init_history_db
+from services.profile import init_db as init_profile_db
 from services.graph_db import seed_database
 from services.rag import init_rag
 
@@ -37,6 +40,7 @@ async def lifespan(app: FastAPI):
         await init_auth_db()
         await init_history_db()
         await init_analyses_db()
+        await init_profile_db()
     except Exception as exc:
         print(f"DB init failed: {exc}")
 
@@ -58,6 +62,11 @@ app.include_router(history_router)
 app.include_router(nodes_router)
 app.include_router(path_router)
 app.include_router(analyze_router)
+app.include_router(profile_router)
+
+# Serve static assets (css, js) — must come before the SPA catch-all
+app.mount("/css", StaticFiles(directory=str(Path(FRONTEND_DIR) / "css")), name="css")
+app.mount("/js",  StaticFiles(directory=str(Path(FRONTEND_DIR) / "js")),  name="js")
 
 
 @app.get("/{full_path:path}")

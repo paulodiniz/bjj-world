@@ -14,6 +14,7 @@ from services.history import (
     create_conversation,
     save_messages,
 )
+from services.profile import get_profile, build_profile_context
 from services.rag import retrieve
 
 router = APIRouter()
@@ -61,20 +62,22 @@ async def _search_youtube(technique: str) -> str | None:
     return result
 
 
-async def _stream_answer(question: str, chunks: list[dict], history: list[dict]):
+async def _stream_answer(question: str, chunks: list[dict], history: list[dict], profile_ctx: str = ""):
     context = "\n\n---\n\n".join(c["text"] for c in chunks)
     messages = [
         *history,
         {"role": "user", "content": f"Question: {question}\n\nRelevant BJJ knowledge:\n{context}"},
     ]
+    system = (
+        "You are a helpful BJJ coach embedded in an app that automatically shows relevant YouTube videos "
+        "alongside your answers. Never say you cannot show videos — the app handles that. "
+        "Answer questions clearly and concisely based on the knowledge provided. Focus on practical advice."
+        + profile_ctx
+    )
     async with anthropic.messages.stream(
         model="claude-haiku-4-5-20251001",
         max_tokens=1024,
-        system=(
-            "You are a helpful BJJ coach embedded in an app that automatically shows relevant YouTube videos "
-            "alongside your answers. Never say you cannot show videos — the app handles that. "
-            "Answer questions clearly and concisely based on the knowledge provided. Focus on practical advice."
-        ),
+        system=system,
         messages=messages,
     ) as stream:
         async for event in stream:
@@ -109,6 +112,10 @@ async def chat(request: Request, bjj_session: str = Cookie(default=None)):
         )
 
     user = await get_user_by_session(bjj_session) if bjj_session else None
+    profile_ctx = ""
+    if user:
+        profile = await get_profile(str(user["id"]))
+        profile_ctx = build_profile_context(profile)
     print(f"ip={ip} user={user['email'] if user else 'anon'} question={question!r}")
 
     async def generate():
@@ -147,7 +154,7 @@ async def chat(request: Request, bjj_session: str = Cookie(default=None)):
 
         yield _sse("status", {"text": "Answering..."})
         full_text = ""
-        async for token in _stream_answer(question, chunks, history):
+        async for token in _stream_answer(question, chunks, history, profile_ctx):
             full_text += token
             yield _sse("token", {"text": token})
 

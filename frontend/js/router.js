@@ -3,6 +3,8 @@
 
       if (path.match(/^\/technique\/(.+)$/)) {
         loadTechnique(decodeURIComponent(path.slice('/technique/'.length)), false);
+      } else if (path === '/profile') {
+        openProfile();
       } else if (path.match(/^\/c\/([a-f0-9-]+)$/)) {
         resumeConversation(path.slice('/c/'.length), false);
       } else if (path.match(/^\/a\/([a-f0-9-]+)$/)) {
@@ -15,6 +17,8 @@
         const p = location.pathname;
         if (p.match(/^\/technique\/(.+)$/)) {
           loadTechnique(decodeURIComponent(p.slice('/technique/'.length)), false);
+        } else if (p === '/profile') {
+          openProfile();
         } else if (p.match(/^\/c\/([a-f0-9-]+)$/)) {
           resumeConversation(p.slice('/c/'.length), false);
         } else if (p.match(/^\/a\/([a-f0-9-]+)$/)) {
