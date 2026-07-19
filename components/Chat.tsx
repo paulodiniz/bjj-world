@@ -63,13 +63,16 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
       let response = ''
       let currentConvId = conversationId
 
-      for await (const event of chatStream(text, history, currentConvId === 'new' ? undefined : currentConvId, controller.signal)) {
+      for await (const event of chatStream(text, history, currentConvId, controller.signal)) {
         if (controller.signal.aborted) break
 
         if (event.type === 'conversation_id') {
           currentConvId = event.id
           setConversationId(event.id)
-          router.replace(`/c/${event.id}`, { scroll: false })
+          // Only replace URL if backend assigned a different ID (logged-in flow)
+          if (event.id !== conversationId) {
+            router.replace(`/c/${event.id}`, { scroll: false })
+          }
         } else if (event.type === 'token') {
           response += event.text
           setCurrentResponse(response)

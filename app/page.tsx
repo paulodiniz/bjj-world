@@ -25,7 +25,8 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
-    router.push(`/c/new?q=${encodeURIComponent(query.trim())}`)
+    const id = crypto.randomUUID()
+    router.push(`/c/${id}?q=${encodeURIComponent(query.trim())}`)
   }
 
   const handleHint = (hint: string) => {
