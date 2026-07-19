@@ -31,12 +31,18 @@ async function apiCall(endpoint: string, options: FetchOptions = {}) {
     })
 
     if (!response.ok) {
+      // 401 errors are expected when not authenticated - don't log them
+      if (response.status !== 401) {
+        console.error(`API error: ${response.status} on ${endpoint}`)
+      }
       throw new Error(`API error: ${response.status}`)
     }
 
     return await response.json()
   } catch (error) {
-    console.error(`API call failed: ${endpoint}`, error)
+    if (!(error instanceof Error) || !error.message.includes('401')) {
+      console.error(`API call failed: ${endpoint}`, error)
+    }
     throw error
   }
 }
