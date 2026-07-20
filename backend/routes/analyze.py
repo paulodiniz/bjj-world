@@ -253,11 +253,14 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
     _ALLOWED_EXTS = {".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v"}
     _orig = video.filename or ""
     _ext = os.path.splitext(_orig)[1].lower()
-    if _ext not in _ALLOWED_EXTS:
-        friendly = _orig or "this file"
-        hint = " (looks like an incomplete yt-dlp download)" if re.search(r"\.(f\d+|part|ytdl)$", _orig) else ""
+    _is_ytdlp = bool(re.search(r"\.(f\d{3,4}|part|ytdl)\.", _orig) or re.search(r"\.(f\d{3,4}|part|ytdl)$", _orig))
+    if _ext not in _ALLOWED_EXTS or _is_ytdlp:
+        if _is_ytdlp:
+            msg = "This looks like an incomplete yt-dlp download. Run 'yt-dlp <url>' without interrupting it to get the merged file."
+        else:
+            msg = f"Unsupported file type '{_ext or '(none)'}'. Please upload an mp4, mov, or webm file."
         return StreamingResponse(
-            iter([_sse("error", {"text": f"Unsupported file type '{_ext or '(none)'}'.{hint} Please upload an mp4, mov, or webm file."})]),
+            iter([_sse("error", {"text": msg})]),
             media_type="text/event-stream",
             status_code=415,
         )
