@@ -23,16 +23,30 @@ def normalize_video_url(url: str) -> str:
     return url
 
 
-def _read_new_frames(tmp_dir: str, seen: set[str]) -> list[dict]:
+def _read_new_frames(tmp_dir: str, seen: set[str], interval: float) -> list[dict]:
     frames = []
     for filename in sorted(f for f in os.listdir(tmp_dir) if f.endswith(".jpg") and f not in seen):
         seen.add(filename)
         index = int(os.path.splitext(filename)[0]) - 1
-        timestamp = index * 15
+        timestamp = round(index * interval)
         with open(os.path.join(tmp_dir, filename), "rb") as fh:
             data = base64.b64encode(fh.read()).decode()
         frames.append({"timestamp": timestamp, "label": format_timestamp(timestamp), "data": data})
     return frames
+
+
+async def _get_duration(source: str) -> float:
+    proc = await asyncio.create_subprocess_exec(
+        "ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+        "-of", "json", source,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    stdout, _ = await proc.communicate()
+    try:
+        return float(json.loads(stdout)["format"]["duration"])
+    except Exception:
+        return 0.0
 
 
 async def _has_video_stream(source: str) -> bool:
@@ -49,11 +63,15 @@ async def _has_video_stream(source: str) -> bool:
         return False
 
 
-async def extract_frames(source: str, target_frames: int = 20, is_url: bool = True) -> AsyncGenerator[dict, None]:
+async def extract_frames(source: str, target_frames: int = 30, is_url: bool = True) -> AsyncGenerator[dict, None]:
     url = normalize_video_url(source) if is_url else source
 
     if not await _has_video_stream(url):
         raise RuntimeError("This file has no video stream. Make sure you're uploading a video file, not audio-only.")
+
+    duration = await _get_duration(url)
+    # Space frames evenly across the full video; clamp interval to 5–30 s
+    interval = max(5.0, min(30.0, duration / target_frames)) if duration > 0 else 15.0
 
     tmp_dir = tempfile.mkdtemp(prefix="bjj-frames-")
 
@@ -63,7 +81,7 @@ async def extract_frames(source: str, target_frames: int = 20, is_url: bool = Tr
             cmd += ["-headers", "User-Agent: Mozilla/5.0\r\n"]
         cmd += [
             "-i", url,
-            "-vf", "fps=1/15,scale=480:-2",
+            "-vf", f"fps=1/{interval:.1f},scale=480:-2",
             "-vframes", str(target_frames),
             "-q:v", "3",
             os.path.join(tmp_dir, "%04d.jpg"),
@@ -82,7 +100,7 @@ async def extract_frames(source: str, target_frames: int = 20, is_url: bool = Tr
                 await asyncio.wait_for(asyncio.shield(proc.wait()), timeout=0.01)
             except (asyncio.TimeoutError, asyncio.CancelledError):
                 pass
-            for frame in _read_new_frames(tmp_dir, seen):
+            for frame in _read_new_frames(tmp_dir, seen, interval):
                 yield frame
 
         await proc.wait()
@@ -90,7 +108,7 @@ async def extract_frames(source: str, target_frames: int = 20, is_url: bool = Tr
             stderr = (await proc.stderr.read()).decode()
             raise RuntimeError(f"ffmpeg error: {stderr[-300:]}")
 
-        for frame in _read_new_frames(tmp_dir, seen):
+        for frame in _read_new_frames(tmp_dir, seen, interval):
             yield frame
 
     finally:

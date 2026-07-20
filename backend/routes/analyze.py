@@ -55,22 +55,23 @@ def _build_vision_content(frames: list[dict], title: str, duration_secs: int) ->
     frame_count = len(frames)
     content.append({
         "type": "text",
-        "text": f"""Video: "{title}" (~{round(duration_secs / 60)} min)
+        "text": f"""Video: "{title}" (~{round(duration_secs / 60)} min, {frame_count} frames sampled)
 
 Known BJJ positions and techniques — use these EXACT names whenever you recognise them:
 {known_techniques}
 
 Each image is a single frame labeled [M:SS] — use that timestamp exactly.
 
-You are a BJJ analyst. For EACH of the {frame_count} frames above, write one event describing exactly what you see. Do not skip any frame.
+You are a BJJ analyst. Describe what you can clearly see in each frame.
 
-For each frame:
+For each frame you include:
 - Name the specific BJJ position (use names from the list above when possible)
 - Say who holds the position and who is on the receiving end
 - If a submission, sweep, pass, or takedown is being attempted, name it
-- Use the fighter names from the video title
+- Use the fighter names from the video title if known, otherwise "Fighter A" / "Fighter B"
 
 Rules:
+- SKIP frames that are obscured, off-mat, mid-transition blur, or show only a crowd/referee with no clear position — do not hallucinate what might be happening
 - Never write vague phrases like "grappling continues" or "ground work" — always name the specific position
 - Use the EXACT timestamp from the frame label (e.g. [1:20] → timestamp 80)
 - Timestamps must be integers (seconds)
@@ -78,8 +79,8 @@ Rules:
 Return ONLY valid JSON, no markdown fences:
 {{
   "summary": "2-3 sentence factual summary of the match including result if known",
-  "fighter_a": "first fighter full name",
-  "fighter_b": "second fighter full name",
+  "fighter_a": "first fighter full name or Fighter A",
+  "fighter_b": "second fighter full name or Fighter B",
   "events": [
     {{
       "timestamp": 80,
@@ -89,15 +90,14 @@ Return ONLY valid JSON, no markdown fences:
       "description": "one sentence: who is where and what is happening"
     }}
   ]
-}}
-
-You must produce one event per frame — you have {frame_count} frames so the events array must have exactly {frame_count} entries.""",
+}}""",
     })
     return content
 
 
 async def _run_analysis(frames: list[dict], title: str):
-    vision_content = _build_vision_content(frames, title, len(frames) * 10)
+    duration_secs = frames[-1]["timestamp"] if frames else 0
+    vision_content = _build_vision_content(frames, title, duration_secs)
     response = await anthropic.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=8192,
