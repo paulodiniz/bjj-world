@@ -63,7 +63,7 @@ async def _has_video_stream(source: str) -> bool:
         return False
 
 
-async def extract_frames(source: str, target_frames: int = 30, is_url: bool = True) -> AsyncGenerator[dict, None]:
+async def extract_frames(source: str, target_frames: int = 30, is_url: bool = True, crop_filter: str = "") -> AsyncGenerator[dict, None]:
     url = normalize_video_url(source) if is_url else source
 
     if not await _has_video_stream(url):
@@ -79,9 +79,10 @@ async def extract_frames(source: str, target_frames: int = 30, is_url: bool = Tr
         cmd = ["ffmpeg", "-y"]
         if is_url and (url.startswith("http://") or url.startswith("https://")):
             cmd += ["-headers", "User-Agent: Mozilla/5.0\r\n"]
+        crop_part = f"{crop_filter}," if crop_filter else ""
         cmd += [
             "-i", url,
-            "-vf", f"fps=1/{interval:.1f},scale=720:-2,unsharp=5:5:1.0:5:5:0.0",
+            "-vf", f"fps=1/{interval:.1f},{crop_part}scale=720:-2,unsharp=5:5:1.0:5:5:0.0",
             "-vframes", str(target_frames),
             "-q:v", "3",
             os.path.join(tmp_dir, "%04d.jpg"),

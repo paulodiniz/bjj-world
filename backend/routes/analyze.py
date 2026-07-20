@@ -1,7 +1,10 @@
 import asyncio
+import base64
 import json
 import os
 import re
+import shutil
+import tempfile
 import time
 import traceback
 from collections import defaultdict
@@ -15,7 +18,7 @@ from services.analyses import save_analysis
 from services.auth import get_user_by_session
 from services.profile import merge_weak_nodes
 from services.rag import retrieve
-from services.video import extract_frames, format_timestamp
+from services.video import extract_frames, format_timestamp, normalize_video_url
 from services.weak_nodes import detect_weak_nodes
 
 router = APIRouter()
@@ -37,6 +40,68 @@ def _is_analysis_limited(ip: str) -> bool:
     hits.append(now)
     _analysis_hits[ip] = hits
     return False
+
+
+async def _detect_crop(source: str, is_url: bool) -> str:
+    """
+    Extract 3 low-res sample frames and ask Claude Haiku to locate the match area.
+    Returns an ffmpeg crop expression (e.g. "crop=iw*0.7:ih*0.6:iw*0.15:ih*0.2")
+    or "" if no meaningful crop is found.
+    """
+    url = normalize_video_url(source) if is_url else source
+    tmp = tempfile.mkdtemp(prefix="bjj-crop-")
+    try:
+        cmd = ["ffmpeg", "-y"]
+        if is_url and url.startswith("http"):
+            cmd += ["-headers", "User-Agent: Mozilla/5.0\r\n"]
+        cmd += ["-i", url, "-vf", "fps=1/20,scale=384:-2", "-vframes", "3",
+                os.path.join(tmp, "%04d.jpg")]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+        await proc.wait()
+
+        frame_files = sorted(f for f in os.listdir(tmp) if f.endswith(".jpg"))
+        if not frame_files:
+            return ""
+
+        content: list[dict] = []
+        for fname in frame_files:
+            with open(os.path.join(tmp, fname), "rb") as fh:
+                content.append({"type": "image", "source": {
+                    "type": "base64", "media_type": "image/jpeg",
+                    "data": base64.b64encode(fh.read()).decode()}})
+
+        content.append({"type": "text", "text": (
+            "These are sample frames from a BJJ competition video. "
+            "Identify the bounding box of the active match — the mat where the two fighters are competing. "
+            "Exclude: audience/bleachers, chairs or equipment in the foreground, "
+            "other matches on distant mats, scoreboards, and any person who is NOT one of the two main fighters. "
+            "Return ONLY valid JSON with no markdown: "
+            '{"left": 0.0, "top": 0.0, "right": 1.0, "bottom": 1.0} '
+            "where values are fractions of the image (0.0 = left/top edge, 1.0 = right/bottom edge)."
+        )})
+
+        resp = await anthropic.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=80,
+            messages=[{"role": "user", "content": content}])
+
+        raw = re.sub(r"^```(?:json)?\n?", "", resp.content[0].text.strip()).rstrip("`").strip()
+        r = json.loads(raw)
+        left, top = max(0.0, float(r["left"])), max(0.0, float(r["top"]))
+        right, bottom = min(1.0, float(r["right"])), min(1.0, float(r["bottom"]))
+        w, h = right - left, bottom - top
+
+        if w < 0.9 or h < 0.9:
+            print(f"[crop] match area: left={left:.2f} top={top:.2f} right={right:.2f} bottom={bottom:.2f}")
+            return f"crop=iw*{w:.3f}:ih*{h:.3f}:iw*{left:.3f}:ih*{top:.3f}"
+
+        print("[crop] full frame — no crop applied")
+        return ""
+    except Exception as exc:
+        print(f"[crop] detection failed: {exc}")
+        return ""
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def _build_vision_content(frames: list[dict], title: str, duration_secs: int) -> list[dict]:
@@ -219,9 +284,11 @@ async def analyze_video(request: Request, bjj_session: str = Cookie(default=None
 
     async def generate():
         yield _sse("video-info", {"videoId": None, "title": title, "thumbnail": None})
+        yield _sse("status", {"text": "Locating match area…"})
+        crop_filter = await _detect_crop(url, is_url=True)
         yield _sse("status", {"text": "Extracting frames from video…"})
         frames = []
-        async for frame in extract_frames(url, target_frames=20, is_url=True):
+        async for frame in extract_frames(url, target_frames=30, is_url=True, crop_filter=crop_filter):
             frames.append(frame)
             yield _sse("frame", {"timestamp": frame["timestamp"], "label": frame["label"], "data": frame["data"]})
         try:
@@ -294,9 +361,11 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
     async def generate():
         try:
             yield _sse("video-info", {"videoId": None, "title": title, "thumbnail": None})
+            yield _sse("status", {"text": "Locating match area…"})
+            crop_filter = await _detect_crop(tmp_path, is_url=False)
             yield _sse("status", {"text": "Extracting frames…"})
             frames = []
-            async for frame in extract_frames(tmp_path, target_frames=20, is_url=False):
+            async for frame in extract_frames(tmp_path, target_frames=30, is_url=False, crop_filter=crop_filter):
                 frames.append(frame)
                 yield _sse("frame", {"timestamp": frame["timestamp"], "label": frame["label"], "data": frame["data"]})
             collected = {"summary": None, "fighter_a": None, "fighter_b": None, "events": []}
