@@ -81,7 +81,7 @@ async def extract_frames(source: str, target_frames: int = 30, is_url: bool = Tr
             cmd += ["-headers", "User-Agent: Mozilla/5.0\r\n"]
         cmd += [
             "-i", url,
-            "-vf", f"fps=1/{interval:.1f},scale=720:-2",
+            "-vf", f"fps=1/{interval:.1f},scale=720:-2,unsharp=5:5:1.0:5:5:0.0",
             "-vframes", str(target_frames),
             "-q:v", "3",
             os.path.join(tmp_dir, "%04d.jpg"),

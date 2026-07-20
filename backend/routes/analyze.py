@@ -71,8 +71,9 @@ For each frame you include:
 - Use the fighter names from the video title if known, otherwise "Fighter A" / "Fighter B"
 
 Rules:
-- SKIP frames that are obscured, off-mat, mid-transition blur, or show only a crowd/referee with no clear position — do not hallucinate what might be happening
-- Never write vague phrases like "grappling continues" or "ground work" — always name the specific position
+- SKIP frames that are obscured, off-mat, mid-transition blur, show only crowd/referee, or where the fighters are too far from the camera to identify the position — do not hallucinate
+- If you can see grappling but the fighters are small/distant and you cannot clearly identify the position, use type "position" and description "Ground work — position unclear from camera angle" rather than guessing
+- If you can clearly identify a position, name it specifically (use names from the list above when possible)
 - Use the EXACT timestamp from the frame label (e.g. [1:20] → timestamp 80)
 - Timestamps must be integers (seconds)
 
