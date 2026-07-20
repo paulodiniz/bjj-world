@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+import traceback
 from collections import defaultdict
 
 from anthropic import AsyncAnthropic
@@ -309,6 +310,7 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
                 yield _sse("analysis_id", {"id": analysis_id})
                 asyncio.create_task(_update_graph_profile(str(user["id"]), collected))
         except Exception as exc:
+            traceback.print_exc()
             yield _sse("error", {"text": str(exc)})
         finally:
             try:
