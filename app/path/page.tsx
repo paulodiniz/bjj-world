@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { marked } from 'marked'
 import { getNodes, getPath, chatStream } from '@/lib/api'
 
 const PATH_TYPES = ['position', 'submission', 'sweep', 'guard_pass', 'takedown', 'escape']
@@ -51,18 +52,15 @@ function PathFinder() {
       const data = await getPath(fromNode.id, toNode.id)
       setResult(data)
 
-      if (data.found && data.steps?.length > 0) {
-        const pathStr = data.steps.map((s: any, i: number) =>
-          i < data.transitions.length ? `${s.name} --[${data.transitions[i]}]-->` : s.name
-        ).join(' ')
+      if (data.found && data.steps?.length > 1) {
+        const transitionLines = data.steps.slice(0, -1).map((s: any, i: number) =>
+          `${i + 1}. ${s.name} → ${data.steps[i + 1].name}`
+        ).join('\n')
+
+        const prompt = `You are an experienced BJJ coach narrating a technique path for a student.\n\nTechnique chain:\n${transitionLines}\n\nFor each numbered transition, write a short coaching breakdown:\n- **What to do**: the 1–2 mechanical actions that execute this transition\n- **Key detail**: the single thing that makes or breaks it\n- **Beginner trap**: the most common mistake at this exact moment\n\nKeep each transition to 3–4 sentences. Be specific and practical.`
 
         const signal = abortRef.current.signal
-        for await (const ev of chatStream(
-          `Explain this BJJ path step by step as a coach: ${pathStr}. Be concise and practical.`,
-          [],
-          undefined,
-          signal
-        )) {
+        for await (const ev of chatStream(prompt, [], undefined, signal)) {
           if (ev.type === 'token') setExplanation((t) => t + ev.text)
         }
       }
@@ -132,8 +130,13 @@ function PathFinder() {
                   ))}
                 </div>
                 {explanation && (
-                  <div id="path-explanation"
-                    dangerouslySetInnerHTML={{ __html: (window as any).marked?.parse(explanation) || explanation }} />
+                  <>
+                    <p style={{ fontFamily: 'var(--mono)', fontSize: '0.7rem', color: 'var(--ink-3)', marginTop: 28, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Coach&apos;s walkthrough
+                    </p>
+                    <div id="path-explanation"
+                      dangerouslySetInnerHTML={{ __html: marked.parse(explanation) as string }} />
+                  </>
                 )}
               </>
             ) : (
