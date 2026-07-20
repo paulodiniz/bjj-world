@@ -12,7 +12,15 @@ const BADGE_LABELS: Record<string, string> = {
 }
 
 interface AnalysisEvent {
-  timestamp: number; label: string; type: string; description: string
+  timestamp: number; label: string; badge: string; description: string
+}
+
+function cleanTitle(raw: string): string {
+  if (!raw) return 'Video Analysis'
+  // Raw device filenames: "video5323734155211612495", pure digits, IMG_1234 etc.
+  if (/^(video|img|clip|mov|vlc|rec|capture|screen|dji)[\d_-]+$/i.test(raw)) return 'Uploaded Match'
+  if (/^\d{8,}$/.test(raw)) return 'Uploaded Match'
+  return raw
 }
 interface Analysis {
   id: string; title: string; summary?: string
@@ -28,11 +36,11 @@ function TimelineRow({ ev, videoId, note, onNoteChange }: {
     ? `https://www.youtube.com/watch?v=${videoId}&t=${ev.timestamp}s`
     : undefined
   return (
-    <div className="timeline-row" data-type={ev.type}>
+    <div className="timeline-row" data-type={ev.badge}>
       {tsHref
         ? <a className="timeline-ts" href={tsHref} target="_blank" rel="noopener">{ev.label}</a>
         : <span className="timeline-ts">{ev.label}</span>}
-      <span className={`timeline-badge ${ev.type}`}>{BADGE_LABELS[ev.type] || ev.type}</span>
+      <span className={`timeline-badge ${ev.badge}`}>{BADGE_LABELS[ev.badge] || ev.badge}</span>
       <div className="timeline-info">
         <span className="timeline-desc">{ev.description}</span>
         {onNoteChange && (
@@ -191,7 +199,8 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
     </div>
   )
 
-  const title = analysis?.title || streamTitle
+  const rawTitle = analysis?.title || streamTitle
+  const title = cleanTitle(rawTitle)
   const summary = analysis?.summary || streamSummary
   const events = analysis?.events || streamEvents
   const videoId = streamVideoId
@@ -212,14 +221,12 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
               </div>
             )}
 
-            {title && (
+            {videoId ? (
               <div className="fight-header">
-                {videoId && (
-                  <div className="fight-embed">
-                    <iframe src={`https://www.youtube.com/embed/${videoId}`}
-                      title={`${title} — BJJ match`} allowFullScreen loading="lazy" />
-                  </div>
-                )}
+                <div className="fight-embed">
+                  <iframe src={`https://www.youtube.com/embed/${videoId}`}
+                    title={`${title} — BJJ match`} allowFullScreen loading="lazy" />
+                </div>
                 <div className="fight-meta">
                   <div className="fight-title">{title}</div>
                   {summary && <div className="fight-summary">{summary}</div>}
@@ -228,7 +235,14 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
                   )}
                 </div>
               </div>
-            )}
+            ) : summary ? (
+              <div className="fight-summary-block">
+                {summary}
+                {analysis?.fighter_a && analysis.fighter_a !== 'Fighter A' && (
+                  <div className="fight-fighters">{analysis.fighter_a} vs {analysis.fighter_b}</div>
+                )}
+              </div>
+            ) : null}
 
             {analysis && (
               <>
