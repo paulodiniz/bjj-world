@@ -70,14 +70,6 @@ export default function Home() {
 
   return (
     <div className="landing" role="main" aria-label="Tapcodex — knowledge graph">
-      <div className="landing-topbar">
-        {user ? (
-          <button className="landing-user-btn">{user.email}</button>
-        ) : (
-          <Link href="/signin" className="landing-signin-btn">Sign in</Link>
-        )}
-      </div>
-
       <div className="landing-brand">
         <h1 className="landing-title">Tapcodex</h1>
         <p className="landing-sub">knowledge graph</p>
