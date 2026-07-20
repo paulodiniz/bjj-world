@@ -250,11 +250,23 @@ async def analyze_upload(request: Request, video: UploadFile = File(...), bjj_se
             status_code=429,
         )
 
-    title = re.sub(r"\.[^.]+$", "", video.filename or "") or "BJJ Match"
+    _ALLOWED_EXTS = {".mp4", ".mov", ".webm", ".mkv", ".avi", ".m4v"}
+    _orig = video.filename or ""
+    _ext = os.path.splitext(_orig)[1].lower()
+    if _ext not in _ALLOWED_EXTS:
+        friendly = _orig or "this file"
+        hint = " (looks like an incomplete yt-dlp download)" if re.search(r"\.(f\d+|part|ytdl)$", _orig) else ""
+        return StreamingResponse(
+            iter([_sse("error", {"text": f"Unsupported file type '{_ext or '(none)'}'.{hint} Please upload an mp4, mov, or webm file."})]),
+            media_type="text/event-stream",
+            status_code=415,
+        )
+
+    title = re.sub(r"\.[^.]+$", "", _orig) or "BJJ Match"
     size_mb = 0
 
     import tempfile
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=_ext or ".mp4")
     tmp_path = tmp.name
     tmp.close()
 
