@@ -61,6 +61,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
   const [streamTitle, setStreamTitle] = useState('')
   const [streamVideoId, setStreamVideoId] = useState('')
   const [notFound, setNotFound] = useState(false)
+  const [needsFile, setNeedsFile] = useState(false)
   const [globalNote, setGlobalNote] = useState('')
   const [eventNotes, setEventNotes] = useState<Record<string, string>>({})
   const [shareUrl, setShareUrl] = useState('')
@@ -73,7 +74,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
     const file = takePendingFile()
     if (file) { startFileAnalysis(file); return }
 
-    if (id === 'new') return
+    if (id === 'new') { setNeedsFile(true); return }
 
     fetch(`/api/analyses/${id}`, { credentials: 'include' })
       .then((r) => r.ok ? r.json() : Promise.reject(r.status))
@@ -160,6 +161,28 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
     setEventNotes((p) => ({ ...p, [ts]: val }))
     saveNotes()
   }
+
+  const handleFallbackFile = (file: File) => {
+    setNeedsFile(false)
+    startFileAnalysis(file)
+  }
+
+  if (needsFile) return (
+    <div className="results-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+      <label className="upload-zone" style={{ cursor: 'pointer' }}
+        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over') }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.classList.remove('drag-over') }}
+        onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) handleFallbackFile(f) }}
+      >
+        <span className="upload-zone-glyph" aria-hidden="true">↑</span>
+        <span className="upload-zone-text">Select or drop a video to analyse</span>
+        <span className="upload-zone-meta">mp4 · mov · webm · up to 100 MB</span>
+        <input type="file" accept="video/*" style={{ display: 'none' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFallbackFile(f); e.target.value = '' }} />
+      </label>
+      <Link href="/" style={{ color: 'var(--accent-text)', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>← Home</Link>
+    </div>
+  )
 
   if (notFound) return (
     <div className="results-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>

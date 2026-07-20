@@ -1,3 +1,8 @@
-let _file: File | null = null
-export const setPendingFile = (f: File) => { _file = f }
-export const takePendingFile = (): File | null => { const f = _file; _file = null; return f }
+declare global { interface Window { __pendingFile?: File | null } }
+
+export const setPendingFile = (f: File) => { window.__pendingFile = f }
+export const takePendingFile = (): File | null => {
+  const f = window.__pendingFile ?? null
+  window.__pendingFile = null
+  return f
+}
