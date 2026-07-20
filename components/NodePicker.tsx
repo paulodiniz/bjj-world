@@ -29,6 +29,7 @@ export function NodePicker({ label, types, value, multi = false, onChange }: Nod
 
   const remove = (id: string) => onChange(value.filter((v) => v !== id))
 
+  const totalAvailable = allNodes.filter((n) => types.includes(n.type)).length
   const datalistId = `np-${label.replace(/\s+/g, '-').toLowerCase()}`
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +48,7 @@ export function NodePicker({ label, types, value, multi = false, onChange }: Nod
           type="text"
           value={query}
           onChange={handleChange}
-          placeholder="Search…"
+          placeholder={totalAvailable ? `Search ${totalAvailable} techniques…` : 'Search…'}
           autoComplete="off"
           list={datalistId}
         />
