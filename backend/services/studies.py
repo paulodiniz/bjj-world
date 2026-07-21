@@ -68,7 +68,11 @@ async def _fetch_youtube_title(url: str) -> str | None:
     return None
 
 
-async def _generate_improvements(goal: str, youtube_url: str | None, count: int) -> list[dict]:
+async def _generate_improvements(goal: str, youtube_url: str | None, count: int, user_id: str) -> list[dict]:
+    from services.profile import get_profile, build_profile_context
+    profile = await get_profile(user_id)
+    profile_ctx = build_profile_context(profile)
+
     video_ctx = ""
     if youtube_url:
         title = await _fetch_youtube_title(youtube_url)
@@ -78,7 +82,7 @@ async def _generate_improvements(goal: str, youtube_url: str | None, count: int)
             video_ctx = f"\nThe student also attached a YouTube resource: {youtube_url}"
 
     prompt = (
-        f'You are a BJJ coach. A student has set this study goal: "{goal}".{video_ctx}\n\n'
+        f'You are a BJJ coach. A student has set this study goal: "{goal}".{video_ctx}{profile_ctx}\n\n'
         f"Generate exactly {count} improvement areas, each with specific practice drills.\n\n"
         f'Return a JSON array of exactly {count} objects, each with:\n'
         '- "title": short name (5-8 words)\n'
@@ -116,7 +120,7 @@ async def _generate_improvements(goal: str, youtube_url: str | None, count: int)
 
 async def create_study(user_id: str, goal: str, youtube_url: str | None, count: int = 3) -> dict:
     count = max(1, min(5, count))
-    improvements = await _generate_improvements(goal, youtube_url, count)
+    improvements = await _generate_improvements(goal, youtube_url, count, user_id)
 
     pool = await _get_pool()
     async with pool.acquire() as conn:
