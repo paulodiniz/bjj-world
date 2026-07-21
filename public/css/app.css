@@ -2043,7 +2043,7 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 4px;
-      min-width: 160px;
+      min-width: 180px;
       box-shadow: 0 8px 24px oklch(0 0 0 / 0.4);
     }
     .user-menu-email {
@@ -2079,6 +2079,21 @@
     .user-menu-item:hover { background: var(--surface-2); color: var(--ink); }
     .user-menu-item.danger { color: var(--accent-text); }
     .user-menu-item.danger:hover { background: color-mix(in oklch, var(--accent) 10%, transparent); }
+
+    .user-menu-divider {
+      height: 1px;
+      background: var(--border-sub);
+      margin: 4px 0;
+    }
+
+    .user-menu-section-label {
+      padding: 6px 12px 3px;
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--ink-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
 
     /* ── Class Prep ──────────────────────────────────────── */
     .prep-area {
