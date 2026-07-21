@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import time
@@ -17,6 +18,7 @@ from services.history import (
     save_messages,
 )
 from services.profile import get_profile, build_profile_context
+from services.graph_context import build_graph_context
 from services.rag import retrieve
 
 router = APIRouter()
@@ -64,11 +66,14 @@ async def _search_youtube(technique: str) -> str | None:
     return result
 
 
-async def _stream_answer(question: str, chunks: list[dict], history: list[dict], profile_ctx: str = ""):
+async def _stream_answer(question: str, chunks: list[dict], history: list[dict], profile_ctx: str = "", graph_ctx: str = ""):
     context = "\n\n---\n\n".join(c["text"] for c in chunks)
+    user_content = f"Question: {question}\n\nRelevant BJJ knowledge:\n{context}"
+    if graph_ctx:
+        user_content += f"\n\n{graph_ctx}"
     messages = [
         *history,
-        {"role": "user", "content": f"Question: {question}\n\nRelevant BJJ knowledge:\n{context}"},
+        {"role": "user", "content": user_content},
     ]
     system = (
         "You are a helpful BJJ coach embedded in an app that automatically shows relevant YouTube videos "
@@ -165,11 +170,14 @@ async def chat(request: Request, bjj_session: str = Cookie(default=None), anon_s
             yield _sse("conversation_id", {"id": conv_id})
 
         yield _sse("status", {"text": "Searching knowledge base..."})
-        chunks = await retrieve(question)
+        chunks, graph_ctx = await asyncio.gather(
+            retrieve(question),
+            build_graph_context(question),
+        )
 
         yield _sse("status", {"text": "Answering..."})
         full_text = ""
-        async for token in _stream_answer(question, chunks, history, profile_ctx):
+        async for token in _stream_answer(question, chunks, history, profile_ctx, graph_ctx):
             full_text += token
             yield _sse("token", {"text": token})
 

@@ -148,6 +148,9 @@ async def init_rag(graph_path: str) -> None:
     rag_chunks = build_chunks(graph)
     print(f"Built {len(rag_chunks)} RAG chunks")
 
+    from services.graph_context import build_graph_index
+    build_graph_index(rag_chunks)
+
     async with httpx.AsyncClient(timeout=120.0) as client:
         print("Pulling nomic-embed-text...")
         await client.post(f"{OLLAMA_URL}/api/pull", json={"name": "nomic-embed-text", "stream": False})
