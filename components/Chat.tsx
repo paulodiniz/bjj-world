@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { chatStream, getNodes } from '@/lib/api'
 import { setChipNodes, chipifyHtml } from '@/lib/chipifyHtml'
 import { registerStop, clearStop } from '@/lib/streamControl'
@@ -30,8 +31,10 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
   const [currentResponse, setCurrentResponse] = useState('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const [nodesReady, setNodesReady] = useState(false)
+  const router = useRouter()
   const entriesRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollParentRef = useRef<HTMLElement | null>(null)
   const autoSentRef = useRef(false)
 
   // Load nodes once and register with chipifyHtml
@@ -42,10 +45,23 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
     }).catch(() => {})
   }, [])
 
+  // Cache the scrollable ancestor once on mount
   useEffect(() => {
-    // Use instant scroll during streaming to avoid competing smooth animations
-    const behavior = currentResponse ? 'instant' : 'smooth'
-    bottomRef.current?.scrollIntoView({ behavior, block: 'end' })
+    let el: HTMLElement | null = entriesRef.current?.parentElement ?? null
+    while (el) {
+      const { overflowY } = window.getComputedStyle(el)
+      if (overflowY === 'auto' || overflowY === 'scroll') { scrollParentRef.current = el; break }
+      el = el.parentElement
+    }
+  }, [])
+
+  useEffect(() => {
+    const parent = scrollParentRef.current
+    if (parent) {
+      const distanceFromBottom = parent.scrollHeight - parent.scrollTop - parent.clientHeight
+      if (distanceFromBottom > 120) return // user scrolled up — don't interrupt
+    }
+    bottomRef.current?.scrollIntoView({ behavior: currentResponse ? 'instant' : 'smooth', block: 'end' })
   }, [messages, currentResponse])
 
   useEffect(() => {
@@ -74,7 +90,7 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
         if (event.type === 'conversation_id') {
           currentConvId = event.id
           setConversationId(event.id)
-          window.history.replaceState(null, '', `/c/${event.id}`)
+          router.replace(`/c/${event.id}`)
         } else if (event.type === 'token') {
           response += event.text
           setCurrentResponse(response)
