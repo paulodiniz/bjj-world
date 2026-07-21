@@ -121,6 +121,7 @@ export function Header() {
                 </div>
                 <Link href="/history" className="user-menu-item" role="menuitem" onClick={() => setShowMenu(false)}>History</Link>
                 <Link href="/profile" className="user-menu-item" role="menuitem" onClick={() => setShowMenu(false)}>My game profile</Link>
+                <Link href="/studies" className="user-menu-item" role="menuitem" onClick={() => setShowMenu(false)}>My studies</Link>
                 {user.plan === 'coach' && (
                   <Link href="/prep" className="user-menu-item" role="menuitem" onClick={() => setShowMenu(false)}>Class Prep</Link>
                 )}

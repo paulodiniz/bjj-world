@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.analyses import router as analyses_router
+from routes.studies import router as studies_router
 from routes.auth import router as auth_router
 from routes.chat import router as chat_router
 from routes.history import router as history_router
@@ -25,6 +26,7 @@ from services.analyses import init_db as init_analyses_db
 from services.auth import init_db as init_auth_db
 from services.history import init_db as init_history_db
 from services.profile import init_db as init_profile_db
+from services.studies import init_db as init_studies_db
 from services.graph_db import seed_database
 from services.rag import init_rag
 
@@ -38,6 +40,7 @@ async def lifespan(app: FastAPI):
         await init_history_db()
         await init_analyses_db()
         await init_profile_db()
+        await init_studies_db()
     except Exception as exc:
         print(f"DB init failed: {exc}")
 
@@ -71,6 +74,7 @@ app.add_middleware(
 )
 
 app.include_router(analyses_router)
+app.include_router(studies_router)
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(history_router)

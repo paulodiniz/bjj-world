@@ -178,6 +178,24 @@ export async function updateProfile(data: any) {
 }
 
 /**
+ * Studies APIs
+ */
+export async function getStudies() {
+  return apiCall('/api/studies')
+}
+
+export async function createStudy(goal: string, youtubeUrl: string | null, count: number) {
+  return apiCall('/api/studies', {
+    method: 'POST',
+    body: { goal, youtube_url: youtubeUrl, count },
+  })
+}
+
+export async function deleteStudy(id: string) {
+  return apiCall(`/api/studies/${id}`, { method: 'DELETE' })
+}
+
+/**
  * Prep APIs
  */
 export async function generatePrepPlan(techniqueId: string, duration: number) {
