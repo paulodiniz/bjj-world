@@ -10,13 +10,13 @@ export default function ConversationPage({ params }: { params: { id: string } })
   const { id } = params
   const [messages, setMessages] = useState<Message[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'unauth' | 'notfound'>('loading')
+  const [autoQ, setAutoQ] = useState('')
 
   useEffect(() => {
-    // Check if there's a pending question stored by the home page
     const pending = sessionStorage.getItem(`pending_q_${id}`)
     if (pending) {
       sessionStorage.removeItem(`pending_q_${id}`)
-      // This path is hit when Header search navigates here
+      setAutoQ(pending)
       setStatus('ready')
       return
     }
@@ -51,11 +51,9 @@ export default function ConversationPage({ params }: { params: { id: string } })
     </div>
   )
 
-  const pendingQ = typeof window !== 'undefined' ? sessionStorage.getItem(`pending_q_${id}`) || '' : ''
-
   return (
     <div className="results-area" style={{ display: 'flex' }} role="main">
-      <Chat conversationId={id} initialMessages={messages} autoQuestion={pendingQ} />
+      <Chat conversationId={id} initialMessages={messages} autoQuestion={autoQ} />
     </div>
   )
 }

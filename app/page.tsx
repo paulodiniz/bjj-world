@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
 import type { User } from '@/lib/auth'
-import { Chat } from '@/components/Chat'
 import { setPendingFile } from '@/lib/pendingFile'
 import { getProfile } from '@/lib/api'
 
@@ -19,7 +18,6 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [showNudge, setShowNudge] = useState(false)
   const [query, setQuery] = useState('')
-  const [activeConv, setActiveConv] = useState<{ id: string; question: string } | null>(null)
   const [uploadError, setUploadError] = useState('')
   const router = useRouter()
 
@@ -52,20 +50,8 @@ export default function Home() {
     e.preventDefault()
     if (!query.trim()) return
     const id = crypto.randomUUID()
-    window.history.replaceState(null, '', `/c/${id}`)
-    setActiveConv({ id, question: query.trim() })
-  }
-
-  if (activeConv) {
-    return (
-      <div className="results-area" style={{ display: 'flex' }} role="main">
-        <Chat
-          conversationId={activeConv.id}
-          initialMessages={[]}
-          autoQuestion={activeConv.question}
-        />
-      </div>
-    )
+    sessionStorage.setItem(`pending_q_${id}`, query.trim())
+    router.push(`/c/${id}`)
   }
 
   return (
