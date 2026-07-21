@@ -143,32 +143,44 @@ async def create_study(user_id: str, goal: str, youtube_url: str | None, count: 
 
 async def list_studies(user_id: str) -> list[dict]:
     pool = await _get_pool()
-    rows = await pool.fetch(
-        """
-        SELECT s.id, s.goal, s.youtube_url, s.created_at,
-               COUNT(d.id)::int AS total_drills,
-               COUNT(d.id) FILTER (WHERE d.completed)::int AS completed_drills
-        FROM studies s
-        LEFT JOIN study_improvements i ON i.study_id = s.id
-        LEFT JOIN study_drills d ON d.improvement_id = i.id
-        WHERE s.user_id = $1
-        GROUP BY s.id
-        ORDER BY s.created_at DESC
-        LIMIT 50
-        """,
+    study_rows = await pool.fetch(
+        "SELECT id, goal, youtube_url, created_at FROM studies WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
         user_id,
     )
-    return [
-        {
-            "id": str(r["id"]),
-            "goal": r["goal"],
-            "youtube_url": r["youtube_url"],
-            "created_at": r["created_at"].isoformat(),
-            "total_drills": r["total_drills"],
-            "completed_drills": r["completed_drills"],
-        }
-        for r in rows
-    ]
+    results = []
+    for study in study_rows:
+        study_id = str(study["id"])
+        imp_rows = await pool.fetch(
+            "SELECT id, title, description FROM study_improvements WHERE study_id = $1 ORDER BY position",
+            study_id,
+        )
+        improvements = []
+        total_drills = 0
+        completed_drills = 0
+        for imp in imp_rows:
+            drill_rows = await pool.fetch(
+                "SELECT id, text, completed FROM study_drills WHERE improvement_id = $1 ORDER BY position",
+                imp["id"],
+            )
+            drills = [{"id": str(d["id"]), "text": d["text"], "completed": d["completed"]} for d in drill_rows]
+            total_drills += len(drills)
+            completed_drills += sum(1 for d in drills if d["completed"])
+            improvements.append({
+                "id": str(imp["id"]),
+                "title": imp["title"],
+                "description": imp["description"],
+                "drills": drills,
+            })
+        results.append({
+            "id": study_id,
+            "goal": study["goal"],
+            "youtube_url": study["youtube_url"],
+            "created_at": study["created_at"].isoformat(),
+            "total_drills": total_drills,
+            "completed_drills": completed_drills,
+            "improvements": improvements,
+        })
+    return results
 
 
 async def get_study(study_id: str, user_id: str) -> dict | None:

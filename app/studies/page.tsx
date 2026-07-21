@@ -220,7 +220,7 @@ export default function StudiesPage() {
                       </a>
                     )}
                     <ol className="study-improvements">
-                      {study.improvements.map((imp) => (
+                      {(study.improvements || []).map((imp) => (
                         <li key={imp.id} className="study-improvement">
                           <div className="study-improvement-title">{imp.title}</div>
                           <div className="study-improvement-desc">{imp.description}</div>
