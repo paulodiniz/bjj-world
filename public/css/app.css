@@ -2259,6 +2259,31 @@
     }
     .user-menu-item.danger:hover { background: color-mix(in oklch, var(--accent) 10%, transparent); }
 
+    /* ── Studies — keyframes ─────────────────────────────── */
+    @keyframes study-sweep {
+      0%   { left: -45%; }
+      100% { left: 145%; }
+    }
+    @keyframes study-dot {
+      0%, 100% { opacity: 0.25; transform: translateY(0); }
+      50%       { opacity: 1;    transform: translateY(-3px); }
+    }
+    @keyframes pip-pop {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.5); }
+      100% { transform: scale(1); }
+    }
+    @keyframes drill-tap {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+    @keyframes card-complete {
+      0%   { box-shadow: 0 0 0 0 oklch(0.55 0.22 25 / 0.5); }
+      40%  { box-shadow: 0 0 0 5px oklch(0.55 0.22 25 / 0.12); }
+      100% { box-shadow: 0 0 0 0 oklch(0.55 0.22 25 / 0); }
+    }
+
     /* ── Studies ──────────────────────────────────────────── */
     .studies-area {
       display: none;
@@ -2413,10 +2438,13 @@
       border: 1px solid var(--border-sub);
       border-radius: 8px;
       overflow: hidden;
-      transition: border-color 0.15s;
+      transition: border-color 200ms ease-out;
     }
     .study-card:hover { border-color: var(--border); }
     .study-card.expanded { border-color: var(--border); }
+    .study-card.in-progress { border-color: oklch(0.55 0.22 25 / 0.3); }
+    .study-card.done { border-color: oklch(0.50 0.14 145 / 0.5); }
+    .study-card.flash { animation: card-complete 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
     .study-card-head {
       display: flex;
@@ -2426,6 +2454,13 @@
       cursor: pointer;
       gap: 12px;
       background: var(--surface);
+      transition: background 400ms ease-out;
+    }
+    .study-card.in-progress .study-card-head {
+      background: color-mix(in oklch, var(--accent) 7%, var(--surface));
+    }
+    .study-card.done .study-card-head {
+      background: oklch(0.145 0.016 145);
     }
 
     .study-card-goal {
@@ -2436,13 +2471,14 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: color 300ms ease-out;
     }
     .study-card.expanded .study-card-goal { white-space: normal; }
+    .study-card.done .study-card-goal { color: var(--ink-2); }
 
     .study-card-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-    .study-card-date,
-    .study-card-count {
+    .study-card-date {
       font-family: var(--mono);
       font-size: 0.65rem;
       color: var(--ink-3);
@@ -2450,6 +2486,28 @@
     }
 
     .study-card-chevron { font-size: 0.6rem; color: var(--ink-3); }
+
+    /* drill pips — compact progress dots in card header */
+    .study-pips {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .study-pip {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 250ms ease-out;
+      flex-shrink: 0;
+    }
+    .study-pip.filled { background: var(--accent); }
+    .study-card.done .study-pip.filled { background: oklch(0.60 0.16 145); }
+    .study-pips.flash .study-pip.filled {
+      animation: pip-pop 350ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    }
+    @media (max-width: 520px) { .study-pips { display: none; } }
 
     .study-card-del {
       background: none;
@@ -2523,29 +2581,17 @@
       margin-top: 2px;
     }
 
-    /* progress bar track — sits between card head and body */
-    .study-card-progress-bar-track {
-      height: 2px;
+    /* progress bar — 1px tape between head and body */
+    .study-card-track {
+      height: 1px;
       background: var(--border-sub);
     }
-    .study-card-progress-bar-fill {
+    .study-card-fill {
       height: 100%;
       background: var(--accent);
-      transition: width 300ms ease-out;
+      transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .study-card.done .study-card-progress-bar-fill {
-      background: oklch(0.65 0.16 145); /* green when complete */
-    }
-
-    .study-card-progress-label {
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      color: var(--ink-3);
-      white-space: nowrap;
-    }
-    .study-card-progress-label.done {
-      color: oklch(0.65 0.16 145);
-    }
+    .study-card.done .study-card-fill { background: oklch(0.55 0.16 145); }
 
     /* drill checklist */
     .study-drill-list {
@@ -2575,40 +2621,131 @@
     .study-drill-checkbox {
       appearance: none;
       -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border: 1px solid var(--border);
-      border-radius: 3px;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
       background: none;
       cursor: pointer;
       flex-shrink: 0;
-      margin-top: 2px;
+      margin-top: 1px;
       position: relative;
-      transition: border-color 150ms, background 150ms;
+      transition: border-color 150ms ease-out, background 150ms ease-out;
     }
+    .study-drill-checkbox:hover { border-color: var(--ink-3); }
     .study-drill-checkbox:checked {
       background: var(--accent);
       border-color: var(--accent);
+      animation: drill-tap 180ms cubic-bezier(0.34, 1.4, 0.64, 1);
     }
     .study-drill-checkbox:checked::after {
       content: '';
       position: absolute;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: center;
-      background-size: 9px 7px;
+      background-size: 10px 8px;
     }
-    .study-drill-checkbox:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .study-drill-checkbox:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
     .study-drill-text {
       font-size: 0.8rem;
       color: var(--ink-2);
       line-height: 1.5;
-      transition: color 150ms;
+      transition: color 200ms ease-out;
     }
     .study-drill-text.completed {
       color: var(--ink-3);
       text-decoration: line-through;
-      text-decoration-color: var(--border);
+      text-decoration-color: oklch(0.35 0 0);
+    }
+
+    /* improvement done state */
+    .study-improvement.done .study-improvement-title {
+      color: var(--ink-3);
+    }
+    .study-improvement.done::before {
+      content: '✓';
+      color: oklch(0.58 0.16 145);
+      font-family: var(--sans);
+    }
+
+    /* generating card */
+    .study-generating {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border-sub);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .study-generating-sweep {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 45%;
+      background: linear-gradient(90deg, transparent, oklch(0.55 0.22 25 / 0.07), transparent);
+      animation: study-sweep 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      pointer-events: none;
+    }
+
+    .study-generating-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .study-generating-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--ink-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .study-generating-goal {
+      font-size: 0.85rem;
+      color: var(--ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .study-generating-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .study-generating-dots span {
+      display: block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: study-dot 1.3s ease-in-out infinite;
+    }
+    .study-generating-dots span:nth-child(2) { animation-delay: 0.18s; }
+    .study-generating-dots span:nth-child(3) { animation-delay: 0.36s; }
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .study-generating-sweep { animation: none; opacity: 0; }
+      .study-generating-dots span { animation: none; opacity: 0.7; }
+      .study-card.flash { animation: none; }
+      .study-pips.flash .study-pip.filled { animation: none; }
+      .study-drill-checkbox:checked { animation: none; }
+      .study-card-fill { transition: none; }
+      .study-card-head { transition: none; }
+      .study-card-goal { transition: none; }
     }

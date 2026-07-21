@@ -1,5 +1,5 @@
 interface FetchOptions {
-  method?: 'GET' | 'POST' | 'DELETE' | 'PUT'
+  method?: 'GET' | 'POST' | 'DELETE' | 'PUT' | 'PATCH'
   body?: any
   headers?: Record<string, string>
   token?: string
