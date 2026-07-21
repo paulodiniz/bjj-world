@@ -146,8 +146,6 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
         </div>
       )}
 
-      <div ref={bottomRef} />
-
       <form className="landing-cmd" onSubmit={handleSubmit} style={{ marginTop: '20px', maxWidth: 680, margin: '20px auto 0' }}>
         <span className="landing-cmd-glyph" aria-hidden="true">◎</span>
         <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
@@ -158,6 +156,8 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
           <button type="submit" className="landing-ask-btn" disabled={!query.trim()}>Ask</button>
         )}
       </form>
+
+      <div ref={bottomRef} />
     </div>
   )
 }
