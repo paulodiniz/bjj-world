@@ -6,7 +6,7 @@ import { getStudies, createStudy, deleteStudy, toggleDrill } from '@/lib/api'
 import { getCurrentUser } from '@/lib/auth'
 
 interface Drill { id: string; text: string; completed: boolean }
-interface Improvement { id: string; title: string; description: string; drills: Drill[] }
+interface Improvement { id: string; title: string; description: string; video_url: string | null; drills: Drill[] }
 interface Study {
   id: string
   goal: string
@@ -287,6 +287,11 @@ export default function StudiesPage() {
                           <li key={imp.id} className={`study-improvement${impDone ? ' done' : ''}`}>
                             <div className="study-improvement-title">{imp.title}</div>
                             <div className="study-improvement-desc">{imp.description}</div>
+                            {imp.video_url && (
+                              <a className="study-improvement-video" href={imp.video_url} target="_blank" rel="noopener noreferrer">
+                                ▶ Watch
+                              </a>
+                            )}
                             {imp.drills.length > 0 && (
                               <ul className="study-drill-list">
                                 {imp.drills.map((drill) => (

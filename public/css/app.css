@@ -2661,6 +2661,21 @@
       text-decoration-color: oklch(0.35 0 0);
     }
 
+    .study-improvement-video {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--accent-text);
+      text-decoration: none;
+      grid-column: 2;
+      margin-top: 4px;
+      opacity: 0.8;
+      transition: opacity 120ms;
+    }
+    .study-improvement-video:hover { opacity: 1; text-decoration: underline; }
+
     /* improvement done state */
     .study-improvement.done .study-improvement-title {
       color: var(--ink-3);

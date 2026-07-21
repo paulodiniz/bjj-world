@@ -7,6 +7,30 @@ from anthropic import AsyncAnthropic
 
 _pool: asyncpg.Pool | None = None
 _anthropic = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+_video_cache: dict[str, str | None] = {}
+
+
+async def _search_youtube(technique: str) -> str | None:
+    query = f"{technique} BJJ tutorial"
+    key = query.lower()
+    if key in _video_cache:
+        return _video_cache[key]
+    if not YOUTUBE_API_KEY:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(
+                "https://www.googleapis.com/youtube/v3/search",
+                params={"q": query, "type": "video", "part": "snippet", "maxResults": 1, "key": YOUTUBE_API_KEY},
+            )
+            data = resp.json()
+        video_id = data.get("items", [{}])[0].get("id", {}).get("videoId")
+        result = f"https://www.youtube.com/watch?v={video_id}" if video_id else None
+    except Exception:
+        result = None
+    _video_cache[key] = result
+    return result
 
 
 async def _get_pool() -> asyncpg.Pool:
@@ -33,9 +57,13 @@ async def init_db() -> None:
             study_id UUID NOT NULL REFERENCES studies(id) ON DELETE CASCADE,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
+            video_url TEXT,
             position INTEGER NOT NULL DEFAULT 0
         )
     """)
+    await pool.execute(
+        "ALTER TABLE study_improvements ADD COLUMN IF NOT EXISTS video_url TEXT"
+    )
     await pool.execute("""
         CREATE TABLE IF NOT EXISTS study_drills (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -87,12 +115,13 @@ async def _generate_improvements(goal: str, youtube_url: str | None, count: int,
         f'Return a JSON array of exactly {count} objects, each with:\n'
         '- "title": short name (5-8 words)\n'
         '- "description": 1-2 sentences on what to work on and why it matters\n'
-        '- "drills": array of exactly 4 short, specific, completable practice tasks. '
-        'Each drill is one imperative sentence describing a concrete mat activity '
+        '- "drills": array of exactly 4 short, specific, completable mat activities. '
+        'Each drill is one imperative sentence. Do NOT include any "watch video" or "watch instructional" drills — '
+        'video resources are handled separately. '
+        'Vary the types across: solo rep drilling, partner reps, positional sparring focus, flow drilling or visualization. '
         '(e.g., "Drill the basic scissor sweep 20 reps each side", '
         '"Try the sweep in positional sparring from closed guard bottom", '
-        '"Isolate the hip escape entry for 5 minutes"). '
-        'Vary the types: some solo drilling, some partner reps, some sparring focus, some video study.\n\n'
+        '"Flow drill the entry sequence for 5 minutes without stopping").\n\n'
         "Return ONLY the JSON array, no markdown, no other text."
     )
 
@@ -122,6 +151,10 @@ async def create_study(user_id: str, goal: str, youtube_url: str | None, count: 
     count = max(1, min(5, count))
     improvements = await _generate_improvements(goal, youtube_url, count, user_id)
 
+    # Search YouTube for each improvement in parallel
+    import asyncio
+    video_urls = await asyncio.gather(*[_search_youtube(imp["title"]) for imp in improvements])
+
     pool = await _get_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
@@ -130,10 +163,10 @@ async def create_study(user_id: str, goal: str, youtube_url: str | None, count: 
                 user_id, goal, youtube_url,
             )
             study_id = str(row["id"])
-            for i, imp in enumerate(improvements):
+            for i, (imp, video_url_imp) in enumerate(zip(improvements, video_urls)):
                 imp_row = await conn.fetchrow(
-                    "INSERT INTO study_improvements (study_id, title, description, position) VALUES ($1, $2, $3, $4) RETURNING id",
-                    study_id, imp["title"], imp["description"], i,
+                    "INSERT INTO study_improvements (study_id, title, description, video_url, position) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+                    study_id, imp["title"], imp["description"], video_url_imp, i,
                 )
                 imp_id = str(imp_row["id"])
                 for j, drill_text in enumerate(imp["drills"]):
@@ -155,7 +188,7 @@ async def list_studies(user_id: str) -> list[dict]:
     for study in study_rows:
         study_id = str(study["id"])
         imp_rows = await pool.fetch(
-            "SELECT id, title, description FROM study_improvements WHERE study_id = $1 ORDER BY position",
+            "SELECT id, title, description, video_url FROM study_improvements WHERE study_id = $1 ORDER BY position",
             study_id,
         )
         improvements = []
@@ -173,6 +206,7 @@ async def list_studies(user_id: str) -> list[dict]:
                 "id": str(imp["id"]),
                 "title": imp["title"],
                 "description": imp["description"],
+                "video_url": imp["video_url"],
                 "drills": drills,
             })
         results.append({
@@ -197,7 +231,7 @@ async def get_study(study_id: str, user_id: str) -> dict | None:
         return None
 
     improvements = await pool.fetch(
-        "SELECT id, title, description FROM study_improvements WHERE study_id = $1 ORDER BY position",
+        "SELECT id, title, description, video_url FROM study_improvements WHERE study_id = $1 ORDER BY position",
         study_id,
     )
 
@@ -217,6 +251,7 @@ async def get_study(study_id: str, user_id: str) -> dict | None:
             "id": str(imp["id"]),
             "title": imp["title"],
             "description": imp["description"],
+            "video_url": imp["video_url"],
             "drills": drill_list,
         })
 
