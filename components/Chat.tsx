@@ -31,6 +31,7 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const [nodesReady, setNodesReady] = useState(false)
   const entriesRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
   const autoSentRef = useRef(false)
 
   // Load nodes once and register with chipifyHtml
@@ -42,9 +43,9 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
   }, [])
 
   useEffect(() => {
-    if (entriesRef.current) {
-      entriesRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    }
+    // Use instant scroll during streaming to avoid competing smooth animations
+    const behavior = currentResponse ? 'instant' : 'smooth'
+    bottomRef.current?.scrollIntoView({ behavior, block: 'end' })
   }, [messages, currentResponse])
 
   useEffect(() => {
@@ -144,6 +145,8 @@ export function Chat({ conversationId: initialConvId, initialMessages, autoQuest
           </div>
         </div>
       )}
+
+      <div ref={bottomRef} />
 
       <form className="landing-cmd" onSubmit={handleSubmit} style={{ marginTop: '20px', maxWidth: 680, margin: '20px auto 0' }}>
         <span className="landing-cmd-glyph" aria-hidden="true">◎</span>
