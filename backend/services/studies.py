@@ -180,42 +180,55 @@ async def create_study(user_id: str, goal: str, youtube_url: str | None, count: 
 
 async def list_studies(user_id: str) -> list[dict]:
     pool = await _get_pool()
+
     study_rows = await pool.fetch(
         "SELECT id, goal, youtube_url, created_at FROM studies WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
         user_id,
     )
-    results = []
-    for study in study_rows:
-        study_id = str(study["id"])
-        imp_rows = await pool.fetch(
-            "SELECT id, title, description, video_url FROM study_improvements WHERE study_id = $1 ORDER BY position",
-            study_id,
+    if not study_rows:
+        return []
+
+    study_ids = [r["id"] for r in study_rows]
+
+    imp_rows = await pool.fetch(
+        "SELECT id, study_id, title, description, video_url FROM study_improvements WHERE study_id = ANY($1) ORDER BY study_id, position",
+        study_ids,
+    )
+
+    imp_ids = [r["id"] for r in imp_rows]
+    drill_rows = await pool.fetch(
+        "SELECT id, improvement_id, text, completed FROM study_drills WHERE improvement_id = ANY($1) ORDER BY improvement_id, position",
+        imp_ids,
+    ) if imp_ids else []
+
+    drills_by_imp: dict = {}
+    for d in drill_rows:
+        drills_by_imp.setdefault(d["improvement_id"], []).append(
+            {"id": str(d["id"]), "text": d["text"], "completed": d["completed"]}
         )
-        improvements = []
-        total_drills = 0
-        completed_drills = 0
-        for imp in imp_rows:
-            drill_rows = await pool.fetch(
-                "SELECT id, text, completed FROM study_drills WHERE improvement_id = $1 ORDER BY position",
-                imp["id"],
-            )
-            drills = [{"id": str(d["id"]), "text": d["text"], "completed": d["completed"]} for d in drill_rows]
-            total_drills += len(drills)
-            completed_drills += sum(1 for d in drills if d["completed"])
-            improvements.append({
-                "id": str(imp["id"]),
-                "title": imp["title"],
-                "description": imp["description"],
-                "video_url": imp["video_url"],
-                "drills": drills,
-            })
+
+    imps_by_study: dict = {}
+    for i in imp_rows:
+        drills = drills_by_imp.get(i["id"], [])
+        imps_by_study.setdefault(i["study_id"], []).append({
+            "id": str(i["id"]),
+            "title": i["title"],
+            "description": i["description"],
+            "video_url": i["video_url"],
+            "drills": drills,
+        })
+
+    results = []
+    for s in study_rows:
+        improvements = imps_by_study.get(s["id"], [])
+        all_drills = [d for imp in improvements for d in imp["drills"]]
         results.append({
-            "id": study_id,
-            "goal": study["goal"],
-            "youtube_url": study["youtube_url"],
-            "created_at": study["created_at"].isoformat(),
-            "total_drills": total_drills,
-            "completed_drills": completed_drills,
+            "id": str(s["id"]),
+            "goal": s["goal"],
+            "youtube_url": s["youtube_url"],
+            "created_at": s["created_at"].isoformat(),
+            "total_drills": len(all_drills),
+            "completed_drills": sum(1 for d in all_drills if d["completed"]),
             "improvements": improvements,
         })
     return results
