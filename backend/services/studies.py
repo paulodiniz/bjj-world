@@ -36,8 +36,21 @@ async def init_db() -> None:
             position INTEGER NOT NULL DEFAULT 0
         )
     """)
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS study_drills (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            improvement_id UUID NOT NULL REFERENCES study_improvements(id) ON DELETE CASCADE,
+            text TEXT NOT NULL,
+            completed BOOLEAN NOT NULL DEFAULT FALSE,
+            completed_at TIMESTAMPTZ,
+            position INTEGER NOT NULL DEFAULT 0
+        )
+    """)
     await pool.execute(
         "CREATE INDEX IF NOT EXISTS studies_user_idx ON studies(user_id, created_at DESC)"
+    )
+    await pool.execute(
+        "CREATE INDEX IF NOT EXISTS study_drills_improvement_idx ON study_drills(improvement_id)"
     )
 
 
@@ -66,18 +79,22 @@ async def _generate_improvements(goal: str, youtube_url: str | None, count: int)
 
     prompt = (
         f'You are a BJJ coach. A student has set this study goal: "{goal}".{video_ctx}\n\n'
-        f"Generate exactly {count} concrete improvement areas. Each should be specific and actionable. "
-        "An improvement can cover multiple angles — for example, if the goal is closed guard, "
-        '"Scissor sweep variations" and "Breaking closed guard posture" are both valid improvements.\n\n'
+        f"Generate exactly {count} improvement areas, each with specific practice drills.\n\n"
         f'Return a JSON array of exactly {count} objects, each with:\n'
         '- "title": short name (5-8 words)\n'
-        '- "description": 2-3 sentences on what to drill and why it matters for this goal\n\n'
+        '- "description": 1-2 sentences on what to work on and why it matters\n'
+        '- "drills": array of exactly 4 short, specific, completable practice tasks. '
+        'Each drill is one imperative sentence describing a concrete mat activity '
+        '(e.g., "Drill the basic scissor sweep 20 reps each side", '
+        '"Try the sweep in positional sparring from closed guard bottom", '
+        '"Isolate the hip escape entry for 5 minutes"). '
+        'Vary the types: some solo drilling, some partner reps, some sparring focus, some video study.\n\n'
         "Return ONLY the JSON array, no markdown, no other text."
     )
 
     message = await _anthropic.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
+        max_tokens=2048,
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -87,7 +104,14 @@ async def _generate_improvements(goal: str, youtube_url: str | None, count: int)
         text = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
 
     items = json.loads(text)
-    return [{"title": str(i["title"]), "description": str(i["description"])} for i in items[:count]]
+    return [
+        {
+            "title": str(i["title"]),
+            "description": str(i["description"]),
+            "drills": [str(d) for d in i.get("drills", [])[:4]],
+        }
+        for i in items[:count]
+    ]
 
 
 async def create_study(user_id: str, goal: str, youtube_url: str | None, count: int = 3) -> dict:
@@ -103,10 +127,16 @@ async def create_study(user_id: str, goal: str, youtube_url: str | None, count: 
             )
             study_id = str(row["id"])
             for i, imp in enumerate(improvements):
-                await conn.execute(
-                    "INSERT INTO study_improvements (study_id, title, description, position) VALUES ($1, $2, $3, $4)",
+                imp_row = await conn.fetchrow(
+                    "INSERT INTO study_improvements (study_id, title, description, position) VALUES ($1, $2, $3, $4) RETURNING id",
                     study_id, imp["title"], imp["description"], i,
                 )
+                imp_id = str(imp_row["id"])
+                for j, drill_text in enumerate(imp["drills"]):
+                    await conn.execute(
+                        "INSERT INTO study_drills (improvement_id, text, position) VALUES ($1, $2, $3)",
+                        imp_id, drill_text, j,
+                    )
 
     return await get_study(study_id, user_id)
 
@@ -114,11 +144,29 @@ async def create_study(user_id: str, goal: str, youtube_url: str | None, count: 
 async def list_studies(user_id: str) -> list[dict]:
     pool = await _get_pool()
     rows = await pool.fetch(
-        "SELECT id, goal, youtube_url, created_at FROM studies WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
+        """
+        SELECT s.id, s.goal, s.youtube_url, s.created_at,
+               COUNT(d.id)::int AS total_drills,
+               COUNT(d.id) FILTER (WHERE d.completed)::int AS completed_drills
+        FROM studies s
+        LEFT JOIN study_improvements i ON i.study_id = s.id
+        LEFT JOIN study_drills d ON d.improvement_id = i.id
+        WHERE s.user_id = $1
+        GROUP BY s.id
+        ORDER BY s.created_at DESC
+        LIMIT 50
+        """,
         user_id,
     )
     return [
-        {"id": str(r["id"]), "goal": r["goal"], "youtube_url": r["youtube_url"], "created_at": r["created_at"].isoformat()}
+        {
+            "id": str(r["id"]),
+            "goal": r["goal"],
+            "youtube_url": r["youtube_url"],
+            "created_at": r["created_at"].isoformat(),
+            "total_drills": r["total_drills"],
+            "completed_drills": r["completed_drills"],
+        }
         for r in rows
     ]
 
@@ -131,17 +179,58 @@ async def get_study(study_id: str, user_id: str) -> dict | None:
     )
     if not study:
         return None
+
     improvements = await pool.fetch(
         "SELECT id, title, description FROM study_improvements WHERE study_id = $1 ORDER BY position",
         study_id,
     )
+
+    result_improvements = []
+    total_drills = 0
+    completed_drills = 0
+
+    for imp in improvements:
+        drills = await pool.fetch(
+            "SELECT id, text, completed FROM study_drills WHERE improvement_id = $1 ORDER BY position",
+            imp["id"],
+        )
+        drill_list = [{"id": str(d["id"]), "text": d["text"], "completed": d["completed"]} for d in drills]
+        total_drills += len(drill_list)
+        completed_drills += sum(1 for d in drill_list if d["completed"])
+        result_improvements.append({
+            "id": str(imp["id"]),
+            "title": imp["title"],
+            "description": imp["description"],
+            "drills": drill_list,
+        })
+
     return {
         "id": str(study["id"]),
         "goal": study["goal"],
         "youtube_url": study["youtube_url"],
         "created_at": study["created_at"].isoformat(),
-        "improvements": [{"id": str(r["id"]), "title": r["title"], "description": r["description"]} for r in improvements],
+        "total_drills": total_drills,
+        "completed_drills": completed_drills,
+        "improvements": result_improvements,
     }
+
+
+async def toggle_drill(study_id: str, drill_id: str, user_id: str, completed: bool) -> bool:
+    pool = await _get_pool()
+    result = await pool.execute(
+        """
+        UPDATE study_drills SET
+            completed = $1,
+            completed_at = CASE WHEN $1 THEN NOW() ELSE NULL END
+        WHERE id = $2
+        AND improvement_id IN (
+            SELECT id FROM study_improvements
+            WHERE study_id IN (SELECT id FROM studies WHERE id = $3 AND user_id = $4)
+        )
+        """,
+        completed, drill_id, study_id, user_id,
+    )
+    return result.endswith("1")
 
 
 async def delete_study(study_id: str, user_id: str) -> bool:

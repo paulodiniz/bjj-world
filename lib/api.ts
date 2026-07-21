@@ -195,6 +195,13 @@ export async function deleteStudy(id: string) {
   return apiCall(`/api/studies/${id}`, { method: 'DELETE' })
 }
 
+export async function toggleDrill(studyId: string, drillId: string, completed: boolean) {
+  return apiCall(`/api/studies/${studyId}/drills/${drillId}`, {
+    method: 'PATCH',
+    body: { completed },
+  })
+}
+
 /**
  * Prep APIs
  */

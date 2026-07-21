@@ -2,7 +2,7 @@ from fastapi import APIRouter, Cookie, Request
 from fastapi.responses import JSONResponse
 
 from services.auth import get_user_by_session
-from services.studies import create_study, delete_study, get_study, list_studies
+from services.studies import create_study, delete_study, get_study, list_studies, toggle_drill
 
 router = APIRouter()
 
@@ -54,6 +54,19 @@ async def get_study_detail(study_id: str, bjj_session: str = Cookie(default=None
     if not study:
         return JSONResponse({"error": "Not found"}, status_code=404)
     return JSONResponse(study)
+
+
+@router.patch("/api/studies/{study_id}/drills/{drill_id}")
+async def patch_drill(study_id: str, drill_id: str, request: Request, bjj_session: str = Cookie(default=None)):
+    user = await _require_user(bjj_session)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    body = await request.json()
+    completed: bool = bool(body.get("completed", False))
+    ok = await toggle_drill(study_id, drill_id, str(user["id"]), completed)
+    if not ok:
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    return JSONResponse({"ok": True, "completed": completed})
 
 
 @router.delete("/api/studies/{study_id}")

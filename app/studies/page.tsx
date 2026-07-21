@@ -2,11 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getStudies, createStudy, deleteStudy } from '@/lib/api'
+import { getStudies, createStudy, deleteStudy, toggleDrill } from '@/lib/api'
 import { getCurrentUser } from '@/lib/auth'
 
-interface Improvement { id: string; title: string; description: string }
-interface Study { id: string; goal: string; youtube_url: string | null; created_at: string; improvements: Improvement[] }
+interface Drill { id: string; text: string; completed: boolean }
+interface Improvement { id: string; title: string; description: string; drills: Drill[] }
+interface Study {
+  id: string
+  goal: string
+  youtube_url: string | null
+  created_at: string
+  total_drills: number
+  completed_drills: number
+  improvements: Improvement[]
+}
 
 function relativeDate(iso: string) {
   const d = new Date(iso)
@@ -69,6 +78,34 @@ export default function StudiesPage() {
     if (expandedId === id) setExpandedId(null)
   }
 
+  const handleToggle = async (studyId: string, impId: string, drillId: string, current: boolean) => {
+    const next = !current
+    // Optimistic update
+    setStudies((prev) => prev.map((s) => {
+      if (s.id !== studyId) return s
+      const improvements = s.improvements.map((imp) => {
+        if (imp.id !== impId) return imp
+        return { ...imp, drills: imp.drills.map((d) => d.id === drillId ? { ...d, completed: next } : d) }
+      })
+      const completed_drills = improvements.flatMap(i => i.drills).filter(d => d.completed).length
+      return { ...s, improvements, completed_drills }
+    }))
+    try {
+      await toggleDrill(studyId, drillId, next)
+    } catch {
+      // Revert on failure
+      setStudies((prev) => prev.map((s) => {
+        if (s.id !== studyId) return s
+        const improvements = s.improvements.map((imp) => {
+          if (imp.id !== impId) return imp
+          return { ...imp, drills: imp.drills.map((d) => d.id === drillId ? { ...d, completed: current } : d) }
+        })
+        const completed_drills = improvements.flatMap(i => i.drills).filter(d => d.completed).length
+        return { ...s, improvements, completed_drills }
+      }))
+    }
+  }
+
   return (
     <div className="studies-area" style={{ display: 'block' }} role="main" aria-label="My studies">
       <div className="studies-inner">
@@ -95,7 +132,9 @@ export default function StudiesPage() {
             </div>
 
             <div className="studies-form-field">
-              <label className="studies-form-label">YouTube resource <span className="studies-form-optional">(optional — helps tailor suggestions)</span></label>
+              <label className="studies-form-label">
+                YouTube resource <span className="studies-form-optional">(optional — helps tailor drills)</span>
+              </label>
               <input
                 type="url"
                 className="studies-form-input"
@@ -108,7 +147,7 @@ export default function StudiesPage() {
 
             <div className="studies-form-row">
               <div className="studies-form-field" style={{ flex: 1 }}>
-                <label className="studies-form-label">Improvements to generate</label>
+                <label className="studies-form-label">Improvement areas</label>
                 <div className="studies-count-btns">
                   {[3, 4, 5].map((n) => (
                     <button
@@ -121,7 +160,6 @@ export default function StudiesPage() {
                   ))}
                 </div>
               </div>
-
               <div className="studies-form-actions">
                 <button type="button" className="studies-cancel-btn" onClick={() => { setShowForm(false); setCreateError('') }} disabled={creating}>
                   Cancel
@@ -145,13 +183,20 @@ export default function StudiesPage() {
         <div className="studies-list">
           {studies.map((study) => {
             const expanded = expandedId === study.id
+            const pct = study.total_drills > 0 ? (study.completed_drills / study.total_drills) * 100 : 0
+            const done = study.total_drills > 0 && study.completed_drills === study.total_drills
+
             return (
-              <div key={study.id} className={`study-card${expanded ? ' expanded' : ''}`}>
+              <div key={study.id} className={`study-card${expanded ? ' expanded' : ''}${done ? ' done' : ''}`}>
                 <div className="study-card-head" onClick={() => setExpandedId(expanded ? null : study.id)}>
                   <div className="study-card-goal">{study.goal}</div>
                   <div className="study-card-meta">
                     <span className="study-card-date">{relativeDate(study.created_at)}</span>
-                    <span className="study-card-count">{study.improvements.length} improvements</span>
+                    {study.total_drills > 0 && (
+                      <span className={`study-card-progress-label${done ? ' done' : ''}`}>
+                        {done ? '✓ done' : `${study.completed_drills}/${study.total_drills}`}
+                      </span>
+                    )}
                     <span className="study-card-chevron" aria-hidden="true">{expanded ? '▴' : '▾'}</span>
                     <button
                       className="study-card-del"
@@ -160,6 +205,12 @@ export default function StudiesPage() {
                     >✕</button>
                   </div>
                 </div>
+
+                {study.total_drills > 0 && (
+                  <div className="study-card-progress-bar-track">
+                    <div className="study-card-progress-bar-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                )}
 
                 {expanded && (
                   <div className="study-card-body">
@@ -173,6 +224,25 @@ export default function StudiesPage() {
                         <li key={imp.id} className="study-improvement">
                           <div className="study-improvement-title">{imp.title}</div>
                           <div className="study-improvement-desc">{imp.description}</div>
+                          {imp.drills.length > 0 && (
+                            <ul className="study-drill-list">
+                              {imp.drills.map((drill) => (
+                                <li key={drill.id} className="study-drill">
+                                  <label className="study-drill-label">
+                                    <input
+                                      type="checkbox"
+                                      className="study-drill-checkbox"
+                                      checked={drill.completed}
+                                      onChange={() => handleToggle(study.id, imp.id, drill.id, drill.completed)}
+                                    />
+                                    <span className={`study-drill-text${drill.completed ? ' completed' : ''}`}>
+                                      {drill.text}
+                                    </span>
+                                  </label>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </li>
                       ))}
                     </ol>
